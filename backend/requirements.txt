@@ -30,3 +30,9 @@ beautifulsoup4
 aiofiles
 geoalchemy2
 psycopg2-binary
+
+# Phase 1 Auth & Celery
+passlib[bcrypt]==1.7.4
+PyJWT==2.8.0
+celery==5.3.6
+redis==5.0.3
