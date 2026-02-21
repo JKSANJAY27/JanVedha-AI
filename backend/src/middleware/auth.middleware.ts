@@ -14,7 +14,7 @@ const roleHierarchy: Record<string, number> = {
     'SUPER_ADMIN': 7
 };
 
-export interface AuthRequest extends Request {
+export interface AuthRequest extends Request<any, any, any, any> {
     user?: {
         id: string;
         role: string;

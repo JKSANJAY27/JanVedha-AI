@@ -55,7 +55,7 @@ export class TicketController {
     // GET /api/tickets/ward/:wardId
     static async getTicketsForWard(req: AuthRequest, res: Response) {
         try {
-            const { wardId } = req.params;
+            const wardId = req.params.wardId as string;
 
             const tickets = await prisma.ticket.findMany({
                 where: { wardId },
@@ -75,7 +75,7 @@ export class TicketController {
     // PATCH /api/tickets/:id/status (Ward Officer closing or assigning)
     static async updateStatus(req: AuthRequest, res: Response) {
         try {
-            const { id } = req.params;
+            const id = req.params.id as string;
             const { status, assignedOfficerId } = req.body;
 
             const updateData: any = { status };
