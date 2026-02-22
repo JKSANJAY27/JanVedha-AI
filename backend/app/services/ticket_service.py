@@ -109,7 +109,8 @@ class TicketService:
         new_status: str, 
         actor_id: int, 
         actor_role: str,
-        reason: str = None
+        reason: str = None,
+        new_dept_id: str = None
     ) -> Ticket:
         result = await db.execute(select(Ticket).where(Ticket.id == ticket_id))
         ticket = result.scalar_one_or_none()
@@ -117,22 +118,63 @@ class TicketService:
             raise HTTPException(status_code=404, detail="Ticket not found")
 
         old_status = ticket.status
-        ticket.status = new_status
         
-        if new_status == TicketStatus.ASSIGNED:
-            ticket.assigned_officer_id = actor_id
-            ticket.assigned_at = datetime.utcnow()
-        elif new_status == TicketStatus.CLOSED:
-            ticket.resolved_at = datetime.utcnow()
+        if new_status == "REROUTE":
+            if not new_dept_id:
+                raise HTTPException(status_code=400, detail="new_dept_id is required for REROUTE")
+            old_dept = ticket.dept_id
+            ticket.dept_id = new_dept_id
             
-        await write_audit(
-            db=db, 
-            action="STATUS_CHANGED", 
-            ticket_id=ticket.id, 
-            actor_id=actor_id,
-            actor_role=actor_role,
-            old_value={"status": old_status}, 
-            new_value={"status": new_status, "reason": reason}
-        )
+            # Reset SLA
+            dept_result = await db.execute(select(Department).where(Department.dept_id == new_dept_id))
+            dept = dept_result.scalar_one_or_none()
+            sla_days = dept.sla_days if dept else 7
+            ticket.sla_deadline = datetime.utcnow() + timedelta(days=sla_days)
+            
+            await write_audit(
+                db=db, 
+                action="TICKET_REROUTED", 
+                ticket_id=ticket.id, 
+                actor_id=actor_id,
+                actor_role=actor_role,
+                old_value={"dept_id": old_dept}, 
+                new_value={"dept_id": new_dept_id, "reason": reason}
+            )
+            return ticket
+            
+        elif new_status == "ESCALATE":
+            # Send notification to zonal officer (using stub/placeholder)
+            whatsapp = get_whatsapp_provider()
+            await whatsapp.send_message(WhatsAppMessage(to_phone="ZONAL_OFFICER_PHONE", body=f"Ticket {ticket.ticket_code} escalated."))
+            
+            await write_audit(
+                db=db,
+                action="TICKET_ESCALATED",
+                ticket_id=ticket.id,
+                actor_id=actor_id,
+                actor_role=actor_role,
+                old_value={"status": old_status},
+                new_value={"status": old_status, "reason": reason}
+            )
+            return ticket
+            
+        else:
+            ticket.status = new_status
+            
+            if new_status == TicketStatus.ASSIGNED:
+                ticket.assigned_officer_id = actor_id
+                ticket.assigned_at = datetime.utcnow()
+            elif new_status == TicketStatus.CLOSED:
+                ticket.resolved_at = datetime.utcnow()
+                
+            await write_audit(
+                db=db, 
+                action="STATUS_CHANGED", 
+                ticket_id=ticket.id, 
+                actor_id=actor_id,
+                actor_role=actor_role,
+                old_value={"status": old_status}, 
+                new_value={"status": new_status, "reason": reason}
+            )
         await db.flush()
         return ticket

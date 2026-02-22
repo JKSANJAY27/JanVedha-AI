@@ -13,8 +13,19 @@ router = APIRouter()
 
 @router.get("/tickets")
 async def get_tickets(db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
-    # Very basic list for Phase 1 MVP
-    result = await db.execute(select(Ticket))
+    from app.models.user import UserRole
+    query = select(Ticket)
+    
+    if current_user.role == UserRole.WARD_OFFICER:
+        query = query.where(Ticket.ward_id == current_user.ward_id)
+    elif current_user.role == UserRole.ZONAL_OFFICER:
+        query = query.where(Ticket.zone_id == current_user.zone_id)
+    elif current_user.role == UserRole.DEPT_HEAD:
+        query = query.where(Ticket.dept_id == current_user.dept_id)
+    elif current_user.role == UserRole.COUNCILLOR:
+        query = query.where(Ticket.ward_id == current_user.ward_id)
+    
+    result = await db.execute(query)
     return result.scalars().all()
 
 @router.get("/tickets/{id}")
@@ -28,6 +39,7 @@ async def get_ticket(id: int, db: AsyncSession = Depends(get_db), current_user: 
 class StatusUpdateEvent(BaseModel):
     status: str
     reason: str = None
+    new_dept_id: str = None
 
 @router.patch("/tickets/{id}/status")
 async def update_status(id: int, event: StatusUpdateEvent, db: AsyncSession = Depends(get_db), current_user: User = Depends(require_ward_officer)):
@@ -37,7 +49,8 @@ async def update_status(id: int, event: StatusUpdateEvent, db: AsyncSession = De
         new_status=event.status,
         actor_id=current_user.id,
         actor_role=current_user.role,
-        reason=event.reason
+        reason=event.reason,
+        new_dept_id=event.new_dept_id
     )
     await db.commit()
     return {"id": ticket.id, "status": ticket.status}
