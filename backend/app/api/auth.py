@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+from pydantic import BaseModel, EmailStr
 
 from app.core.database import get_db
 from app.services.auth_service import AuthService
@@ -108,3 +109,37 @@ async def logout(request: Request, response: Response):
     # Always clear the cookie
     response.delete_cookie("refresh_token")
     return {"status": "Logged out successfully"}
+
+class PublicUserRegister(BaseModel):
+    name: str
+    email: EmailStr
+    phone: str
+    password: str
+
+@router.post("/register/public", status_code=status.HTTP_201_CREATED)
+async def register_public_user(
+    data: PublicUserRegister,
+    db: AsyncSession = Depends(get_db)
+):
+    # Check if user with email or phone already exists
+    result_email = await db.execute(select(User).where(User.email == data.email))
+    if result_email.scalar_one_or_none():
+        raise HTTPException(status_code=400, detail="Email already registered")
+        
+    result_phone = await db.execute(select(User).where(User.phone == data.phone))
+    if result_phone.scalar_one_or_none():
+        raise HTTPException(status_code=400, detail="Phone already registered")
+        
+    new_user = User(
+        name=data.name,
+        email=data.email,
+        phone=data.phone,
+        password_hash=AuthService.get_password_hash(data.password),
+        role="PUBLIC_USER"
+    )
+    
+    db.add(new_user)
+    await db.commit()
+    await db.refresh(new_user)
+    
+    return {"message": "User registered successfully", "user_id": new_user.id}

@@ -17,6 +17,7 @@ class ComplaintCreateEvent(BaseModel):
     consent_given: bool
     reporter_name: Optional[str] = None
     photo_url: Optional[str] = None
+    reporter_user_id: Optional[int] = None
 
 @router.post("/complaints")
 async def create_complaint(data: ComplaintCreateEvent, db: AsyncSession = Depends(get_db)):
@@ -27,7 +28,8 @@ async def create_complaint(data: ComplaintCreateEvent, db: AsyncSession = Depend
         reporter_phone=data.reporter_phone,
         consent_given=data.consent_given,
         reporter_name=data.reporter_name,
-        photo_url=data.photo_url
+        photo_url=data.photo_url,
+        reporter_user_id=data.reporter_user_id
     )
     await db.commit()
     await db.refresh(ticket)

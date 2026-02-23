@@ -10,6 +10,7 @@ class UserRole(str, enum.Enum):
     COMMISSIONER = "COMMISSIONER"
     COUNCILLOR = "COUNCILLOR"
     SUPER_ADMIN = "SUPER_ADMIN"
+    PUBLIC_USER = "PUBLIC_USER"
 
 class User(Base):
     __tablename__ = "users"

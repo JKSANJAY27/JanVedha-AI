@@ -49,6 +49,7 @@ class Ticket(Base):
     after_photo_url = Column(Text)
     reporter_phone = Column(String(15))
     reporter_name = Column(String(100))
+    reporter_user_id = Column(Integer, ForeignKey("users.id"))
     consent_given = Column(Boolean, default=False)
     consent_timestamp = Column(DateTime)
     language_detected = Column(String(20))

@@ -23,7 +23,8 @@ class TicketService:
         reporter_name: str = None,
         photo_url: str = None,
         language: str = "en",
-        source: str = TicketSource.WEB_PORTAL
+        source: str = TicketSource.WEB_PORTAL,
+        reporter_user_id: int = None
     ) -> Ticket:
         # 1. DPDP Compliance
         if not consent_given:
@@ -67,6 +68,7 @@ class TicketService:
             photo_url=photo_url,
             reporter_phone=reporter_phone,
             reporter_name=reporter_name,
+            reporter_user_id=reporter_user_id,
             consent_given=True,
             consent_timestamp=datetime.utcnow(),
             language_detected=classification.language_detected,
