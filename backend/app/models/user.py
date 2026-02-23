@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey
+from datetime import datetime
 from .base import Base
 import enum
 
@@ -22,4 +23,4 @@ class User(Base):
     zone_id = Column(Integer)
     dept_id = Column(String(5), ForeignKey("departments.dept_id"))
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, server_default="NOW()")
+    created_at = Column(DateTime, default=datetime.utcnow)

@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String, Float, Text, DateTime
+from datetime import datetime
 from .base import Base
 
 class WardPrediction(Base):
@@ -9,4 +10,4 @@ class WardPrediction(Base):
     predicted_next_month_score = Column(Float)
     risk_level = Column(String(20))
     ai_recommendation = Column(Text)
-    computed_at = Column(DateTime, server_default="NOW()")
+    computed_at = Column(DateTime, default=datetime.utcnow)

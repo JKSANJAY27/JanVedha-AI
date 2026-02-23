@@ -1,0 +1,27 @@
+{
+  "name": "janvedha-backend",
+  "version": "1.0.0",
+  "description": "JanVedha AI - Backend API server",
+  "main": "app/main.py",
+  "scripts": {
+    "dev": "uvicorn app.main:app --reload --host 127.0.0.1 --port 8000",
+    "start": "uvicorn app.main:app --host 127.0.0.1 --port 8000",
+    "migrate": "alembic upgrade head",
+    "migration:create": "alembic revision --autogenerate -m",
+    "seed": "python app/scripts/seed.py",
+    "celery": "celery -A app.tasks worker -l info",
+    "celery:beat": "celery -A app.tasks beat -l info"
+  },
+  "keywords": [
+    "janvedha",
+    "ai",
+    "fastapi",
+    "ticket-management"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "app": "^0.1.0",
+    "celery": "^0.0.0"
+  }
+}

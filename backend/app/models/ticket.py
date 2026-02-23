@@ -1,8 +1,13 @@
-from sqlalchemy import Column, Integer, String, Float, Boolean, Text, DateTime, ForeignKey, Numeric
-from sqlalchemy.dialects.postgresql import JSONB, INET
-from geoalchemy2 import Geography
+from sqlalchemy import Column, Integer, String, Float, Boolean, Text, DateTime, ForeignKey, func
+from datetime import datetime
 from .base import Base
 import enum
+
+try:
+    from geoalchemy2 import Geography
+    HAS_GEOALCHEMY = True
+except ImportError:
+    HAS_GEOALCHEMY = False
 
 class TicketSource(str, enum.Enum):
     VOICE_CALL = "VOICE_CALL"
@@ -38,7 +43,7 @@ class Ticket(Base):
     dept_id = Column(String(5), ForeignKey("departments.dept_id"), nullable=False)
     ward_id = Column(Integer)
     zone_id = Column(Integer)
-    coordinates = Column(Geography(geometry_type='POINT', srid=4326))
+    coordinates = Column(String(100))  # Store as string, e.g., "POINT(lat lng)"
     photo_url = Column(Text)
     before_photo_url = Column(Text)
     after_photo_url = Column(Text)
@@ -53,12 +58,12 @@ class Ticket(Base):
     status = Column(String(30), default="OPEN")
     report_count = Column(Integer, default=1)
     requires_human_review = Column(Boolean, default=False)
-    estimated_cost = Column(Numeric(12, 2))
+    estimated_cost = Column(Float)
     citizen_satisfaction = Column(Integer)
     sla_deadline = Column(DateTime)
     social_media_mentions = Column(Integer, default=0)
     assigned_officer_id = Column(Integer, ForeignKey("users.id"))
     blockchain_hash = Column(String(66))
-    created_at = Column(DateTime, server_default="NOW()")
+    created_at = Column(DateTime, default=datetime.utcnow)
     assigned_at = Column(DateTime)
     resolved_at = Column(DateTime)

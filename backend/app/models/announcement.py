@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, ForeignKey
+from datetime import datetime
 from .base import Base
 
 class Announcement(Base):
@@ -11,5 +12,5 @@ class Announcement(Base):
     approved = Column(Boolean, default=False)
     related_ticket_id = Column(Integer, ForeignKey("tickets.id"))
     announcement_type = Column(String(50))
-    created_at = Column(DateTime, server_default="NOW()")
+    created_at = Column(DateTime, default=datetime.utcnow)
     published_at = Column(DateTime)
