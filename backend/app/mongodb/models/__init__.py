@@ -6,6 +6,8 @@ from .announcement import AnnouncementMongo
 from .audit_log import AuditLogMongo
 from .ward_dept_officer import WardDeptOfficerMongo
 from .ward_prediction import WardPredictionMongo
+from .issue_memory import IssueMemoryMongo
+from .priority_model import PriorityModelMongo
 
 __all__ = [
     "UserMongo",
@@ -15,4 +17,6 @@ __all__ = [
     "AuditLogMongo",
     "WardDeptOfficerMongo",
     "WardPredictionMongo",
+    "IssueMemoryMongo",
+    "PriorityModelMongo",
 ]

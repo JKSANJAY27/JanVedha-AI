@@ -1,4 +1,4 @@
-from app.models.user import UserRole
+from app.enums import UserRole
 
 ROLE_PERMISSIONS = {
     UserRole.WARD_OFFICER: {

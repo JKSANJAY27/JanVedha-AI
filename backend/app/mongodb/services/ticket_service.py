@@ -21,7 +21,7 @@ from app.core.container import (
     get_whatsapp_provider,
 )
 from app.interfaces.notification_provider import SMSMessage, WhatsAppMessage
-from app.models.ticket import TicketSource, TicketStatus
+from app.enums import TicketSource, TicketStatus
 
 from app.mongodb.models.ticket import TicketMongo
 from app.mongodb.repositories.ticket_repo import TicketRepo

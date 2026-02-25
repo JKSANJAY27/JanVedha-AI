@@ -39,8 +39,6 @@ async def init_mongodb() -> None:
     """
     global _motor_client
 
-    # Import here to avoid circular imports; all Beanie Documents must be
-    # registered so Beanie can resolve cross-collection references.
     from app.mongodb.models import (
         UserMongo,
         TicketMongo,
@@ -49,12 +47,14 @@ async def init_mongodb() -> None:
         AuditLogMongo,
         WardDeptOfficerMongo,
         WardPredictionMongo,
+        IssueMemoryMongo,
+        PriorityModelMongo,
     )
 
     _motor_client = AsyncIOMotorClient(settings.MONGODB_URI)
 
-    # Extract DB name from URI  (e.g. "mongodb://localhost:27017/civicai" → "civicai")
-    db_name = settings.MONGODB_URI.rsplit("/", 1)[-1] or "civicai"
+    # Extract DB name from URI (e.g. "mongodb://localhost:27017/civicai" → "civicai")
+    db_name = settings.MONGODB_URI.rsplit("/", 1)[-1].split("?")[0] or "civicai"
     database = _motor_client[db_name]
 
     await init_beanie(
@@ -67,6 +67,8 @@ async def init_mongodb() -> None:
             AuditLogMongo,
             WardDeptOfficerMongo,
             WardPredictionMongo,
+            IssueMemoryMongo,
+            PriorityModelMongo,
         ],
     )
 

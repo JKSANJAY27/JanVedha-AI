@@ -8,7 +8,7 @@ for the same stats exposed by the existing StatsService.
 from datetime import datetime
 from typing import List, Dict, Any
 
-from app.models.ticket import TicketStatus, PriorityLabel
+from app.enums import TicketStatus, PriorityLabel
 from app.mongodb.repositories.ticket_repo import TicketRepo
 from app.mongodb.models.ticket import TicketMongo
 from app.mongodb.models.ward_prediction import WardPredictionMongo

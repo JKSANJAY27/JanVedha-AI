@@ -9,7 +9,7 @@ from datetime import datetime
 from beanie import PydanticObjectId
 
 from app.mongodb.models.ticket import TicketMongo
-from app.models.ticket import TicketStatus, PriorityLabel
+from app.enums import TicketStatus, PriorityLabel
 
 
 class TicketRepo:
