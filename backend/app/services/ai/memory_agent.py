@@ -6,9 +6,10 @@ Saves computation by NOT checking memory for every new ticket.
 
 Workflow:
 1. Query IssueMemoryMongo for same ward + category + month (any past year)
-2. If occurrence_count >= 2 → pattern detected → generate proactive alert text
-3. Upsert the IssueMemory record for this ticket
-4. Return alert text (None if no pattern detected)
+2. If occurrence_count >= 2 → pattern detected → generate proactive alert text via Gemini
+3. [NEW] Also query SeasonalPredictor (Prophet) for spike forecasts — merges both alerts
+4. Upsert the IssueMemory record for this ticket
+5. Return combined alert text (None if no pattern detected by either method)
 """
 from __future__ import annotations
 
@@ -20,6 +21,7 @@ from typing import Optional, List
 from langchain_core.messages import HumanMessage, SystemMessage
 
 from app.services.ai.gemini_client import get_llm
+from app.services.ai.seasonal_predictor import get_seasonal_predictor
 
 logger = logging.getLogger(__name__)
 
@@ -103,6 +105,22 @@ async def check_and_update_memory(
                     count=total_occurrences,
                     avg_severity=avg_severity,
                 )
+
+        # [NEW] Prophet-based spike prediction (runs concurrently, fails silently)
+        try:
+            predictor = get_seasonal_predictor()
+            prophet_result = await predictor.predict_spike(
+                ward_id=ward_id, category=issue_category
+            )
+            if prophet_result and prophet_result.get("alert"):
+                prophet_msg = prophet_result["message"]
+                # Merge with exact-match alert if both fired
+                if alert_text:
+                    alert_text = f"{alert_text}\n\n{prophet_msg}"
+                else:
+                    alert_text = prophet_msg
+        except Exception as _exc:
+            logger.debug("SeasonalPredictor skipped: %s", _exc)
 
         # Upsert current year's memory record
         existing = await IssueMemoryMongo.find_one(

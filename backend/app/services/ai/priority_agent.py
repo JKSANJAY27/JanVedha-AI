@@ -3,16 +3,20 @@ PriorityAgent — Hybrid Rule + ML Priority Scorer
 
 Architecture:
   1. Rule engine  (deterministic, fast, always runs)
-  2. ML model     (SGDClassifier, online learning, activates after 50+ training samples)
+  2. ML model     (LightGBM classifier, batch retrain every 10 samples, activates after 50+)
   3. LLM override (only if rule and ML disagree by > 20 score points)
 
 Final score = weighted average:
   - Rules  : 60% weight
-  - ML     : 30% weight (when available)
-  - LLM    : applied as bounded adjustment only (±10)
+  - ML     : 40% weight (when available)
 
 The ML model persists in MongoDB (PriorityModelMongo) and self-improves via
-partial_fit() every time a ticket is closed (called from ticket_service.py).
+batch retraining every time a ticket is closed (called from ticket_service.py).
+
+New in v2:
+  - LightGBM replaces SGDClassifier (non-linear, faster, SHAP-explainable)
+  - Richer features: temporal (day_of_week, hour, monsoon flag), ward_id
+  - explain_prediction() helper using SHAP TreeExplainer
 """
 from __future__ import annotations
 
@@ -20,7 +24,7 @@ import io
 import logging
 import asyncio
 from dataclasses import dataclass
-from typing import Tuple, Optional, List
+from typing import Tuple, Optional, List, Dict, Any
 
 import numpy as np
 
@@ -104,9 +108,15 @@ def _score_to_label(score: float) -> str:
 
 DEPT_IDS = ["D01", "D02", "D03", "D04", "D05", "D06", "D07", "D08",
             "D09", "D10", "D11", "D12", "D13", "D14"]
+
 FEATURE_NAMES = [
+    # Core severity features
     "severity_base", "report_count", "days_open", "social_mentions",
-    "sla_hours_remaining", "month", "safety_flag",
+    "sla_hours_remaining", "safety_flag",
+    # Temporal features (NEW in v2)
+    "month", "day_of_week", "hour_of_day", "is_weekend", "is_monsoon",
+    # Ward-level feature (NEW in v2)
+    "ward_id",
 ] + [f"dept_{d}" for d in DEPT_IDS]
 
 
@@ -119,19 +129,30 @@ def _build_feature_vector(
     month: int,
     description: str,
     dept_id: str,
+    ward_id: int = 0,
+    day_of_week: int = 0,   # 0=Monday … 6=Sunday
+    hour_of_day: int = 12,
 ) -> List[float]:
-    """Convert ticket attributes into a numeric feature vector for the ML model."""
+    """Convert ticket attributes into a numeric feature vector for LightGBM."""
     severity_base = SEVERITY_MAP.get(issue_category, SEVERITY_MAP["default"])
     safety_flag = 1.0 if any(kw.lower() in description.lower() for kw in SAFETY_KEYWORDS) else 0.0
+    is_weekend = 1.0 if day_of_week >= 5 else 0.0
+    is_monsoon = 1.0 if month in (6, 7, 8, 9) else 0.0
     dept_onehot = [1.0 if dept_id == d else 0.0 for d in DEPT_IDS]
+
     return [
         float(severity_base),
         float(min(report_count, 20)),
         float(min(days_open, 60)),
         float(min(social_media_mentions, 200)),
         float(max(0, hours_until_sla_breach)),
-        float(month),
         safety_flag,
+        float(month),
+        float(day_of_week),
+        float(hour_of_day),
+        is_weekend,
+        is_monsoon,
+        float(ward_id),
     ] + dept_onehot
 
 
@@ -139,8 +160,9 @@ def _build_feature_vector(
 
 class _PriorityMLModel:
     """
-    Singleton wrapper around scikit-learn SGDClassifier.
-    Supports partial_fit() for online learning.
+    Singleton wrapper around LightGBM LGBMClassifier.
+    LightGBM doesn't support partial_fit, so we accumulate all training
+    samples in memory and fully retrain every 10 new samples.
     Thread-safe for async via asyncio.Lock on I/O-bound operations.
     """
     LABEL_MAP = {"LOW": 0, "MEDIUM": 1, "HIGH": 2, "CRITICAL": 3}
@@ -149,58 +171,97 @@ class _PriorityMLModel:
 
     def __init__(self):
         self._clf = None
-        self._scaler = None
         self._sample_count = 0
+        self._training_X: List[List[float]] = []
+        self._training_y: List[int] = []
         self._lock = asyncio.Lock()
 
-    def _build_fresh_models(self):
-        from sklearn.linear_model import SGDClassifier
-        from sklearn.preprocessing import StandardScaler
-        clf = SGDClassifier(
-            loss="modified_huber",
-            max_iter=1,
-            tol=None,
-            warm_start=True,
-            random_state=42,
-            class_weight="balanced",
-        )
-        scaler = StandardScaler()
-        return clf, scaler
+    def _build_fresh_model(self):
+        try:
+            from lightgbm import LGBMClassifier
+            return LGBMClassifier(
+                objective="multiclass",
+                num_class=4,
+                learning_rate=0.05,
+                num_leaves=31,
+                n_estimators=100,
+                feature_fraction=0.8,
+                bagging_fraction=0.8,
+                bagging_freq=5,
+                random_state=42,
+                class_weight="balanced",
+                verbose=-1,
+            )
+        except ImportError:
+            logger.warning("LightGBM not installed. Falling back to SGDClassifier.")
+            from sklearn.linear_model import SGDClassifier
+            return SGDClassifier(
+                loss="modified_huber",
+                max_iter=1000,
+                random_state=42,
+                class_weight="balanced",
+            )
 
     async def load_from_db(self):
-        """Load the most recent model from MongoDB on startup."""
+        """Load the most recent model + training buffer from MongoDB on startup."""
         try:
             import joblib
             from app.mongodb.models.priority_model import PriorityModelMongo
             doc = await PriorityModelMongo.find_one(PriorityModelMongo.is_active == True)
             if doc and doc.model_bytes:
                 self._clf = joblib.load(io.BytesIO(doc.model_bytes))
-                self._scaler = joblib.load(io.BytesIO(doc.scaler_bytes))
                 self._sample_count = doc.sample_count
-                logger.info("Priority ML model loaded from DB (samples=%d)", self._sample_count)
+                # Restore training buffer if persisted
+                if hasattr(doc, "training_X") and doc.training_X:
+                    self._training_X = doc.training_X
+                    self._training_y = doc.training_y
+                logger.info(
+                    "Priority LightGBM model loaded from DB (samples=%d)", self._sample_count
+                )
             else:
-                logger.info("No trained priority model found. Will use rules only until %d samples.", self.MIN_SAMPLES_TO_USE)
+                logger.info(
+                    "No trained priority model found. Will use rules only until %d samples.",
+                    self.MIN_SAMPLES_TO_USE,
+                )
         except Exception as exc:
             logger.warning("Could not load priority model from DB: %s", exc)
 
     def predict(self, features: List[float]) -> Optional[str]:
-        """
-        Returns label prediction if model is trained enough, else None.
-        """
+        """Returns label prediction if model is trained enough, else None."""
         if self._clf is None or self._sample_count < self.MIN_SAMPLES_TO_USE:
             return None
         try:
             X = np.array([features], dtype=float)
-            X_scaled = self._scaler.transform(X)
-            label_int = self._clf.predict(X_scaled)[0]
+            label_int = self._clf.predict(X)[0]
             return self.LABEL_REVERSE.get(int(label_int), None)
         except Exception as exc:
             logger.warning("ML prediction failed: %s", exc)
             return None
 
-    async def partial_fit(self, features: List[float], true_label: str):
+    def explain_prediction(self, features: List[float]) -> Optional[Dict[str, float]]:
         """
-        Online learning: update the model with a new labelled sample.
+        Returns a dict of {feature_name: shap_value} for the predicted class.
+        Returns None if shap is not installed or model not ready.
+        """
+        if self._clf is None or self._sample_count < self.MIN_SAMPLES_TO_USE:
+            return None
+        try:
+            import shap
+            X = np.array([features], dtype=float)
+            explainer = shap.TreeExplainer(self._clf)
+            shap_values = explainer.shap_values(X)
+            # shap_values shape: (num_classes, n_samples, n_features)
+            predicted_class = int(self._clf.predict(X)[0])
+            class_shap = shap_values[predicted_class][0]
+            return {name: float(val) for name, val in zip(FEATURE_NAMES, class_shap)}
+        except Exception as exc:
+            logger.debug("SHAP explanation skipped: %s", exc)
+            return None
+
+    async def add_training_sample(self, features: List[float], true_label: str):
+        """
+        Online-style learning: accumulate a new labelled sample and retrain
+        LightGBM every 10 new samples (full refit, not incremental).
         Called when a ticket is closed (true_label = the final confirmed priority).
         """
         async with self._lock:
@@ -209,42 +270,41 @@ class _PriorityMLModel:
                 from app.mongodb.models.priority_model import PriorityModelMongo
 
                 label_int = self.LABEL_MAP.get(true_label, 1)
-                X = np.array([features], dtype=float)
-
-                if self._clf is None:
-                    self._clf, self._scaler = self._build_fresh_models()
-                    self._scaler.partial_fit(X)
-
-                X_scaled = self._scaler.transform(X)
-                self._clf.partial_fit(
-                    X_scaled,
-                    [label_int],
-                    classes=list(self.LABEL_MAP.values())
-                )
+                self._training_X.append(features)
+                self._training_y.append(label_int)
                 self._sample_count += 1
 
-                # Persist every 10 samples
+                # Retrain every 10 new samples
                 if self._sample_count % 10 == 0:
-                    model_buf = io.BytesIO()
-                    scaler_buf = io.BytesIO()
-                    joblib.dump(self._clf, model_buf)
-                    joblib.dump(self._scaler, scaler_buf)
+                    X = np.array(self._training_X, dtype=float)
+                    y = np.array(self._training_y, dtype=int)
 
-                    # Deactivate old model docs, save new one
-                    await PriorityModelMongo.find(PriorityModelMongo.is_active == True).update(
-                        {"$set": {"is_active": False}}
-                    )
+                    clf = self._build_fresh_model()
+                    clf.fit(X, y)
+                    self._clf = clf
+
+                    # Persist to MongoDB
+                    model_buf = io.BytesIO()
+                    joblib.dump(self._clf, model_buf)
+
+                    await PriorityModelMongo.find(
+                        PriorityModelMongo.is_active == True
+                    ).update({"$set": {"is_active": False}})
+
                     new_doc = PriorityModelMongo(
                         model_bytes=model_buf.getvalue(),
-                        scaler_bytes=scaler_buf.getvalue(),
+                        scaler_bytes=b"",          # No scaler needed for LightGBM
                         feature_names=FEATURE_NAMES,
                         sample_count=self._sample_count,
                         is_active=True,
                     )
                     await new_doc.insert()
-                    logger.info("Priority ML model saved to DB (samples=%d)", self._sample_count)
+                    logger.info(
+                        "Priority LightGBM model retrained and saved (samples=%d)",
+                        self._sample_count,
+                    )
             except Exception as exc:
-                logger.error("ML partial_fit failed: %s", exc)
+                logger.error("ML training sample failed: %s", exc)
 
 
 # Module-level singleton
@@ -266,16 +326,20 @@ async def train_on_closed_ticket(
     description: str,
     dept_id: str,
     confirmed_priority_label: str,
+    ward_id: int = 0,
+    day_of_week: int = 0,
+    hour_of_day: int = 12,
 ):
     """
-    Called when a ticket is closed. Trains the ML model with verified data.
+    Called when a ticket is closed. Trains the LightGBM model with verified data.
     The confirmed_priority_label is the ground truth (human-confirmed outcome).
     """
     features = _build_feature_vector(
         issue_category, report_count, days_open, social_media_mentions,
-        hours_until_sla_breach, month, description, dept_id
+        hours_until_sla_breach, month, description, dept_id,
+        ward_id=ward_id, day_of_week=day_of_week, hour_of_day=hour_of_day,
     )
-    await _ml_model.partial_fit(features, confirmed_priority_label)
+    await _ml_model.add_training_sample(features, confirmed_priority_label)
 
 
 # ── Main Priority Function ────────────────────────────────────────────────────
@@ -290,6 +354,9 @@ async def calculate_priority(
     hours_until_sla_breach: float = 168.0,
     social_media_mentions: int = 0,
     month: int = 6,
+    ward_id: int = 0,
+    day_of_week: int = 0,
+    hour_of_day: int = 12,
 ) -> Tuple[float, str, str]:
     """
     Returns (score: float, label: str, source: str)
@@ -297,9 +364,9 @@ async def calculate_priority(
 
     Hybrid logic:
     - Build rule score (always)
-    - If ML is available, build ML prediction
+    - If LightGBM is available, build ML prediction
     - If they agree (or ML unavailable): use rule score + label
-    - If they differ significantly (>20 points): average them
+    - If they differ significantly (>20 points): blend (60% rules, 40% ML)
     """
     # 1. Rule score
     rule_score = _rule_score(
@@ -308,10 +375,11 @@ async def calculate_priority(
     )
     rule_label = _score_to_label(rule_score)
 
-    # 2. ML prediction
+    # 2. LightGBM prediction
     features = _build_feature_vector(
         issue_category, report_count, days_open, social_media_mentions,
-        hours_until_sla_breach, month, description, dept_id
+        hours_until_sla_breach, month, description, dept_id,
+        ward_id=ward_id, day_of_week=day_of_week, hour_of_day=hour_of_day,
     )
     ml_label = _ml_model.predict(features)
 
