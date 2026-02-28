@@ -23,13 +23,14 @@ class StatsService:
 
         active_statuses = [TicketStatus.OPEN, TicketStatus.ASSIGNED, TicketStatus.IN_PROGRESS]
 
+        from beanie.operators import In
         active_critical = await TicketMongo.find(
-            TicketMongo.status.in_(active_statuses),
+            In(TicketMongo.status, active_statuses),
             TicketMongo.priority_label == PriorityLabel.CRITICAL,
         ).count()
 
         active_high = await TicketMongo.find(
-            TicketMongo.status.in_(active_statuses),
+            In(TicketMongo.status, active_statuses),
             TicketMongo.priority_label == PriorityLabel.HIGH,
         ).count()
 

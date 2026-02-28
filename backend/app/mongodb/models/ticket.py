@@ -68,7 +68,7 @@ class TicketMongo(Document):
     priority_source: str = "rules"                   # "rules" | "ml" | "hybrid" | "llm"
 
     # Lifecycle
-    status: Indexed(TicketStatus) = TicketStatus.OPEN  # type: ignore[valid-type]
+    status: TicketStatus = TicketStatus.OPEN  # type: ignore[valid-type]
     report_count: int = 1
     requires_human_review: bool = False
 
