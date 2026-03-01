@@ -51,7 +51,8 @@ async def init_mongodb() -> None:
         PriorityModelMongo,
     )
 
-    _motor_client = AsyncIOMotorClient(settings.MONGODB_URI)
+    import certifi
+    _motor_client = AsyncIOMotorClient(settings.MONGODB_URI, tlsCAFile=certifi.where())
 
     # Extract DB name from URI (e.g. "mongodb://localhost:27017/civicai" → "civicai")
     db_name = settings.MONGODB_URI.rsplit("/", 1)[-1].split("?")[0] or "civicai"
