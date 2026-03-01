@@ -1,0 +1,86 @@
+"use client";
+
+import Link from "next/link";
+import { useRouter, usePathname } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
+import { authApi } from "@/lib/api";
+
+export default function NavBar() {
+    const { user, isOfficer, logout } = useAuth();
+    const router = useRouter();
+    const pathname = usePathname();
+
+    const handleLogout = async () => {
+        try { await authApi.logout(); } catch { }
+        logout();
+        router.push("/");
+    };
+
+    const navLink = (href: string, label: string) => (
+        <Link
+            href={href}
+            className={`text-sm font-medium transition-colors hover:text-blue-600 ${pathname === href ? "text-blue-600 border-b-2 border-blue-600 pb-0.5" : "text-gray-600"
+                }`}
+        >
+            {label}
+        </Link>
+    );
+
+    return (
+        <nav className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-100 shadow-sm">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+                {/* Logo */}
+                <Link href="/" className="flex items-center gap-2 group">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center text-white font-bold text-sm shadow-sm group-hover:shadow-md transition-shadow">
+                        JV
+                    </div>
+                    <span className="font-bold text-gray-900 text-lg hidden sm:block">JanVedha AI</span>
+                </Link>
+
+                {/* Public nav */}
+                <div className="flex items-center gap-6">
+                    {navLink("/", "Submit")}
+                    {navLink("/track", "Track")}
+                    {navLink("/map", "Issue Map")}
+                    {navLink("/ward-performance", "Leaderboard")}
+
+                    {/* Officer links */}
+                    {isOfficer && (
+                        <>
+                            {navLink("/officer/dashboard", "Dashboard")}
+                            {navLink("/officer/reports", "Reports")}
+                        </>
+                    )}
+                </div>
+
+                {/* Auth */}
+                <div className="flex items-center gap-3">
+                    {user ? (
+                        <div className="flex items-center gap-3">
+                            <div className="hidden sm:flex flex-col items-end">
+                                <span className="text-sm font-medium text-gray-900">{user.name}</span>
+                                <span className="text-xs text-gray-400">{user.role.replace(/_/g, " ")}</span>
+                            </div>
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-sm">
+                                {user.name[0]?.toUpperCase()}
+                            </div>
+                            <button
+                                onClick={handleLogout}
+                                className="text-sm text-gray-500 hover:text-red-500 transition-colors"
+                            >
+                                Logout
+                            </button>
+                        </div>
+                    ) : (
+                        <Link
+                            href="/login"
+                            className="text-sm font-medium bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+                        >
+                            Officer Login
+                        </Link>
+                    )}
+                </div>
+            </div>
+        </nav>
+    );
+}

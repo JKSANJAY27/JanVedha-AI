@@ -113,3 +113,58 @@ async def get_seasonal_alerts(ward_id: int, month: int):
         "alerts": alerts,
         "count": len(alerts),
     }
+
+
+@router.get("/map/issues")
+async def get_map_issues(
+    priority: Optional[str] = None,
+    status: Optional[str] = None,
+    ward_id: Optional[int] = None,
+    limit: int = 300,
+):
+    """
+    Returns tickets with geographic coordinates for the interactive map.
+    Filters by priority, status, and ward_id.
+    """
+    query = TicketMongo.find()
+
+    if ward_id:
+        query = TicketMongo.find(TicketMongo.ward_id == ward_id)
+
+    tickets = await query.limit(limit).to_list()
+
+    results = []
+    for t in tickets:
+        # Filter by priority (comma-separated list allowed)
+        if priority:
+            priorities = [p.strip().upper() for p in priority.split(",")]
+            if t.priority_label not in priorities:
+                continue
+        # Filter by status
+        if status:
+            statuses = [s.strip().upper() for s in status.split(",")]
+            if t.status not in statuses:
+                continue
+
+        # Extract lat/lng from location field
+        lat, lng = None, None
+        if t.location and isinstance(t.location, dict):
+            lat = t.location.get("lat")
+            lng = t.location.get("lng")
+
+        results.append({
+            "id": str(t.id),
+            "ticket_code": t.ticket_code,
+            "description": t.description,
+            "dept_id": t.dept_id,
+            "priority_label": t.priority_label,
+            "priority_score": t.priority_score,
+            "status": t.status,
+            "lat": lat,
+            "lng": lng,
+            "location": t.location,
+            "created_at": t.created_at,
+            "ward_id": t.ward_id,
+        })
+
+    return {"issues": results, "count": len(results)}

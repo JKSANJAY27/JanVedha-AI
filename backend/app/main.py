@@ -48,12 +48,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-from app.api import public, auth, officer, webhooks
+from app.api import public, auth, officer, webhooks, chat
 
 app.include_router(public.router, prefix="/api/public", tags=["public"])
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(officer.router, prefix="/api/officer", tags=["officer"])
 app.include_router(webhooks.router, prefix="/api/webhooks", tags=["webhooks"])
+app.include_router(chat.router, prefix="/api/chat", tags=["chat"])
 
 
 @app.get("/api/health")
