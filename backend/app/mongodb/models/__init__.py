@@ -8,6 +8,7 @@ from .ward_dept_officer import WardDeptOfficerMongo
 from .ward_prediction import WardPredictionMongo
 from .issue_memory import IssueMemoryMongo
 from .priority_model import PriorityModelMongo
+from .scheduled_event import ScheduledEventMongo
 
 __all__ = [
     "UserMongo",
@@ -19,4 +20,5 @@ __all__ = [
     "WardPredictionMongo",
     "IssueMemoryMongo",
     "PriorityModelMongo",
+    "ScheduledEventMongo",
 ]

@@ -49,10 +49,16 @@ async def init_mongodb() -> None:
         WardPredictionMongo,
         IssueMemoryMongo,
         PriorityModelMongo,
+        ScheduledEventMongo,
     )
 
     import certifi
-    _motor_client = AsyncIOMotorClient(settings.MONGODB_URI, tlsCAFile=certifi.where())
+    _motor_client = AsyncIOMotorClient(
+        settings.MONGODB_URI,
+        tls=True,
+        tlsCAFile=certifi.where(),
+        tlsAllowInvalidCertificates=True
+    )
 
     # Extract DB name from URI (e.g. "mongodb://localhost:27017/civicai" → "civicai")
     db_name = settings.MONGODB_URI.rsplit("/", 1)[-1].split("?")[0] or "civicai"
@@ -70,6 +76,7 @@ async def init_mongodb() -> None:
             WardPredictionMongo,
             IssueMemoryMongo,
             PriorityModelMongo,
+            ScheduledEventMongo,
         ],
     )
 

@@ -69,12 +69,59 @@ export const authApi = {
 export const officerApi = {
   getTickets: (limit = 100) =>
     api.get(`/api/officer/tickets?limit=${limit}`),
+  getMyTickets: () =>
+    api.get("/api/officer/tickets/assigned-to-me"),
+  getDashboardSummary: () =>
+    api.get("/api/officer/dashboard/summary"),
   getTicket: (id: string) => api.get(`/api/officer/tickets/${id}`),
   updateStatus: (id: string, status: string, reason?: string) =>
     api.patch(`/api/officer/tickets/${id}/status`, { status, reason }),
+  assignTicket: (id: string, officerId?: string, technicianId?: string) =>
+    api.post(`/api/officer/tickets/${id}/assign`, {
+      officer_id: officerId,
+      technician_id: technicianId,
+    }),
+  addRemark: (id: string, text: string) =>
+    api.post(`/api/officer/tickets/${id}/remark`, { text }),
+  scheduleTicket: (id: string, scheduledDate: string) =>
+    api.patch(`/api/officer/tickets/${id}/schedule`, { scheduled_date: scheduledDate }),
   overridePriority: (id: string, score: number, reason: string) =>
     api.post(`/api/officer/tickets/${id}/override-priority`, {
       priority_score: score,
       reason,
     }),
+};
+
+export const calendarApi = {
+  getEvents: (params?: { dept_id?: string; ward_id?: number; month?: number; year?: number }) =>
+    api.get("/api/calendar/events", { params }),
+  createEvent: (data: {
+    ticket_id: string;
+    dept_id: string;
+    ward_id?: number;
+    scheduled_date: string;
+    time_slot?: string;
+    notes?: string;
+    is_ai_suggested?: boolean;
+  }) => api.post("/api/calendar/events", data),
+  deleteEvent: (id: string) => api.delete(`/api/calendar/events/${id}`),
+  getAISuggestions: (deptId: string, wardId: number) =>
+    api.get(`/api/calendar/ai-suggest?dept_id=${deptId}&ward_id=${wardId}`),
+  applyAISuggestions: (deptId: string, wardId: number) =>
+    api.post(`/api/calendar/ai-suggest/apply?dept_id=${deptId}&ward_id=${wardId}`),
+};
+
+export const councillorApi = {
+  getWardSummary: (wardId?: number) =>
+    api.get("/api/councillor/ward-summary", { params: wardId ? { ward_id: wardId } : {} }),
+  getDeptPerformance: (wardId?: number) =>
+    api.get("/api/councillor/department-performance", { params: wardId ? { ward_id: wardId } : {} }),
+  getSatisfactionTrend: (wardId?: number, weeks = 8) =>
+    api.get("/api/councillor/satisfaction-trend", { params: { ward_id: wardId, weeks } }),
+  getTopIssues: (wardId?: number, limit = 8) =>
+    api.get("/api/councillor/top-issues", { params: { ward_id: wardId, limit } }),
+  getOverdueTickets: (wardId?: number) =>
+    api.get("/api/councillor/overdue-tickets", { params: wardId ? { ward_id: wardId } : {} }),
+  getFeed: (wardId?: number) =>
+    api.get("/api/councillor/announcement-feed", { params: wardId ? { ward_id: wardId } : {} }),
 };

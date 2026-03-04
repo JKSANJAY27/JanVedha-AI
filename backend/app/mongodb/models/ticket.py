@@ -85,9 +85,26 @@ class TicketMongo(Document):
     # Assignment
     assigned_officer_id: Optional[str] = None       # ObjectId of UserMongo
     assigned_at: Optional[datetime] = None
+    technician_id: Optional[str] = None              # ObjectId of UserMongo (field technician)
 
     # Seasonal alert info
     seasonal_alert: Optional[str] = None             # populated by MemoryAgent
+
+    # Scheduling
+    scheduled_date: Optional[datetime] = None        # Finalized work date set by officer
+    ai_suggested_date: Optional[datetime] = None     # AI-calculated suggested work date
+
+    # Transparency timeline
+    status_timeline: List[Dict[str, Any]] = Field(
+        default_factory=list,
+        description='List of {status, timestamp, actor_role, note} dicts'
+    )
+
+    # Officer remarks
+    remarks: List[Dict[str, Any]] = Field(
+        default_factory=list,
+        description='List of {text, timestamp, officer_id} dicts'
+    )
 
     # Immutability record
     blockchain_hash: Optional[str] = Field(None, max_length=66)
