@@ -1,23 +1,32 @@
 import jwt
+import bcrypt
+import hashlib
 from datetime import datetime, timedelta
-from passlib.context import CryptContext
 from fastapi import HTTPException, status
 from typing import Dict, Any, Optional
 
 from app.core.config import settings
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+def _hash_password(password: str) -> bytes:
+    """
+    SHA-256 pre-hash then bcrypt.
+    Pre-hashing lets us safely handle passwords > 72 bytes
+    while keeping bcrypt's cost factor protection.
+    """
+    digest = hashlib.sha256(password.encode("utf-8")).hexdigest().encode("utf-8")
+    return bcrypt.hashpw(digest, bcrypt.gensalt())
 
 class AuthService:
     """Core logic for Authentication: Password hashing and JWT generation"""
     
     @staticmethod
     def verify_password(plain_password: str, hashed_password: str) -> bool:
-        return pwd_context.verify(plain_password, hashed_password)
+        digest = hashlib.sha256(plain_password.encode("utf-8")).hexdigest().encode("utf-8")
+        return bcrypt.checkpw(digest, hashed_password.encode("utf-8") if isinstance(hashed_password, str) else hashed_password)
 
     @staticmethod
     def get_password_hash(password: str) -> str:
-        return pwd_context.hash(password)
+        return _hash_password(password).decode("utf-8")
 
     @staticmethod
     def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:

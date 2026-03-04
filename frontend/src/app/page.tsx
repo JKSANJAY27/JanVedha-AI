@@ -6,12 +6,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
+import { getErrorMessage } from "@/lib/getErrorMessage";
 import { publicApi } from "@/lib/api";
 import { formatDate } from "@/lib/formatters";
 import PriorityBadge from "@/components/PriorityBadge";
 import LoadingOverlay from "@/components/LoadingOverlay";
 import Link from "next/link";
 import { DEPT_NAMES } from "@/lib/constants";
+import { useAuth } from "@/context/AuthContext";
 
 const schema = z.object({
   description: z.string().min(20, "Describe the issue in at least 20 characters"),
@@ -45,12 +47,24 @@ const AI_STEPS = [
 ];
 
 export default function SubmitComplaintPage() {
+  const { user } = useAuth();
+  const isPublicUser = !!user && user.role === "PUBLIC_USER";
+
   const {
     register,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors },
   } = useForm<FormData>({ resolver: zodResolver(schema) });
+
+  // Auto-fill name and phone for logged-in public users
+  useEffect(() => {
+    if (isPublicUser && user) {
+      if (user.name) setValue("reporter_name", user.name);
+      if (user.phone) setValue("reporter_phone", user.phone);
+    }
+  }, [isPublicUser, user, setValue]);
 
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
@@ -115,48 +129,11 @@ export default function SubmitComplaintPage() {
     return () => intervals.forEach(clearTimeout);
   }, [isSubmitting]);
 
-  const onSubmit = async (data: FormData) => {
-    setIsSubmitting(true);
-    setResult(null);
-
-    const formData = new FormData();
-    formData.append("description", data.description);
-    formData.append("location_text", data.location_text);
-    formData.append("reporter_phone", data.reporter_phone);
-    formData.append("consent_given", "true");
-    if (data.reporter_name) formData.append("reporter_name", data.reporter_name);
-    if (photo) formData.append("photo", photo);
-
-    // Also need to send as JSON since backend uses JSON body
-    const jsonData = {
-      description: data.description,
-      location_text: data.location_text,
-      reporter_phone: data.reporter_phone,
-      consent_given: true,
-      reporter_name: data.reporter_name || null,
-      photo_url: null,
-    };
-
-    try {
-      await new Promise((r) => setTimeout(r, AI_STEPS.length * 800 + 500));
-      const res = await publicApi.submitComplaint(JSON.stringify(jsonData) as any);
-      setResult(res.data);
-      toast.success("Complaint submitted successfully!");
-      reset();
-      setPhoto(null);
-      setPhotoPreview(null);
-    } catch (err: any) {
-      toast.error(err?.response?.data?.detail || "Submission failed. Please try again.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
   const handleJsonSubmit = async (data: FormData) => {
     setIsSubmitting(true);
     setResult(null);
 
-    const jsonData = {
+    const jsonData: any = {
       description: data.description,
       location_text: data.location_text,
       reporter_phone: data.reporter_phone,
@@ -164,6 +141,9 @@ export default function SubmitComplaintPage() {
       reporter_name: data.reporter_name || null,
       photo_url: null,
     };
+    if (isPublicUser && user) {
+      jsonData.reporter_user_id = user.id;
+    }
 
     try {
       // Wait for animation
@@ -175,7 +155,13 @@ export default function SubmitComplaintPage() {
       setPhoto(null);
       setPhotoPreview(null);
     } catch (err: any) {
-      toast.error(err?.response?.data?.detail || "Submission failed. Please try again.");
+      const detail = err?.response?.data?.detail;
+      // AI requested clarification → show the question prominently
+      if (err?.response?.status === 400 && detail?.question) {
+        toast.error(`💬 ${detail.question}`, { duration: 6000 });
+      } else {
+        toast.error(getErrorMessage(err, "Submission failed. Please try again."));
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -291,6 +277,14 @@ export default function SubmitComplaintPage() {
                   Submit Another
                 </button>
               </div>
+              {isPublicUser && (
+                <Link
+                  href="/my-tickets"
+                  className="block text-center text-sm text-blue-500 font-medium mt-3 hover:text-blue-700 transition-colors"
+                >
+                  View in My Tickets →
+                </Link>
+              )}
             </motion.div>
           ) : (
             <motion.div

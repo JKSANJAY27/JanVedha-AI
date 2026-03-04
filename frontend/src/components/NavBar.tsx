@@ -10,6 +10,8 @@ export default function NavBar() {
     const router = useRouter();
     const pathname = usePathname();
 
+    const isPublicUser = !!user && user.role === "PUBLIC_USER";
+
     const handleLogout = async () => {
         try { await authApi.logout(); } catch { }
         logout();
@@ -44,6 +46,9 @@ export default function NavBar() {
                     {navLink("/map", "Issue Map")}
                     {navLink("/ward-performance", "Leaderboard")}
 
+                    {/* Public user: My Tickets */}
+                    {isPublicUser && navLink("/my-tickets", "My Tickets")}
+
                     {/* Officer links */}
                     {isOfficer && (
                         <>
@@ -72,15 +77,30 @@ export default function NavBar() {
                             </button>
                         </div>
                     ) : (
-                        <Link
-                            href="/login"
-                            className="text-sm font-medium bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
-                        >
-                            Officer Login
-                        </Link>
+                        <div className="flex items-center gap-2">
+                            <Link
+                                href="/user-login"
+                                className="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors px-3 py-2"
+                            >
+                                Sign In
+                            </Link>
+                            <Link
+                                href="/signup"
+                                className="text-sm font-medium bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors shadow-sm"
+                            >
+                                Sign Up
+                            </Link>
+                            <Link
+                                href="/login"
+                                className="text-xs text-gray-400 hover:text-blue-500 transition-colors ml-1"
+                            >
+                                Officer
+                            </Link>
+                        </div>
                     )}
                 </div>
             </div>
         </nav>
     );
 }
+

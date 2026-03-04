@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
+import { getErrorMessage } from "@/lib/getErrorMessage";
 import { authApi } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
@@ -48,7 +49,7 @@ export default function LoginPage() {
             const redirect = ROLE_REDIRECTS[user.role] ?? "/officer/dashboard";
             router.push(redirect);
         } catch (err: any) {
-            toast.error(err?.response?.data?.detail || "Login failed. Check credentials.");
+            toast.error(getErrorMessage(err, "Login failed. Check credentials."));
         } finally {
             setLoading(false);
         }

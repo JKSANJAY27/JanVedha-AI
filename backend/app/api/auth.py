@@ -75,6 +75,8 @@ async def login(
             "id": user_id_str,
             "name": user.name,
             "role": user.role,
+            "phone": user.phone,
+            "email": user.email,
             "ward_id": user.ward_id,
             "zone_id": user.zone_id,
             "dept_id": user.dept_id,

@@ -6,6 +6,8 @@ interface User {
     id: string;
     name: string;
     role: string;
+    phone?: string;
+    email?: string;
     ward_id?: number;
     zone_id?: number;
     dept_id?: string;

@@ -38,7 +38,7 @@ torch>=2.3.0
 asyncpraw>=7.7.0             # Async Reddit scraper (requires REDDIT_CLIENT_ID in .env)
 
 # ── Auth & Security ───────────────────────────────────────────────────────────
-passlib[bcrypt]==1.7.4
+bcrypt>=4.0.1
 python-jose[cryptography]
 PyJWT==2.8.0
 

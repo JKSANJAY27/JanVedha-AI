@@ -8,7 +8,7 @@ from app.core.config import settings
 
 
 @lru_cache(maxsize=1)
-def get_llm(model: str = "gemini-1.5-flash") -> ChatGoogleGenerativeAI:
+def get_llm(model: str = "gemini-2-flash") -> ChatGoogleGenerativeAI:
     """
     Returns a cached LangChain Gemini LLM instance.
     Cached with lru_cache so only one client is created per model name per process.
@@ -23,4 +23,4 @@ def get_llm(model: str = "gemini-1.5-flash") -> ChatGoogleGenerativeAI:
 
 def get_pro_llm() -> ChatGoogleGenerativeAI:
     """Returns Gemini Pro model for complex reasoning tasks."""
-    return get_llm(model="gemini-1.5-pro")
+    return get_llm(model="gemini-2.5-pro")

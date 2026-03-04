@@ -90,6 +90,7 @@ def _keyword_fallback(text: str) -> ClassificationResult:
             best_score = score
             best_dept = dept_id
     dept_info = DEPARTMENT_CATALOGUE[best_dept]
+    matched = best_score > 0
     return ClassificationResult(
         dept_id=best_dept,
         dept_name=dept_info["name"],
@@ -97,10 +98,10 @@ def _keyword_fallback(text: str) -> ClassificationResult:
         issue_summary=text[:200],
         location_extracted="Unknown",
         language_detected="en",
-        confidence=0.6 if best_score > 0 else 0.4,
-        needs_clarification=best_score == 0,
-        clarification_question="Could you describe the issue in more detail?" if best_score == 0 else None,
-        requires_human_review=True,
+        confidence=0.75 if matched else 0.45,
+        needs_clarification=not matched,
+        clarification_question="Could you describe the issue in more detail?" if not matched else None,
+        requires_human_review=not matched,
     )
 
 

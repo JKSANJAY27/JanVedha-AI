@@ -34,10 +34,8 @@ api.interceptors.response.use(
 // ─── API helpers ────────────────────────────────────────────────────────────
 
 export const publicApi = {
-  submitComplaint: (data: FormData) =>
-    api.post("/api/public/complaints", data, {
-      headers: { "Content-Type": "multipart/form-data" },
-    }),
+  submitComplaint: (data: object) =>
+    api.post("/api/public/complaints", data),
   trackTicket: (code: string) => api.get(`/api/public/track/${code}`),
   getStats: () => api.get("/api/public/stats"),
   getLeaderboard: () => api.get("/api/public/wards/leaderboard"),
@@ -46,6 +44,7 @@ export const publicApi = {
     api.get(`/api/public/seasonal-alerts?ward_id=${wardId}&month=${month}`),
   getMapIssues: (params?: Record<string, string>) =>
     api.get("/api/public/map/issues", { params }),
+  getMyTickets: () => api.get("/api/public/my-tickets"),
 };
 
 export const authApi = {

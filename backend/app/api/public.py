@@ -3,16 +3,49 @@ Public API — citizen-facing endpoints.
 
 Fully rewritten to use MongoDB (Beanie) + the full AI pipeline.
 """
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from typing import Optional
 
+from app.core.dependencies import get_current_user
+from app.mongodb.models.user import UserMongo
 from app.services.ticket_service import TicketService
 from app.services.stats_service import StatsService
 from app.mongodb.models.ticket import TicketMongo
 from app.enums import TicketSource
 
 router = APIRouter()
+
+
+@router.get("/my-tickets")
+async def get_my_tickets(
+    current_user: UserMongo = Depends(get_current_user),
+    limit: int = 100,
+):
+    """Return all tickets submitted by the currently logged-in public user."""
+    user_id_str = str(current_user.id)
+    tickets = (
+        await TicketMongo.find(TicketMongo.reporter_user_id == user_id_str)
+        .sort(-TicketMongo.created_at)
+        .limit(limit)
+        .to_list()
+    )
+    return [
+        {
+            "id": str(t.id),
+            "ticket_code": t.ticket_code,
+            "status": t.status,
+            "description": t.description,
+            "dept_id": t.dept_id,
+            "issue_category": t.issue_category,
+            "priority_label": t.priority_label,
+            "priority_score": t.priority_score,
+            "location_text": t.location_text,
+            "created_at": t.created_at,
+            "sla_deadline": t.sla_deadline,
+        }
+        for t in tickets
+    ]
 
 
 class ComplaintCreateEvent(BaseModel):
