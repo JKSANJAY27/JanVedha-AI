@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 from app.core.dependencies import get_current_user
 from app.mongodb.models.user import UserMongo
 from app.mongodb.models.ticket import TicketMongo
-from app.enums import UserRole, TicketStatus
+from app.enums import UserRole, TicketStatus, PriorityLabel
 
 router = APIRouter()
 
@@ -232,3 +232,81 @@ async def get_announcement_feed(
         }
         for t in recent
     ]
+
+@router.get("/priority-insights")
+async def get_priority_insights(
+    ward_id: Optional[int] = Query(None),
+    current_user: UserMongo = Depends(_require_councillor),
+):
+    """
+    Ward-level priority intelligence panel for the councillor dashboard.
+
+    Returns:
+    - Count of tickets by priority label (CRITICAL / HIGH / MEDIUM / LOW)
+    - Top-5 highest-priority open tickets (sorted by score)
+    - Priority source breakdown (rules vs hybrid vs ml)
+    - Average priority score of open tickets
+    """
+    effective_ward = ward_id or current_user.ward_id
+    open_statuses = [
+        TicketStatus.OPEN, TicketStatus.ASSIGNED,
+        TicketStatus.IN_PROGRESS, TicketStatus.AWAITING_MATERIAL,
+    ]
+
+    tickets = await TicketMongo.find(
+        TicketMongo.ward_id == effective_ward,
+        TicketMongo.status.in_(open_statuses),
+    ).to_list()
+
+    if not tickets:
+        return {
+            "ward_id": effective_ward,
+            "open_ticket_count": 0,
+            "by_priority": {},
+            "avg_priority_score": 0,
+            "top_critical_tickets": [],
+            "priority_source_breakdown": {},
+        }
+
+    # Count by priority label
+    by_priority: dict = {"CRITICAL": 0, "HIGH": 0, "MEDIUM": 0, "LOW": 0}
+    source_count: dict = {}
+    scores = []
+
+    for t in tickets:
+        label = t.priority_label.value if t.priority_label else "LOW"
+        by_priority[label] = by_priority.get(label, 0) + 1
+        src = t.priority_source or "rules"
+        source_count[src] = source_count.get(src, 0) + 1
+        scores.append(t.priority_score or 0)
+
+    avg_score = round(sum(scores) / len(scores), 1) if scores else 0
+
+    # Top-5 by priority score (descending)
+    top_tickets = sorted(tickets, key=lambda t: t.priority_score or 0, reverse=True)[:5]
+
+    now = datetime.utcnow()
+    return {
+        "ward_id": effective_ward,
+        "open_ticket_count": len(tickets),
+        "by_priority": by_priority,
+        "avg_priority_score": avg_score,
+        "priority_source_breakdown": source_count,
+        "top_critical_tickets": [
+            {
+                "id": str(t.id),
+                "ticket_code": t.ticket_code,
+                "priority_score": t.priority_score,
+                "priority_label": t.priority_label,
+                "priority_source": t.priority_source,
+                "issue_category": t.issue_category or "General",
+                "dept_id": t.dept_id,
+                "days_open": (now - t.created_at).days,
+                "sla_deadline": t.sla_deadline,
+                "is_overdue": bool(t.sla_deadline and t.sla_deadline < now),
+                "social_media_mentions": t.social_media_mentions,
+                "report_count": t.report_count,
+            }
+            for t in top_tickets
+        ],
+    }

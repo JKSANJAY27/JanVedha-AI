@@ -95,6 +95,9 @@ async def run_pipeline(
         hours_until_sla_breach=168.0,  # default 7-day SLA
         social_media_mentions=0,
         month=now.month,
+        ward_id=ward_id or 0,
+        day_of_week=now.weekday(),   # 0=Monday … 6=Sunday
+        hour_of_day=now.hour,
     )
 
     # ── Steps 4 & 5: Suggestions + Memory (run concurrently) ─────────────────

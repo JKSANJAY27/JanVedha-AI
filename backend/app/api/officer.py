@@ -348,6 +348,102 @@ async def override_priority(
     }
 
 
+# ─── Priority Explainability ───────────────────────────────────────────────────
+
+@router.get("/tickets/{ticket_id}/priority-explain")
+async def explain_ticket_priority(
+    ticket_id: str,
+    current_user: UserMongo = Depends(get_current_user),
+):
+    """
+    Returns an explainable breakdown of WHY a ticket received its priority score.
+
+    Response includes:
+    - Overall rule score and label
+    - Per-component sub-scores (severity, impact, age, SLA, social)
+    - ML model label probabilities (if model is active)
+    - SHAP feature importance (if shap is installed)
+    - Human-readable summary for the 'Why is this CRITICAL?' dashboard panel
+
+    Perfect for councillor ward oversight and officer decision support.
+    """
+    from beanie import PydanticObjectId
+    from datetime import datetime
+    from app.services.ai.priority_agent import explain_priority
+
+    ticket = await TicketMongo.get(PydanticObjectId(ticket_id))
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+
+    now = datetime.utcnow()
+    days_open = (now - ticket.created_at).days
+    hours_remaining = (
+        (ticket.sla_deadline - now).total_seconds() / 3600
+        if ticket.sla_deadline else 168.0
+    )
+
+    explanation = explain_priority(
+        issue_category=ticket.issue_category or "default",
+        description=ticket.description,
+        dept_id=ticket.dept_id,
+        report_count=ticket.report_count,
+        location_type="unknown",
+        days_open=days_open,
+        hours_until_sla_breach=hours_remaining,
+        social_media_mentions=ticket.social_media_mentions,
+        month=ticket.created_at.month,
+        ward_id=ticket.ward_id or 0,
+        day_of_week=ticket.created_at.weekday(),
+        hour_of_day=ticket.created_at.hour,
+    )
+
+    return {
+        "ticket_code": ticket.ticket_code,
+        "stored_priority_score": ticket.priority_score,
+        "stored_priority_label": ticket.priority_label,
+        "stored_priority_source": ticket.priority_source,
+        **explanation,
+    }
+
+
+class RecalculateRequest(BaseModel):
+    new_report_count: Optional[int] = None
+    new_social_mentions: Optional[int] = None
+
+
+@router.post("/tickets/{ticket_id}/recalculate-priority")
+async def recalculate_ticket_priority(
+    ticket_id: str,
+    data: RecalculateRequest,
+    current_user: UserMongo = Depends(require_ward_officer),
+):
+    """
+    Re-run priority scoring on an existing ticket with updated signals.
+    Use this when:
+    - The real-time scraper detects more social mentions of this complaint
+    - Citizens have reported the same issue multiple times (report_count increased)
+
+    This is the hook the Scrapify Labs integration will call.
+    """
+    from app.services.ai.priority_agent import recalculate_priority
+
+    result = await recalculate_priority(
+        ticket_id=ticket_id,
+        new_report_count=data.new_report_count,
+        new_social_mentions=data.new_social_mentions,
+    )
+    if result is None:
+        raise HTTPException(status_code=404, detail="Ticket not found or recalculation failed")
+
+    new_score, new_label, source = result
+    return {
+        "ticket_id": ticket_id,
+        "new_priority_score": new_score,
+        "new_priority_label": new_label,
+        "source": source,
+    }
+
+
 # ─── Helper ───────────────────────────────────────────────────────────────────
 
 def _ticket_list_item(t: TicketMongo) -> dict:
