@@ -391,6 +391,16 @@ class _PriorityMLModel:
             except Exception:
                 pass
 
+    @staticmethod
+    def _to_df(X_rows: List[List[float]]):
+        """Convert list-of-lists to a pandas DataFrame with named columns.
+        Falls back to numpy array if pandas is not available."""
+        try:
+            import pandas as pd
+            return pd.DataFrame(X_rows, columns=FEATURE_NAMES)
+        except ImportError:
+            return np.array(X_rows, dtype=float)
+
     async def _warm_start(self):
         """
         Train on 80 synthetic civic complaint samples so the ML model is
@@ -401,11 +411,10 @@ class _PriorityMLModel:
         self._training_X = list(X)
         self._training_y = list(y)
 
-        X_np = np.array(X, dtype=float)
-        y_np = np.array(y, dtype=int)
-
         clf = self._build_fresh_model()
-        clf.fit(X_np, y_np)
+        X_df = self._to_df(X)
+        y_np = np.array(y, dtype=int)
+        clf.fit(X_df, y_np)
         self._clf = clf
         self._sample_count = len(X)  # 80 synthetic samples
         logger.info(
@@ -418,7 +427,7 @@ class _PriorityMLModel:
         if self._clf is None or self._sample_count < self.MIN_SAMPLES_TO_USE:
             return None
         try:
-            X = np.array([features], dtype=float)
+            X = self._to_df([features])
             label_int = self._clf.predict(X)[0]
             return self.LABEL_REVERSE.get(int(label_int), None)
         except Exception as exc:
@@ -430,7 +439,7 @@ class _PriorityMLModel:
         if self._clf is None or self._sample_count < self.MIN_SAMPLES_TO_USE:
             return None
         try:
-            X = np.array([features], dtype=float)
+            X = self._to_df([features])
             proba = self._clf.predict_proba(X)[0]
             return {self.LABEL_REVERSE[i]: float(p) for i, p in enumerate(proba)}
         except Exception as exc:
@@ -475,11 +484,11 @@ class _PriorityMLModel:
 
                 # Retrain every 10 new samples
                 if self._sample_count % 10 == 0:
-                    X = np.array(self._training_X, dtype=float)
+                    X_df = self._to_df(self._training_X)
                     y = np.array(self._training_y, dtype=int)
 
                     clf = self._build_fresh_model()
-                    clf.fit(X, y)
+                    clf.fit(X_df, y)
                     self._clf = clf
 
                     # Persist to MongoDB

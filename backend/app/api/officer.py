@@ -444,6 +444,151 @@ async def recalculate_ticket_priority(
     }
 
 
+# ─── Work Completion Verification ─────────────────────────────────────────────
+
+class WorkCompletionRequest(BaseModel):
+    after_photo_url: str                   # URL of the "after" photo submitted by technician
+    notes: Optional[str] = None           # Optional technician notes
+
+
+@router.post("/tickets/{ticket_id}/verify-completion")
+async def verify_work_completion(
+    ticket_id: str,
+    data: WorkCompletionRequest,
+    current_user: UserMongo = Depends(get_current_user),
+):
+    """
+    Technician submits an 'after' photo and the AI verifies if the civic issue
+    has been resolved by comparing it with the original 'before' photo.
+
+    Flow:
+    1. Technician takes after photo on site and submits its URL here
+    2. System fetches both before (from ticket) & after images
+    3. Gemini Vision analyses both + issue context → verdict
+    4. Ticket updated with: after_photo_url, work_verified, verification result
+    5. Status auto-transitions to PENDING_VERIFICATION (officer can then CLOSE)
+
+    Args:
+        ticket_id: MongoDB ObjectId of the ticket
+        after_photo_url: URL of the technician's after-work photo
+    """
+    from beanie import PydanticObjectId
+    from datetime import datetime
+    from app.services.ai.work_verifier import verify_work_completion as _verify
+
+    ticket = await TicketMongo.get(PydanticObjectId(ticket_id))
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+
+    # Only technicians or ward officers can submit completion
+    allowed = {UserRole.TECHNICIAN, UserRole.WARD_OFFICER,
+               UserRole.COMMISSIONER, UserRole.SUPER_ADMIN}
+    if current_user.role not in allowed:
+        raise HTTPException(status_code=403, detail="Only technicians/officers can verify completion")
+
+    # Need a before photo for comparison
+    if not ticket.before_photo_url and not ticket.photo_url:
+        # No before image — store result but cannot do AI verification
+        ticket.after_photo_url = data.after_photo_url
+        ticket.work_verified = None   # indeterminate
+        ticket.work_verification_confidence = 0.0
+        ticket.work_verification_method = "no_before_image"
+        ticket.work_verification_explanation = (
+            "Work marked as submitted. No before-photo was attached to this ticket, "
+            "so AI comparison is not possible. Manual officer review required."
+        )
+        ticket.work_verified_at = datetime.utcnow()
+        if ticket.status not in {"CLOSED", "REJECTED"}:
+            ticket.status = "PENDING_VERIFICATION"  # type: ignore
+        ticket.status_timeline.append({
+            "status": "PENDING_VERIFICATION",
+            "timestamp": datetime.utcnow().isoformat(),
+            "actor_role": current_user.role,
+            "note": f"After photo submitted (no before photo for AI comparison). Notes: {data.notes or ''}",
+        })
+        await ticket.save()
+        return {
+            "ticket_code": ticket.ticket_code,
+            "work_verified": None,
+            "confidence": 0.0,
+            "method": "no_before_image",
+            "explanation": ticket.work_verification_explanation,
+            "change_detected": False,
+        }
+
+    before_url = ticket.before_photo_url or ticket.photo_url
+
+    # Run AI verification (3-tier fallback: Gemini → SSIM → pixel)
+    result = await _verify(
+        before_url=before_url,
+        after_url=data.after_photo_url,
+        issue_category=ticket.issue_category or "general",
+        description=ticket.description,
+    )
+
+    # Persist results to ticket
+    ticket.after_photo_url = data.after_photo_url
+    ticket.work_verified = result.verified
+    ticket.work_verification_confidence = result.confidence
+    ticket.work_verification_method = result.method
+    ticket.work_verification_explanation = result.explanation
+    ticket.work_verified_at = datetime.utcnow()
+
+    # Auto-transition status
+    if ticket.status not in {"CLOSED", "REJECTED"}:
+        ticket.status = "PENDING_VERIFICATION"  # type: ignore
+
+    ticket.status_timeline.append({
+        "status": "PENDING_VERIFICATION",
+        "timestamp": datetime.utcnow().isoformat(),
+        "actor_role": current_user.role,
+        "note": (
+            f"AI Work Verification: {'✅ VERIFIED' if result.verified else '❌ NOT VERIFIED'} "
+            f"(confidence={result.confidence:.0%}, method={result.method}). "
+            f"{result.explanation}. "
+            f"Notes: {data.notes or 'None'}"
+        ),
+    })
+
+    await ticket.save()
+
+    return {
+        "ticket_code": ticket.ticket_code,
+        **result.to_dict(),
+        "ssim_score": result.ssim_score,
+        "phash_distance": result.phash_distance,
+        "status_updated_to": "PENDING_VERIFICATION",
+    }
+
+
+@router.get("/tickets/{ticket_id}/verification-result")
+async def get_verification_result(
+    ticket_id: str,
+    current_user: UserMongo = Depends(get_current_user),
+):
+    """
+    Returns the stored AI work verification result for a ticket.
+    Used by the officer/councillor dashboard to display verification status.
+    """
+    from beanie import PydanticObjectId
+
+    ticket = await TicketMongo.get(PydanticObjectId(ticket_id))
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+
+    return {
+        "ticket_code": ticket.ticket_code,
+        "before_photo_url": ticket.before_photo_url or ticket.photo_url,
+        "after_photo_url": ticket.after_photo_url,
+        "work_verified": ticket.work_verified,
+        "confidence": ticket.work_verification_confidence,
+        "method": ticket.work_verification_method,
+        "explanation": ticket.work_verification_explanation,
+        "verified_at": ticket.work_verified_at,
+        "status": ticket.status,
+    }
+
+
 # ─── Helper ───────────────────────────────────────────────────────────────────
 
 def _ticket_list_item(t: TicketMongo) -> dict:
@@ -463,4 +608,6 @@ def _ticket_list_item(t: TicketMongo) -> dict:
         "technician_id": t.technician_id,
         "scheduled_date": t.scheduled_date,
         "ai_suggested_date": t.ai_suggested_date,
+        "work_verified": t.work_verified,
+        "work_verification_confidence": t.work_verification_confidence,
     }

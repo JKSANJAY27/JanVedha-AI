@@ -24,6 +24,7 @@ numpy>=1.26.0
 joblib>=1.3.0
 lightgbm>=4.3.0              # Priority scoring: non-linear, SHAP-explainable
 shap>=0.45.0                 # Explainability for LightGBM priority predictions
+scikit-image>=0.22.0         # SSIM for work completion image comparison (Tier 2 fallback)
 
 # ── Time Series / Seasonal Prediction ────────────────────────────────────────
 prophet>=1.1.5               # Seasonal spike forecasting (requires pystan)

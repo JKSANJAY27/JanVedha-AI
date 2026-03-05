@@ -113,6 +113,13 @@ class TicketMongo(Document):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     resolved_at: Optional[datetime] = None
 
+    # Work completion verification (AI-powered before/after comparison)
+    work_verified: Optional[bool] = None          # True = AI confirmed work done
+    work_verification_confidence: Optional[float] = None  # 0.0 – 1.0
+    work_verification_method: Optional[str] = None  # "gemini_vision" | "ssim_local" | "pixel_fallback"
+    work_verification_explanation: Optional[str] = None  # Human-readable verdict
+    work_verified_at: Optional[datetime] = None
+
     class Settings:
         name = "tickets"
         indexes = [
