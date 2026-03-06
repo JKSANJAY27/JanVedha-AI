@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import dynamic from "next/dynamic";
 import { publicApi } from "@/lib/api";
 import { PRIORITY_COLORS, PRIORITY_EMOJI, DEPT_NAMES } from "@/lib/constants";
@@ -28,36 +28,70 @@ interface MapIssue {
 
 const PRIORITIES = ["CRITICAL", "HIGH", "MEDIUM", "LOW"];
 const STATUSES_MAP = ["OPEN", "IN_PROGRESS", "ASSIGNED", "CLOSED"];
+const REFRESH_INTERVAL_MS = 30_000; // auto-refresh every 30 seconds
 
 export default function MapPage() {
     const [issues, setIssues] = useState<MapIssue[]>([]);
     const [loading, setLoading] = useState(true);
-    const [priorityFilter, setPriorityFilter] = useState<string[]>(["CRITICAL", "HIGH"]);
-    const [statusFilter, setStatusFilter] = useState<string[]>(["OPEN", "IN_PROGRESS", "ASSIGNED"]);
+    const [refreshing, setRefreshing] = useState(false);
+    const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+    // Default: show all priorities and statuses so every ticket is visible
+    const [priorityFilter, setPriorityFilter] = useState<string[]>(["CRITICAL", "HIGH", "MEDIUM", "LOW"]);
+    const [statusFilter, setStatusFilter] = useState<string[]>(["OPEN", "IN_PROGRESS", "ASSIGNED", "CLOSED"]);
     const [selectedIssue, setSelectedIssue] = useState<MapIssue | null>(null);
+    const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-    useEffect(() => {
-        publicApi.getHeatmap()
-            .then((res) => {
-                // Normalise heatmap data for the map
-                const normalized = (res.data || []).map((item: any) => ({
-                    ...item,
-                    lat: item.location?.lat ?? undefined,
-                    lng: item.location?.lng ?? undefined,
-                }));
-                setIssues(normalized);
-            })
-            .catch(() => { })
-            .finally(() => setLoading(false));
+    const fetchIssues = useCallback(async (isInitial = false) => {
+        if (!isInitial) setRefreshing(true);
+        try {
+            const res = await publicApi.getHeatmap();
+            // API returns { data: [...] }, Axios wraps HTTP body in res.data
+            const items: any[] = res.data?.data || res.data || [];
+            const normalized = items.map((item: any) => ({
+                ...item,
+                lat: item.location?.lat ?? item.lat ?? undefined,
+                lng: item.location?.lng ?? item.lng ?? undefined,
+            }));
+            setIssues(normalized);
+            setLastUpdated(new Date());
+        } catch {
+            // silent — keep showing stale data
+        } finally {
+            if (isInitial) setLoading(false);
+            else setRefreshing(false);
+        }
     }, []);
 
-    const filtered = issues.filter((i) => {
-        const hasCords = i.lat && i.lng;
-        if (!hasCords) return false;
-        if (!priorityFilter.includes(i.priority_label)) return false;
-        if (!statusFilter.includes(i.status)) return false;
-        return true;
-    });
+    // Initial load
+    useEffect(() => {
+        fetchIssues(true);
+    }, [fetchIssues]);
+
+    // Auto-refresh every 30 s
+    useEffect(() => {
+        intervalRef.current = setInterval(() => fetchIssues(false), REFRESH_INTERVAL_MS);
+        return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
+    }, [fetchIssues]);
+
+    // Refresh when tab becomes visible again (user switches back from submit page)
+    useEffect(() => {
+        const handleVisibility = () => {
+            if (document.visibilityState === "visible") fetchIssues(false);
+        };
+        document.addEventListener("visibilitychange", handleVisibility);
+        return () => document.removeEventListener("visibilitychange", handleVisibility);
+    }, [fetchIssues]);
+
+
+    const filtered = useMemo(() => {
+        return issues.filter((i) => {
+            const hasCords = i.lat && i.lng;
+            if (!hasCords) return false;
+            if (!priorityFilter.includes(i.priority_label)) return false;
+            if (!statusFilter.includes(i.status)) return false;
+            return true;
+        });
+    }, [issues, priorityFilter, statusFilter]);
 
     const toggleFilter = (arr: string[], val: string, setter: (a: string[]) => void) => {
         setter(arr.includes(val) ? arr.filter((x) => x !== val) : [...arr, val]);
@@ -74,8 +108,8 @@ export default function MapPage() {
                             key={p}
                             onClick={() => toggleFilter(priorityFilter, p, setPriorityFilter)}
                             className={`text-xs px-3 py-1.5 rounded-full font-medium border transition-all ${priorityFilter.includes(p)
-                                    ? "border-transparent text-white"
-                                    : "border-gray-200 text-gray-400 bg-gray-50"
+                                ? "border-transparent text-white"
+                                : "border-gray-200 text-gray-400 bg-gray-50"
                                 }`}
                             style={priorityFilter.includes(p) ? { backgroundColor: PRIORITY_COLORS[p] } : {}}
                         >
@@ -93,8 +127,8 @@ export default function MapPage() {
                             key={s}
                             onClick={() => toggleFilter(statusFilter, s, setStatusFilter)}
                             className={`text-xs px-3 py-1.5 rounded-full font-medium transition-all ${statusFilter.includes(s)
-                                    ? "bg-blue-600 text-white border-blue-600"
-                                    : "border border-gray-200 text-gray-400 bg-gray-50"
+                                ? "bg-blue-600 text-white border-blue-600"
+                                : "border border-gray-200 text-gray-400 bg-gray-50"
                                 }`}
                         >
                             {s.replace(/_/g, " ")}
@@ -102,8 +136,28 @@ export default function MapPage() {
                     ))}
                 </div>
 
-                <div className="ml-auto text-sm text-gray-500 font-medium">
-                    {loading ? "Loading…" : `${filtered.length} issues shown`}
+                <div className="ml-auto flex items-center gap-3">
+                    {/* Live indicator */}
+                    <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                        <span className={`w-2 h-2 rounded-full ${refreshing ? "bg-yellow-400 animate-pulse" : "bg-green-400 animate-pulse"}`} />
+                        {loading ? "Loading…" : `${filtered.length} issues`}
+                        {lastUpdated && !loading && (
+                            <span className="text-gray-400 hidden sm:inline">
+                                · updated {lastUpdated.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                            </span>
+                        )}
+                    </div>
+                    {/* Manual refresh */}
+                    <button
+                        onClick={() => fetchIssues(false)}
+                        disabled={refreshing || loading}
+                        title="Refresh map"
+                        className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors disabled:opacity-40"
+                    >
+                        <svg className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                    </button>
                 </div>
             </div>
 

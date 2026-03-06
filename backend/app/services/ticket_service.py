@@ -11,6 +11,32 @@ import logging
 from datetime import datetime, timedelta
 from typing import Optional
 
+import httpx
+
+
+async def geocode_location_text(location_text: str) -> Optional[dict]:
+    """
+    Geocode a free-text address using Nominatim (OpenStreetMap, no API key required).
+    Returns {"lat": float, "lng": float, "address": str} or None on failure.
+    """
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            resp = await client.get(
+                "https://nominatim.openstreetmap.org/search",
+                params={"q": location_text, "format": "json", "limit": 1},
+                headers={"User-Agent": "JanVedha-AI/2.0 (civic-platform)"},
+            )
+            results = resp.json()
+            if results:
+                return {
+                    "lat": float(results[0]["lat"]),
+                    "lng": float(results[0]["lon"]),
+                    "address": results[0].get("display_name", location_text),
+                }
+    except Exception as exc:
+        logger.warning("Geocoding failed for '%s': %s", location_text, exc)
+    return None
+
 from fastapi import HTTPException
 
 from app.enums import TicketSource, TicketStatus, PriorityLabel
@@ -37,6 +63,8 @@ class TicketService:
         source: TicketSource = TicketSource.WEB_PORTAL,
         reporter_user_id: Optional[str] = None,
         ward_id: Optional[int] = None,
+        lat: Optional[float] = None,
+        lng: Optional[float] = None,
     ) -> TicketMongo:
         # 1. DPDP Compliance
         if not consent_given:
@@ -75,7 +103,23 @@ class TicketService:
         sla_days = dept.sla_days if dept else 7
         sla_deadline = datetime.utcnow() + timedelta(days=sla_days)
 
-        # 6. Build and persist the ticket
+        # 6. Resolve geo-coordinates
+        # Priority: explicit GPS coords from browser > geocode the text address
+        if lat is not None and lng is not None:
+            resolved_location = {
+                "lat": lat,
+                "lng": lng,
+                "address": location_text,
+            }
+        else:
+            resolved_location = await geocode_location_text(location_text)
+            if resolved_location is None:
+                logger.warning(
+                    "Could not geocode '%s' — ticket will not appear on heatmap",
+                    location_text,
+                )
+
+        # 7. Build and persist the ticket
         ticket = TicketMongo(
             ticket_code=ticket_code,
             source=source,
@@ -83,6 +127,7 @@ class TicketService:
             dept_id=pipeline_result.dept_id,
             issue_category=pipeline_result.issue_category,
             location_text=location_text,
+            location=resolved_location,
             photo_url=photo_url,
             reporter_phone=reporter_phone,
             reporter_name=reporter_name,
@@ -104,14 +149,14 @@ class TicketService:
         )
         await ticket.insert()
 
-        # 7. Blockchain hash (stub-compatible)
+        # 8. Blockchain hash (stub-compatible)
         data_hash = hashlib.sha256(
             f"{ticket.id}-{ticket.created_at}".encode()
         ).hexdigest()
         ticket.blockchain_hash = data_hash
         await ticket.save()
 
-        # 8. SMS notification (non-blocking, best-effort)
+        # 9. SMS notification (non-blocking, best-effort)
         try:
             from app.core.container import get_sms_provider
             from app.interfaces.notification_provider import SMSMessage

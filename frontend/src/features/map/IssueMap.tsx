@@ -41,6 +41,7 @@ export default function IssueMap({ issues, onIssueClick }: IssueMapProps) {
     const mapContainerRef = useRef<HTMLDivElement>(null);
     const mapRef = useRef<L.Map | null>(null);
     const markersRef = useRef<L.Marker[]>([]);
+    const initialFitDone = useRef(false);
 
     // Initialize map once
     useEffect(() => {
@@ -96,12 +97,13 @@ export default function IssueMap({ issues, onIssueClick }: IssueMapProps) {
             markersRef.current.push(marker);
         });
 
-        // Fit bounds if there are visible markers
-        if (markersRef.current.length > 0) {
+        // Fit bounds only once after the initial markers are plotted
+        if (markersRef.current.length > 0 && !initialFitDone.current) {
             const group = L.featureGroup(markersRef.current);
             map.fitBounds(group.getBounds().pad(0.15));
+            initialFitDone.current = true;
         }
-    }, [issues]);
+    }, [issues, onIssueClick]);
 
     return (
         <div

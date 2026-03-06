@@ -57,6 +57,9 @@ class ComplaintCreateEvent(BaseModel):
     photo_url: Optional[str] = None
     reporter_user_id: Optional[str] = None
     ward_id: Optional[int] = None
+    # GPS coordinates sent directly from the browser (avoids geocoding delay)
+    lat: Optional[float] = None
+    lng: Optional[float] = None
 
 
 @router.post("/complaints")
@@ -75,6 +78,8 @@ async def create_complaint(data: ComplaintCreateEvent):
         reporter_user_id=data.reporter_user_id,
         ward_id=data.ward_id,
         source=TicketSource.WEB_PORTAL,
+        lat=data.lat,
+        lng=data.lng,
     )
     response = {
         "ticket_code": ticket.ticket_code,
@@ -127,7 +132,7 @@ async def get_leaderboard():
 
 @router.get("/heatmap")
 async def get_heatmap():
-    return await StatsService.get_heatmap_data()
+    return {"data": await StatsService.get_heatmap_data()}
 
 
 @router.get("/seasonal-alerts")

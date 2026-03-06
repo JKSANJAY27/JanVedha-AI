@@ -48,17 +48,24 @@ class StatsService:
     @staticmethod
     async def get_heatmap_data() -> list:
         """Return tickets with GeoJSON coordinates for map visualization."""
+        from beanie.operators import Exists
         tickets = await TicketMongo.find(
-            TicketMongo.location != None
-        ).limit(500).to_list()
+            Exists(TicketMongo.location, True)
+        ).sort(-TicketMongo.created_at).limit(500).to_list()
         return [
             {
+                "id": str(t.id),
                 "ticket_code": t.ticket_code,
+                "description": t.description,
+                "dept_id": t.dept_id,
+                "priority_label": t.priority_label.value if t.priority_label else "MEDIUM",
+                "priority_score": t.priority_score,
+                "status": t.status.value if hasattr(t.status, "value") else t.status,
                 "location": t.location,
-                "priority_label": t.priority_label,
-                "status": t.status,
+                "created_at": t.created_at.isoformat() if t.created_at else None,
             }
             for t in tickets
+            if t.location  # extra guard: skip if location is falsy/empty dict
         ]
 
     @staticmethod

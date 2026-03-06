@@ -72,6 +72,8 @@ export default function SubmitComplaintPage() {
   const [aiStep, setAiStep] = useState(0);
   const [result, setResult] = useState<TicketResult | null>(null);
   const [locationLoading, setLocationLoading] = useState(false);
+  // Store the raw GPS coords so we can send them with the complaint payload
+  const [gpsCoords, setGpsCoords] = useState<{ lat: number; lng: number } | null>(null);
   const locationRef = useRef<HTMLInputElement | null>(null);
 
   const { ref: locationFormRef, ...locationRegister } = register("location_text");
@@ -87,9 +89,12 @@ export default function SubmitComplaintPage() {
       return;
     }
     setLocationLoading(true);
+    setGpsCoords(null); // reset on each attempt
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         const { latitude, longitude } = pos.coords;
+        // Store exact coords to send with the ticket payload
+        setGpsCoords({ lat: latitude, lng: longitude });
         try {
           const res = await fetch(
             `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`
@@ -97,9 +102,11 @@ export default function SubmitComplaintPage() {
           const data = await res.json();
           const addr = data.display_name || `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
           if (locationRef.current) locationRef.current.value = addr;
+          setValue("location_text", addr);
         } catch {
-          if (locationRef.current)
-            locationRef.current.value = `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
+          const fallback = `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
+          if (locationRef.current) locationRef.current.value = fallback;
+          setValue("location_text", fallback);
         }
         setLocationLoading(false);
       },
@@ -140,6 +147,8 @@ export default function SubmitComplaintPage() {
       consent_given: true,
       reporter_name: data.reporter_name || null,
       photo_url: null,
+      // Include GPS coords if user clicked the GPS button
+      ...(gpsCoords ? { lat: gpsCoords.lat, lng: gpsCoords.lng } : {}),
     };
     if (isPublicUser && user) {
       jsonData.reporter_user_id = user.id;
@@ -277,6 +286,13 @@ export default function SubmitComplaintPage() {
                   Submit Another
                 </button>
               </div>
+              {/* Map link — prominent so users know their ticket is on the map */}
+              <Link
+                href="/map"
+                className="mt-3 flex items-center justify-center gap-2 w-full bg-green-50 border border-green-200 text-green-700 rounded-xl py-2.5 text-sm font-semibold hover:bg-green-100 transition-colors"
+              >
+                📍 View on Issue Map
+              </Link>
               {isPublicUser && (
                 <Link
                   href="/my-tickets"

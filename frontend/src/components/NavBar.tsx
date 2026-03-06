@@ -39,28 +39,28 @@ export default function NavBar() {
                     <span className="font-bold text-gray-900 text-lg hidden sm:block">JanVedha AI</span>
                 </Link>
 
-                {/* Public nav */}
-                <div className="flex items-center gap-6">
-                    {navLink("/", "Submit")}
-                    {navLink("/track", "Track")}
-                    {navLink("/map", "Issue Map")}
-                    {navLink("/ward-performance", "Leaderboard")}
+                {user ? (
+                    <>
+                        {/* Public nav */}
+                        <div className="flex items-center gap-6">
+                            {navLink("/", "Submit")}
+                            {navLink("/track", "Track")}
+                            {navLink("/map", "Issue Map")}
+                            {navLink("/ward-performance", "Leaderboard")}
 
-                    {/* Public user: My Tickets */}
-                    {isPublicUser && navLink("/my-tickets", "My Tickets")}
+                            {/* Public user: My Tickets */}
+                            {isPublicUser && navLink("/my-tickets", "My Tickets")}
 
-                    {/* Officer links */}
-                    {isOfficer && (
-                        <>
-                            {navLink("/officer/dashboard", "Dashboard")}
-                            {navLink("/officer/reports", "Reports")}
-                        </>
-                    )}
-                </div>
+                            {/* Officer links */}
+                            {isOfficer && (
+                                <>
+                                    {navLink("/officer/dashboard", "Dashboard")}
+                                    {navLink("/officer/reports", "Reports")}
+                                </>
+                            )}
+                        </div>
 
-                {/* Auth */}
-                <div className="flex items-center gap-3">
-                    {user ? (
+                        {/* User Profile & Logout */}
                         <div className="flex items-center gap-3">
                             <div className="hidden sm:flex flex-col items-end">
                                 <span className="text-sm font-medium text-gray-900">{user.name}</span>
@@ -76,29 +76,30 @@ export default function NavBar() {
                                 Logout
                             </button>
                         </div>
-                    ) : (
-                        <div className="flex items-center gap-2">
-                            <Link
-                                href="/user-login"
-                                className="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors px-3 py-2"
-                            >
-                                Sign In
-                            </Link>
-                            <Link
-                                href="/signup"
-                                className="text-sm font-medium bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors shadow-sm"
-                            >
-                                Sign Up
-                            </Link>
-                            <Link
-                                href="/login"
-                                className="text-xs text-gray-400 hover:text-blue-500 transition-colors ml-1"
-                            >
-                                Officer
-                            </Link>
-                        </div>
-                    )}
-                </div>
+                    </>
+                ) : (
+                    <div className="flex items-center gap-3">
+                        <Link
+                            href="/user-login?mode=login"
+                            className="text-sm font-semibold text-gray-600 hover:text-blue-600 transition-colors px-3 py-2"
+                        >
+                            Sign In
+                        </Link>
+                        <Link
+                            href="/user-login?mode=signup"
+                            className="text-sm font-bold bg-blue-600/10 text-blue-700 px-4 py-2 rounded-xl hover:bg-blue-600/20 transition-all shadow-sm"
+                        >
+                            Sign Up
+                        </Link>
+                        <div className="w-px h-5 bg-gray-200 mx-1 hidden sm:block" />
+                        <Link
+                            href="/user-login?mode=officer"
+                            className="text-xs font-semibold text-gray-500 hover:text-gray-800 transition-colors px-3 py-2 bg-gray-100 rounded-lg"
+                        >
+                            Staff
+                        </Link>
+                    </div>
+                )}
             </div>
         </nav>
     );

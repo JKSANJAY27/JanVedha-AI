@@ -16,6 +16,7 @@ interface User {
 interface AuthContextType {
     user: User | null;
     token: string | null;
+    loading: boolean;
     login: (token: string, user: User) => void;
     logout: () => void;
     isOfficer: boolean;
@@ -29,6 +30,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType>({
     user: null,
     token: null,
+    loading: true,
     login: () => { },
     logout: () => { },
     isOfficer: false,
@@ -42,6 +44,7 @@ const AuthContext = createContext<AuthContextType>({
 export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [token, setToken] = useState<string | null>(null);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const savedToken = localStorage.getItem("access_token");
@@ -50,6 +53,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setToken(savedToken);
             setUser(JSON.parse(savedUser));
         }
+        setLoading(false);
     }, []);
 
     const login = (tok: string, usr: User) => {
@@ -76,7 +80,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return (
         <AuthContext.Provider value={{
-            user, token, login, logout,
+            user, token, loading, login, logout,
             isOfficer, isWardPGO, isDeptOfficer, isTechnician, isCouncillor, isAdmin,
         }}>
             {children}
