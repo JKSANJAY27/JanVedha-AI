@@ -35,11 +35,16 @@ async def get_calendar_events(
     current_user: UserMongo = Depends(get_current_user),
 ):
     """Return scheduled events filtered by dept/ward/month."""
+    from app.enums import UserRole
+
     query = {}
-    if dept_id:
-        query["dept_id"] = dept_id
-    if ward_id:
-        query["ward_id"] = ward_id
+    # Supervisors see all schedule events (since they route unassigned tickets too)
+    if current_user.role != UserRole.SUPERVISOR:
+        if dept_id:
+            query["dept_id"] = dept_id
+        if ward_id:
+            query["ward_id"] = ward_id
+            
     # Default to current year if not provided
     if month:
         now = datetime.utcnow()
@@ -51,7 +56,9 @@ async def get_calendar_events(
             end = datetime(yr, month + 1, 1)
         query["scheduled_date"] = {"$gte": start, "$lt": end}
 
+    print(f"DEBUG /events: Query -> {query}")
     events = await ScheduledEventMongo.find(query).sort("scheduled_date").to_list()
+    print(f"DEBUG /events: Found -> {len(events)} events")
 
     return [
         {
@@ -64,8 +71,10 @@ async def get_calendar_events(
             "time_slot": e.time_slot,
             "notes": e.notes,
             "is_ai_suggested": e.is_ai_suggested,
+            "event_type": e.event_type,
             "priority_label": e.priority_label,
             "issue_category": e.issue_category,
+            "ticket_description": e.ticket_description,
         }
         for e in events
     ]

@@ -80,6 +80,10 @@ class TicketMongo(Document):
     # SLA
     sla_deadline: Optional[datetime] = None
 
+    # Supervisor-confirmed completion deadline (≤ sla_deadline)
+    completion_deadline: Optional[datetime] = None
+    completion_deadline_confirmed_by: Optional[str] = None  # officer_id who confirmed
+
     # Social signal
     social_media_mentions: int = 0
 

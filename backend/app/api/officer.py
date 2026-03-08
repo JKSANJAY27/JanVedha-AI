@@ -31,15 +31,30 @@ async def get_tickets(
     - TECHNICIAN → tickets assigned specifically to them
     - COMMISSIONER / SUPER_ADMIN → all tickets
     """
-    if current_user.role in {UserRole.SUPERVISOR, UserRole.COUNCILLOR}:
-        tickets = await TicketMongo.find(
-            TicketMongo.ward_id == current_user.ward_id
-        ).sort(-TicketMongo.priority_score).limit(limit).to_list()
+    if current_user.role == UserRole.SUPERVISOR:
+        # Supervisors see ALL tickets — they are the routing authority
+        tickets = await TicketMongo.find_all().sort(
+            -TicketMongo.priority_score
+        ).limit(limit).to_list()
+
+    elif current_user.role == UserRole.COUNCILLOR:
+        # Councillors are scoped to their ward
+        if current_user.ward_id is not None:
+            tickets = await TicketMongo.find(
+                TicketMongo.ward_id == current_user.ward_id
+            ).sort(-TicketMongo.priority_score).limit(limit).to_list()
+        else:
+            tickets = await TicketMongo.find_all().sort(
+                -TicketMongo.priority_score
+            ).limit(limit).to_list()
 
     elif current_user.role == UserRole.JUNIOR_ENGINEER:
+        # JE sees tickets for their dept (ward filter is optional)
+        query_filters = [TicketMongo.dept_id == current_user.dept_id]
+        if current_user.ward_id is not None:
+            query_filters.append(TicketMongo.ward_id == current_user.ward_id)
         tickets = await TicketMongo.find(
-            TicketMongo.dept_id == current_user.dept_id,
-            TicketMongo.ward_id == current_user.ward_id,
+            *query_filters
         ).sort(-TicketMongo.priority_score).limit(limit).to_list()
 
     elif current_user.role == UserRole.FIELD_STAFF:
@@ -48,7 +63,7 @@ async def get_tickets(
         ).sort(-TicketMongo.priority_score).limit(limit).to_list()
 
     else:
-        # Commissioner / Super Admin
+        # Commissioner / Super Admin — all tickets
         tickets = await TicketMongo.find_all().sort(
             -TicketMongo.priority_score
         ).limit(limit).to_list()
@@ -83,15 +98,21 @@ async def get_dashboard_summary(
     """
     from datetime import datetime
 
-    if current_user.role in {UserRole.SUPERVISOR, UserRole.COUNCILLOR}:
-        all_tickets = await TicketMongo.find(
-            TicketMongo.ward_id == current_user.ward_id
-        ).to_list()
+    if current_user.role == UserRole.SUPERVISOR:
+        # Supervisors see all tickets for the full operational picture
+        all_tickets = await TicketMongo.find_all().to_list()
+    elif current_user.role == UserRole.COUNCILLOR:
+        if current_user.ward_id is not None:
+            all_tickets = await TicketMongo.find(
+                TicketMongo.ward_id == current_user.ward_id
+            ).to_list()
+        else:
+            all_tickets = await TicketMongo.find_all().to_list()
     elif current_user.role == UserRole.JUNIOR_ENGINEER:
-        all_tickets = await TicketMongo.find(
-            TicketMongo.dept_id == current_user.dept_id,
-            TicketMongo.ward_id == current_user.ward_id,
-        ).to_list()
+        query_filters = [TicketMongo.dept_id == current_user.dept_id]
+        if current_user.ward_id is not None:
+            query_filters.append(TicketMongo.ward_id == current_user.ward_id)
+        all_tickets = await TicketMongo.find(*query_filters).to_list()
     else:
         all_tickets = await TicketMongo.find_all().to_list()
 
@@ -167,6 +188,8 @@ async def get_ticket(
         "technician_id": ticket.technician_id,
         "scheduled_date": ticket.scheduled_date,
         "ai_suggested_date": ticket.ai_suggested_date,
+        "completion_deadline": ticket.completion_deadline,
+        "completion_deadline_confirmed_by": ticket.completion_deadline_confirmed_by,
         "status_timeline": ticket.status_timeline,
         "remarks": ticket.remarks,
         "photo_url": ticket.photo_url,
@@ -450,6 +473,104 @@ async def schedule_ticket(
     })
     await ticket.save()
     return {"id": str(ticket.id), "scheduled_date": ticket.scheduled_date}
+
+
+# ─── Completion Deadline ───────────────────────────────────────────────────────
+
+class CompletionDeadlineRequest(BaseModel):
+    completion_deadline: datetime
+    use_ai_suggestion: bool = False
+
+
+@router.patch("/tickets/{ticket_id}/set-completion-deadline")
+async def set_completion_deadline(
+    ticket_id: str,
+    data: CompletionDeadlineRequest,
+    current_user: UserMongo = Depends(require_ward_officer),
+):
+    """
+    Supervisor sets a completion deadline for a ticket.
+    - Must not breach the SLA deadline.
+    - Creates a calendar reminder event of type 'deadline'.
+    - Stores on ticket as completion_deadline.
+    """
+    from beanie import PydanticObjectId
+    from app.mongodb.models.scheduled_event import ScheduledEventMongo
+
+    ticket = await TicketMongo.get(PydanticObjectId(ticket_id))
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+
+    # Normalize incoming datetime to naive UTC
+    requested_deadline = data.completion_deadline.replace(tzinfo=None)
+    now_utc = datetime.utcnow()
+
+    # ── SLA Guard ─────────────────────────────────────────────────────────────
+    if ticket.sla_deadline and requested_deadline > ticket.sla_deadline:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "message": "Completion deadline would breach SLA",
+                "sla_deadline": ticket.sla_deadline.isoformat(),
+                "requested": requested_deadline.isoformat(),
+            },
+        )
+
+    if requested_deadline < now_utc:
+        raise HTTPException(
+            status_code=400, detail="Completion deadline cannot be in the past"
+        )
+
+    # ── Save deadline on ticket ───────────────────────────────────────────────
+    ticket.completion_deadline = requested_deadline
+    ticket.completion_deadline_confirmed_by = str(current_user.id)
+    ticket.status_timeline.append({
+        "status": ticket.status,
+        "timestamp": now_utc.isoformat(),
+        "actor_role": current_user.role,
+        "note": (
+            f"⏰ Completion deadline set to {requested_deadline.strftime('%d %b %Y')} "
+            f"by {current_user.name}"
+            + (" (AI suggestion accepted)" if data.use_ai_suggestion else " (manual override)")
+        ),
+    })
+    await ticket.save()
+
+    # ── Create / update calendar reminder event ───────────────────────────────
+    # Remove any existing deadline event for this ticket
+    await ScheduledEventMongo.find(
+        ScheduledEventMongo.ticket_id == ticket_id,
+        ScheduledEventMongo.event_type == "deadline",
+    ).delete()
+
+    event_obj = ScheduledEventMongo(
+        dept_id=ticket.dept_id,
+        ward_id=ticket.ward_id,
+        ticket_id=ticket_id,
+        ticket_code=ticket.ticket_code,
+        scheduled_date=requested_deadline,
+        is_ai_suggested=data.use_ai_suggestion,
+        event_type="deadline",
+        officer_id=str(current_user.id),
+        priority_label=ticket.priority_label,
+        issue_category=ticket.issue_category,
+        ticket_description=ticket.description[:120] if ticket.description else None,
+        notes=(
+            f"⏰ Completion deadline reminder for ticket {ticket.ticket_code}. "
+            f"SLA: {ticket.sla_deadline.strftime('%d %b %Y') if ticket.sla_deadline else 'N/A'}."
+        ),
+    )
+    await event_obj.insert()
+
+    return {
+        "id": str(ticket.id),
+        "ticket_code": ticket.ticket_code,
+        "completion_deadline": ticket.completion_deadline,
+        "sla_deadline": ticket.sla_deadline,
+        "calendar_event_id": str(event_obj.id),
+        "is_ai_suggestion": data.use_ai_suggestion,
+    }
+
 
 
 class OverridePriorityEvent(BaseModel):

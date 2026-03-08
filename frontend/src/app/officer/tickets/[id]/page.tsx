@@ -32,6 +32,8 @@ interface TicketDetail {
     assigned_officer_id?: string;
     technician_id?: string;
     scheduled_date?: string;
+    ai_suggested_date?: string;
+    completion_deadline?: string;
     after_photo_url?: string;
     is_validated?: boolean;
 }
@@ -68,6 +70,11 @@ export default function TicketDetailPage() {
     const [proofUrl, setProofUrl] = useState("");
     const [uploadingProof, setUploadingProof] = useState(false);
     const [showProofUpload, setShowProofUpload] = useState(false);
+
+    // Completion deadline workflow
+    const [deadlineDate, setDeadlineDate] = useState("");
+    const [settingDeadline, setSettingDeadline] = useState(false);
+    const [showDeadlinePicker, setShowDeadlinePicker] = useState(false);
 
     useEffect(() => {
         if (!isOfficer) { router.push("/login"); return; }
@@ -196,6 +203,40 @@ export default function TicketDetailPage() {
             toast.error("Override failed");
         } finally {
             setUpdating(false);
+        }
+    };
+
+    const handleSetDeadline = async (useAiSuggestion: boolean) => {
+        if (!ticket) return;
+        const dateToUse = useAiSuggestion
+            ? ticket.ai_suggested_date
+            : deadlineDate;
+        if (!dateToUse) { toast.error("No date selected"); return; }
+
+        // Client-side SLA guard
+        if (ticket.sla_deadline && new Date(dateToUse) > new Date(ticket.sla_deadline)) {
+            toast.error(`Deadline cannot breach SLA (${new Date(ticket.sla_deadline).toLocaleDateString("en-IN")})`);
+            return;
+        }
+
+        setSettingDeadline(true);
+        try {
+            const isoDate = new Date(dateToUse).toISOString();
+            await officerApi.setCompletionDeadline(ticket.id, isoDate, useAiSuggestion);
+            setTicket(prev => prev ? { ...prev, completion_deadline: isoDate } : prev);
+            setShowDeadlinePicker(false);
+            setDeadlineDate("");
+            toast.success(`⏰ Completion deadline set to ${new Date(dateToUse).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}. Calendar reminder added!`);
+        } catch (err: unknown) {
+            const e = err as { response?: { data?: { detail?: { message?: string } | string } } };
+            const detail = e?.response?.data?.detail;
+            if (typeof detail === "object" && detail?.message) {
+                toast.error(`SLA breach: ${detail.message}`);
+            } else {
+                toast.error("Failed to set deadline");
+            }
+        } finally {
+            setSettingDeadline(false);
         }
     };
 
@@ -466,6 +507,85 @@ export default function TicketDetailPage() {
                                         </button>
                                     </div>
                                 )}
+
+                                {/* ─── COMPLETION DEADLINE CARD ─────────────────── */}
+                                <div className="bg-white border border-pink-200 rounded-2xl shadow-sm p-5">
+                                    <h3 className="font-bold text-gray-900 mb-1 flex items-center gap-2">
+                                        ⏰ Completion Deadline
+                                    </h3>
+                                    <p className="text-xs text-gray-400 mb-4">Set a deadline before which the work must be completed. Must not breach the SLA.</p>
+
+                                    {/* Already confirmed */}
+                                    {ticket.completion_deadline && (
+                                        <div className="bg-pink-50 border border-pink-200 rounded-xl p-3 mb-4">
+                                            <p className="text-xs text-pink-500 font-semibold mb-0.5">✅ Deadline Confirmed</p>
+                                            <p className="text-sm font-bold text-pink-700">
+                                                {new Date(ticket.completion_deadline).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}
+                                            </p>
+                                            <p className="text-xs text-pink-400 mt-1">🔔 A calendar reminder has been added</p>
+                                        </div>
+                                    )}
+
+                                    {/* AI Suggestion */}
+                                    {ticket.ai_suggested_date && (
+                                        <div className="bg-purple-50 border border-purple-200 rounded-xl p-3 mb-3">
+                                            <p className="text-xs text-purple-600 font-semibold mb-1">✨ AI Suggested Date</p>
+                                            <p className="text-sm font-bold text-purple-800">
+                                                {new Date(ticket.ai_suggested_date).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}
+                                            </p>
+                                            {ticket.sla_deadline && (
+                                                <p className="text-xs text-purple-400 mt-1">
+                                                    SLA: {new Date(ticket.sla_deadline).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                                                </p>
+                                            )}
+                                            <button
+                                                onClick={() => handleSetDeadline(true)}
+                                                disabled={settingDeadline}
+                                                className="mt-2 w-full bg-purple-600 hover:bg-purple-700 text-white rounded-lg py-2 text-xs font-semibold transition-colors disabled:opacity-50"
+                                            >
+                                                {settingDeadline ? "Saving…" : "✅ Accept AI Suggestion"}
+                                            </button>
+                                        </div>
+                                    )}
+
+                                    {/* Manual Override */}
+                                    {!showDeadlinePicker ? (
+                                        <button
+                                            onClick={() => setShowDeadlinePicker(true)}
+                                            className="w-full border border-pink-300 text-pink-700 rounded-xl py-2 text-xs font-semibold hover:bg-pink-50 transition-colors"
+                                        >
+                                            📅 {ticket.completion_deadline ? "Change Deadline" : "Set Manual Deadline"}
+                                        </button>
+                                    ) : (
+                                        <motion.div
+                                            initial={{ opacity: 0, height: 0 }}
+                                            animate={{ opacity: 1, height: "auto" }}
+                                            className="space-y-2"
+                                        >
+                                            <p className="text-xs text-gray-600 font-medium">Pick a date (before SLA deadline):</p>
+                                            <input
+                                                type="date"
+                                                value={deadlineDate}
+                                                onChange={e => setDeadlineDate(e.target.value)}
+                                                min={new Date().toISOString().split("T")[0]}
+                                                max={ticket.sla_deadline ? new Date(ticket.sla_deadline).toISOString().split("T")[0] : undefined}
+                                                className="w-full border border-pink-200 bg-pink-50 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-400"
+                                            />
+                                            <div className="flex gap-2">
+                                                <button
+                                                    onClick={() => handleSetDeadline(false)}
+                                                    disabled={settingDeadline || !deadlineDate}
+                                                    className="flex-1 bg-pink-600 hover:bg-pink-700 text-white rounded-xl py-2 text-xs font-semibold transition-colors disabled:opacity-50"
+                                                >
+                                                    {settingDeadline ? "Saving…" : "Confirm Deadline"}
+                                                </button>
+                                                <button onClick={() => { setShowDeadlinePicker(false); setDeadlineDate(""); }} className="text-xs text-gray-500 px-3">
+                                                    Cancel
+                                                </button>
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </div>
 
                                 {/* Assignment Block */}
                                 {ticket.status === "OPEN" && ticket.is_validated && (

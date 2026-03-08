@@ -142,18 +142,43 @@ export default function OfficerCalendarPage() {
                             <div className="flex items-start justify-between mb-3">
                                 <div>
                                     <span className="font-mono font-bold text-indigo-700 text-sm">{selectedEvent.ticket_code}</span>
-                                    {selectedEvent.is_ai_suggested && (
+                                    {selectedEvent.event_type === "deadline" && (
+                                        <span className="ml-2 text-xs bg-pink-100 text-pink-700 px-2 py-0.5 rounded-full font-semibold">🔔 Deadline Reminder</span>
+                                    )}
+                                    {selectedEvent.event_type !== "deadline" && selectedEvent.is_ai_suggested && (
                                         <span className="ml-2 text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">✨ AI Suggested</span>
                                     )}
                                 </div>
                                 <button onClick={() => setSelectedEvent(null)} className="text-gray-400 hover:text-gray-600 text-lg leading-none">✕</button>
                             </div>
-                            <p className="text-sm text-gray-700 font-medium">{selectedEvent.issue_category ?? "General Issue"}</p>
-                            <p className="text-xs text-gray-500 mt-1">Dept: {DEPT_NAMES[selectedEvent.dept_id] ?? selectedEvent.dept_id}</p>
-                            <p className="text-xs text-gray-500">Scheduled: {new Date(selectedEvent.scheduled_date).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}</p>
-                            {selectedEvent.time_slot && <p className="text-xs text-gray-500">Time: {selectedEvent.time_slot}</p>}
-                            <span className={`mt-2 inline-block text-xs font-bold px-2 py-0.5 rounded-full ${PRIORITY_BADGE[selectedEvent.priority_label ?? "LOW"]}`}>
-                                {selectedEvent.priority_label}
+
+                            {selectedEvent.event_type === "deadline" ? (
+                                <>
+                                    <p className="text-sm font-semibold text-pink-700 mb-1">⏰ Work must be completed by:</p>
+                                    <p className="text-base font-bold text-gray-800 mb-2">
+                                        {new Date(selectedEvent.scheduled_date).toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+                                    </p>
+                                    {selectedEvent.ticket_description && (
+                                        <p className="text-xs text-gray-500 italic mb-2 line-clamp-2">{selectedEvent.ticket_description}</p>
+                                    )}
+                                    {selectedEvent.notes && (
+                                        <p className="text-xs text-gray-400 border-t pt-2 mt-2">{selectedEvent.notes}</p>
+                                    )}
+                                </>
+                            ) : (
+                                <>
+                                    <p className="text-sm text-gray-700 font-medium">{selectedEvent.issue_category ?? "General Issue"}</p>
+                                    <p className="text-xs text-gray-500 mt-1">Dept: {DEPT_NAMES[selectedEvent.dept_id] ?? selectedEvent.dept_id}</p>
+                                    <p className="text-xs text-gray-500">Scheduled: {new Date(selectedEvent.scheduled_date).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}</p>
+                                    {selectedEvent.time_slot && <p className="text-xs text-gray-500">Time: {selectedEvent.time_slot}</p>}
+                                </>
+                            )}
+
+                            <span className={`mt-3 inline-block text-xs font-bold px-2 py-0.5 rounded-full ${selectedEvent.event_type === "deadline"
+                                    ? "bg-pink-100 text-pink-700 border border-pink-200"
+                                    : PRIORITY_BADGE[selectedEvent.priority_label ?? "LOW"]
+                                }`}>
+                                {selectedEvent.event_type === "deadline" ? "🔔 Deadline" : selectedEvent.priority_label}
                             </span>
                         </div>
                     )}

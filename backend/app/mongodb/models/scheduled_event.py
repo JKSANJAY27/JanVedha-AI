@@ -24,8 +24,10 @@ class ScheduledEventMongo(Document):
     officer_id: Optional[str] = None                 # Who scheduled it
     notes: Optional[str] = None
     is_ai_suggested: bool = False                    # True if suggested by AI
+    event_type: str = "schedule"                     # "schedule" | "deadline"
     priority_label: Optional[str] = None             # Mirror from ticket for quick display
     issue_category: Optional[str] = None             # Mirror from ticket
+    ticket_description: Optional[str] = None         # Short description for reminders
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
     class Settings:

@@ -43,7 +43,19 @@ async def get_current_user(
 
 
 async def require_ward_officer(user: UserMongo = Depends(get_current_user)) -> UserMongo:
-    allowed = {"WARD_OFFICER", "ZONAL_OFFICER", "DEPT_HEAD", "COMMISSIONER", "SUPER_ADMIN"}
+    allowed = {
+        # Current roles in use
+        "SUPERVISOR",
+        "JUNIOR_ENGINEER",
+        "FIELD_STAFF",
+        "COUNCILLOR",
+        # Legacy / admin roles
+        "WARD_OFFICER",
+        "ZONAL_OFFICER",
+        "DEPT_HEAD",
+        "COMMISSIONER",
+        "SUPER_ADMIN",
+    }
     if user.role not in allowed:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="INSUFFICIENT_ROLE")
     return user

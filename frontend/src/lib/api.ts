@@ -102,6 +102,11 @@ export const officerApi = {
       priority_score: score,
       reason,
     }),
+  setCompletionDeadline: (id: string, completionDeadline: string, useAiSuggestion: boolean) =>
+    api.patch(`/api/officer/tickets/${id}/set-completion-deadline`, {
+      completion_deadline: completionDeadline,
+      use_ai_suggestion: useAiSuggestion,
+    }),
 };
 
 export const calendarApi = {

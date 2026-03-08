@@ -12,6 +12,9 @@ export interface CalendarEvent {
     issue_category?: string;
     is_ai_suggested?: boolean;
     time_slot?: string;
+    event_type?: string;          // "schedule" | "deadline"
+    ticket_description?: string;
+    notes?: string;
 }
 
 interface Props {
@@ -28,6 +31,8 @@ const PRIORITY_CHIP: Record<string, string> = {
     MEDIUM: "bg-yellow-400 text-gray-900",
     LOW: "bg-green-400 text-white",
 };
+
+const DEADLINE_CHIP = "bg-pink-500 text-white";
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MONTHS = [
@@ -118,11 +123,12 @@ export default function CalendarWidget({ events, onDateClick, onEventClick, mont
                                         key={ev.id}
                                         onClick={e => { e.stopPropagation(); onEventClick?.(ev); }}
                                         className={`w-full text-left text-[10px] font-medium px-1 py-0.5 rounded truncate
-                                            ${PRIORITY_CHIP[ev.priority_label ?? "LOW"]}
+                                            ${ev.event_type === "deadline" ? DEADLINE_CHIP : PRIORITY_CHIP[ev.priority_label ?? "LOW"]}
                                             ${ev.is_ai_suggested ? "ring-1 ring-purple-400 ring-offset-0" : ""}`}
-                                        title={`${ev.ticket_code} — ${ev.issue_category ?? "Issue"}${ev.is_ai_suggested ? " (AI)" : ""}`}
+                                        title={`${ev.event_type === "deadline" ? "⏰ Deadline: " : ""
+                                            }${ev.ticket_code} — ${ev.issue_category ?? "Issue"}${ev.is_ai_suggested ? " (AI)" : ""}`}
                                     >
-                                        {ev.is_ai_suggested && "✨ "}{ev.ticket_code}
+                                        {ev.event_type === "deadline" ? "🔔 " : ev.is_ai_suggested ? "✨ " : ""}{ev.ticket_code}
                                     </button>
                                 ))}
                                 {dayEvents.length > 3 && (
@@ -141,6 +147,9 @@ export default function CalendarWidget({ events, onDateClick, onEventClick, mont
                         {label}
                     </span>
                 ))}
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${DEADLINE_CHIP}`}>
+                    🔔 DEADLINE
+                </span>
                 <span className="text-[10px] text-gray-500 flex items-center gap-1">
                     <span className="ring-1 ring-purple-400 rounded px-1 bg-green-400 text-white font-bold">✨ AI</span>
                     AI Suggested
