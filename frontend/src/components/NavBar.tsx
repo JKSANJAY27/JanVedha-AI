@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { authApi } from "@/lib/api";
+import { USER_ROLES } from "@/lib/constants";
 
 export default function NavBar() {
     const { user, isOfficer, logout } = useAuth();
@@ -43,19 +44,29 @@ export default function NavBar() {
                     <>
                         {/* Public nav */}
                         <div className="flex items-center gap-6">
-                            {navLink("/", "Submit")}
-                            {navLink("/track", "Track")}
-                            {navLink("/map", "Issue Map")}
+                            {!isOfficer && (
+                                <>
+                                    {navLink("/", "Submit")}
+                                    {navLink("/track", "Track")}
+                                </>
+                            )}
+                            {navLink("/map", "Issue Heatmap")}
                             {navLink("/ward-performance", "Leaderboard")}
 
                             {/* Public user: My Tickets */}
                             {isPublicUser && navLink("/my-tickets", "My Tickets")}
 
                             {/* Officer links */}
-                            {isOfficer && (
+                            {isOfficer && user.role !== "SUPER_ADMIN" && (
                                 <>
                                     {navLink("/officer/dashboard", "Dashboard")}
                                     {navLink("/officer/reports", "Reports")}
+                                </>
+                            )}
+                            {user.role === "SUPER_ADMIN" && (
+                                <>
+                                    {navLink("/officer/reports", "Reports")}
+                                    {navLink("/map", "Full System Map")}
                                 </>
                             )}
                         </div>
@@ -64,7 +75,7 @@ export default function NavBar() {
                         <div className="flex items-center gap-3">
                             <div className="hidden sm:flex flex-col items-end">
                                 <span className="text-sm font-medium text-gray-900">{user.name}</span>
-                                <span className="text-xs text-gray-400">{user.role.replace(/_/g, " ")}</span>
+                                <span className="text-xs text-gray-400">{USER_ROLES[user.role] ?? user.role.replace(/_/g, " ")}</span>
                             </div>
                             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-sm">
                                 {user.name[0]?.toUpperCase()}
@@ -101,7 +112,7 @@ export default function NavBar() {
                     </div>
                 )}
             </div>
-        </nav>
+        </nav >
     );
 }
 

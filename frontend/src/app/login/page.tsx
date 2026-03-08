@@ -24,7 +24,7 @@ const ROLE_REDIRECTS: Record<string, string> = {
     SUPERVISOR: "/officer/dashboard",
     JUNIOR_ENGINEER: "/officer/dashboard",
     FIELD_STAFF: "/officer/dashboard",
-    SUPER_ADMIN: "/officer/dashboard",
+    SUPER_ADMIN: "/",
     PUBLIC_USER: "/",
 };
 
@@ -124,7 +124,7 @@ export default function LoginPage() {
                     <div className="mt-5 bg-blue-500/10 border border-blue-400/20 rounded-xl p-4">
                         <p className="text-xs text-blue-200 font-medium mb-2">Supported Roles</p>
                         <div className="flex flex-wrap gap-1.5">
-                            {["Supervisor", "Junior Engineer", "Field Staff", "Councillor"].map((r) => (
+                            {["Supervisor", "Junior Engineer", "Councillor"].map((r) => (
                                 <span key={r} className="text-xs bg-white/10 text-blue-100 rounded-full px-2.5 py-0.5">
                                     {r}
                                 </span>

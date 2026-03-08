@@ -66,6 +66,7 @@ function LoginContent() {
 
     const [activeTab, setActiveTab] = useState<'login' | 'signup' | 'officer'>(initialTab);
     const [loading, setLoading] = useState(false);
+    const [isMapLoading, setIsMapLoading] = useState(true);
 
     const [issues, setIssues] = useState<MapIssue[]>([]);
     const [topIssues, setTopIssues] = useState<MapIssue[]>([]);
@@ -81,6 +82,7 @@ function LoginContent() {
     }, [modeParam]);
 
     useEffect(() => {
+        setIsMapLoading(true);
         publicApi.getHeatmap().then((res) => {
             const items: any[] = res.data?.data || res.data || [];
             const normalized = items.map((item: any) => ({
@@ -94,7 +96,11 @@ function LoginContent() {
                 .sort((a, b) => b.priority_score - a.priority_score)
                 .slice(0, 5);
             setTopIssues(top5);
-        }).catch(console.error);
+        }).catch((err) => {
+            console.error("Failed to fetch heatmap data:", err);
+        }).finally(() => {
+            setIsMapLoading(false);
+        });
     }, []);
 
     useEffect(() => {
@@ -146,11 +152,14 @@ function LoginContent() {
         <div className="relative w-full h-[calc(100vh-64px)] overflow-hidden bg-slate-900">
             {/* BACKGROUND MAP */}
             <div className="absolute inset-0 z-0 opacity-80 mix-blend-luminosity hover:mix-blend-normal transition-all duration-1000">
-                {issues.length > 0 ? (
+                {!isMapLoading ? (
                     <MapComponent issues={issues} onIssueClick={() => { }} />
                 ) : (
                     <div className="h-full w-full flex items-center justify-center text-slate-400">
-                        Loading map...
+                        <div className="flex flex-col items-center gap-3">
+                            <span className="w-8 h-8 border-4 border-slate-700 border-t-emerald-500 rounded-full animate-spin" />
+                            <p className="text-sm font-medium">Loading Live Intel Map...</p>
+                        </div>
                     </div>
                 )}
             </div>

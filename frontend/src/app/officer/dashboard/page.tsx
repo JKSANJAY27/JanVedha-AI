@@ -335,166 +335,27 @@ function JuniorEngineerDashboard({ user }: { user: { name: string; dept_id?: str
     );
 }
 
-// ─── Technician Task Board ────────────────────────────────────────────────────
 
-function TechnicianDashboard() {
-    const router = useRouter();
-    const [tickets, setTickets] = useState<Ticket[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [proofUploads, setProofUploads] = useState<Record<string, string>>({});
-    const [updatingParams, setUpdatingParams] = useState<Record<string, boolean>>({});
-
-    useEffect(() => {
-        officerApi.getMyTickets()
-            .then(res => setTickets(res.data))
-            .catch(() => toast.error("Failed to load your tasks"))
-            .finally(() => setLoading(false));
-    }, []);
-
-    const handleStatusUpdate = (id: string, status: string, additional?: Partial<Ticket>) => {
-        setTickets(prev => prev.map(t => t.id === id ? { ...t, status, ...additional } : t));
-    };
-
-    const stats = {
-        total: tickets.length,
-        inProgress: tickets.filter(t => t.status === "IN_PROGRESS").length,
-        pending: tickets.filter(t => ["OPEN", "ASSIGNED", "SCHEDULED"].includes(t.status)).length,
-        done: tickets.filter(t => ["PENDING_VERIFICATION", "CLOSED"].includes(t.status)).length,
-    };
-
-    const STATUS_FLOW: Record<string, { next: string; label: string; cls: string }> = {
-        ASSIGNED: { next: "IN_PROGRESS", label: "▶ Start Work", cls: "bg-blue-600 hover:bg-blue-700 text-white" },
-        SCHEDULED: { next: "IN_PROGRESS", label: "▶ Start Work", cls: "bg-blue-600 hover:bg-blue-700 text-white" },
-        IN_PROGRESS: { next: "AWAITING_MATERIAL", label: "📦 Need Material", cls: "bg-yellow-500 hover:bg-yellow-600 text-white" },
-        AWAITING_MATERIAL: { next: "IN_PROGRESS", label: "✅ Got Material", cls: "bg-emerald-500 hover:bg-emerald-600 text-white" },
-    };
-
-    if (loading) return <div className="flex justify-center py-20"><div className="w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin" /></div>;
-
-    return (
-        <div className="space-y-6">
-            {/* Map Section for Mobile/Field view */}
-            {tickets.length > 0 && (
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden h-[300px]">
-                    <IssueMap
-                        issues={tickets.filter(t => !["PENDING_VERIFICATION", "CLOSED", "REJECTED"].includes(t.status)) as any}
-                        onIssueClick={(issue) => router.push(`/officer/tickets/${issue.id}`)}
-                    />
-                </div>
-            )}
-
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <StatCard label="My Tasks" value={stats.total} icon="📋" color="blue" />
-                <StatCard label="Pending" value={stats.pending} icon="⏳" color="orange" />
-                <StatCard label="In Progress" value={stats.inProgress} icon="🔧" color="purple" />
-                <StatCard label="Completed" value={stats.done} icon="✅" color="green" />
-            </div>
-
-            {tickets.length === 0 ? (
-                <div className="text-center py-20 bg-white rounded-2xl border border-gray-100 text-gray-400">
-                    <p className="text-5xl mb-3">🎉</p>
-                    <p className="text-lg font-medium text-gray-800">No tasks assigned yet!</p>
-                    <p className="text-sm mt-1">Check back later for new dispatches.</p>
-                </div>
-            ) : (
-                <div className="space-y-4">
-                    {tickets.map((ticket, i) => {
-                        const nextAction = STATUS_FLOW[ticket.status];
-                        const isCompleting = ticket.status === "IN_PROGRESS";
-                        const proofUrl = proofUploads[ticket.id] || "";
-                        const isUpdating = updatingParams[ticket.id] || false;
-
-                        return (
-                            <motion.div key={ticket.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
-                                className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 w-full">
-                                <div className="flex flex-col sm:flex-row gap-4">
-                                    <div className="flex-1">
-                                        <div className="flex items-center gap-2 flex-wrap mb-2">
-                                            <span className="font-mono font-bold text-blue-700">{ticket.ticket_code}</span>
-                                            <StatusBadge status={ticket.status} size="sm" />
-                                            <PriorityBadge label={ticket.priority_label} score={ticket.priority_score} size="sm" />
-                                        </div>
-                                        <p className="text-sm font-medium text-gray-900 mb-1">{ticket.issue_category ?? "General Issue"}</p>
-                                        <div className="flex gap-x-3 gap-y-1 mt-2 text-xs text-gray-500 flex-wrap">
-                                            <span className="flex items-center gap-1">📍 Ward {ticket.ward_id}</span>
-                                            {ticket.scheduled_date && (
-                                                <span className="flex items-center gap-1 text-purple-600 font-medium bg-purple-50 px-2 py-0.5 rounded-md">
-                                                    📅 {new Date(ticket.scheduled_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    {/* Action Buttons Column */}
-                                    {["PENDING_VERIFICATION", "CLOSED", "REJECTED"].includes(ticket.status) ? (
-                                        <div className="sm:self-center">
-                                            <Link href={`/officer/tickets/${ticket.id}`} className="block text-center text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-xl px-6 py-2 transition-colors">
-                                                View Review →
-                                            </Link>
-                                        </div>
-                                    ) : (
-                                        <div className="flex flex-col gap-2 min-w-[200px] bg-gray-50 rounded-xl p-3">
-                                            {nextAction && (
-                                                <button
-                                                    disabled={isUpdating}
-                                                    onClick={async () => {
-                                                        setUpdatingParams(p => ({ ...p, [ticket.id]: true }));
-                                                        try {
-                                                            await officerApi.updateStatus(ticket.id, nextAction.next);
-                                                            handleStatusUpdate(ticket.id, nextAction.next);
-                                                            toast.success(`Marked as ${nextAction.next.replace(/_/g, " ")}`);
-                                                        } catch { toast.error("Update failed"); }
-                                                        finally { setUpdatingParams(p => ({ ...p, [ticket.id]: false })); }
-                                                    }}
-                                                    className={`w-full text-xs font-semibold px-4 py-2.5 rounded-xl transition-colors disabled:opacity-50 ${nextAction.cls}`}>
-                                                    {isUpdating ? "..." : nextAction.label}
-                                                </button>
-                                            )}
-
-                                            {isCompleting && (
-                                                <div className="mt-2 pt-2 border-t border-gray-200">
-                                                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 px-1">Proof of Work</p>
-                                                    <input
-                                                        type="url"
-                                                        placeholder="Photo URL (required)"
-                                                        value={proofUrl}
-                                                        onChange={(e) => setProofUploads(p => ({ ...p, [ticket.id]: e.target.value }))}
-                                                        className="w-full text-xs border border-gray-300 rounded-lg px-2 py-2 mb-2 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                                                    />
-                                                    <button
-                                                        disabled={isUpdating || !proofUrl.trim()}
-                                                        onClick={async () => {
-                                                            setUpdatingParams(p => ({ ...p, [ticket.id]: true }));
-                                                            try {
-                                                                await officerApi.uploadProof(ticket.id, proofUrl);
-                                                                toast.success("Proof uploaded");
-                                                                await officerApi.updateStatus(ticket.id, "PENDING_VERIFICATION");
-                                                                handleStatusUpdate(ticket.id, "PENDING_VERIFICATION", { after_photo_url: proofUrl });
-                                                                toast.success("Job marked complete!");
-                                                            } catch { toast.error("Completion failed"); }
-                                                            finally { setUpdatingParams(p => ({ ...p, [ticket.id]: false })); }
-                                                        }}
-                                                        className="w-full text-xs font-semibold px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white transition-colors disabled:opacity-50">
-                                                        {isUpdating ? "Submitting..." : "✓ Submit & Complete"}
-                                                    </button>
-                                                </div>
-                                            )}
-                                        </div>
-                                    )}
-                                </div>
-                            </motion.div>
-                        );
-                    })}
-                </div>
-            )}
-        </div>
-    );
-}
 
 // ─── Main Dashboard Controller ────────────────────────────────────────────────
 
-export default function OfficerDashboard() {
-    const { user, isOfficer, isSupervisor, isJuniorEngineer, isFieldStaff, isCouncillor, isAdmin } = useAuth();
+interface OfficerDashboardProps {
+    userOverride?: any;
+    forcedRole?: string;
+}
+
+export default function OfficerDashboard({ userOverride, forcedRole }: OfficerDashboardProps = {}) {
+    const auth = useAuth();
+    const user = userOverride || auth.user;
+    const role = forcedRole || user?.role;
+
+    const isOfficer = !!user && role !== "PUBLIC_USER";
+    const isSupervisor = role === "SUPERVISOR";
+    const isJuniorEngineer = role === "JUNIOR_ENGINEER";
+    const isFieldStaff = role === "FIELD_STAFF";
+    const isCouncillor = role === "COUNCILLOR";
+    const isAdmin = role === "SUPER_ADMIN";
+
     const router = useRouter();
 
     useEffect(() => {
@@ -504,24 +365,25 @@ export default function OfficerDashboard() {
     if (!user) return null;
 
     const getHeaderColor = () => {
-        if (isSupervisor || isAdmin) return "from-blue-800 to-indigo-900";
+        if (isSupervisor) return "from-blue-800 to-indigo-900";
         if (isCouncillor) return "from-emerald-700 to-teal-800";
         if (isJuniorEngineer) return "from-teal-700 to-cyan-800";
-        if (isFieldStaff) return "from-slate-700 to-gray-800";
-        return "from-blue-800 to-indigo-900";
+        return "from-slate-700 to-gray-800";
     };
 
     const getTitle = () => {
-        if (isSupervisor) return "Ward Supervisor Dashboard";
-        if (isJuniorEngineer) return "Junior Engineer Dashboard";
-        if (isFieldStaff) return "Field Staff Task Board";
+        if (isSupervisor) return "Ward Operations Dashboard";
+        if (isJuniorEngineer) {
+            const deptName = user.dept_id ? (DEPT_NAMES[user.dept_id] || user.dept_id) : "Department";
+            return `${deptName} Engineering Dashboard`;
+        }
         if (isCouncillor) return "Ward Councillor Dashboard";
-        return `${user.role?.replace(/_/g, " ")} Dashboard`;
+        return "Restricted Access";
     };
 
     const navLinks = () => (
         <div className="flex gap-3 flex-wrap">
-            {(isSupervisor || isJuniorEngineer || isAdmin) && (
+            {(isSupervisor || isJuniorEngineer) && (
                 <Link href="/officer/calendar"
                     className="text-sm bg-white/10 border border-white/20 text-white px-4 py-2 rounded-lg hover:bg-white/20 transition-colors">
                     📅 Calendar
@@ -533,20 +395,28 @@ export default function OfficerDashboard() {
                     🏛️ Ward Insights
                 </Link>
             )}
-            {(isSupervisor || isAdmin) && (
+            {isSupervisor && (
                 <Link href="/councillor"
                     className="text-sm bg-white/10 border border-white/20 text-white px-4 py-2 rounded-lg hover:bg-white/20 transition-colors">
                     📊 Analytics
                 </Link>
             )}
-            <Link href="/officer/reports"
-                className="text-sm bg-white/10 border border-white/20 text-white px-4 py-2 rounded-lg hover:bg-white/20 transition-colors">
-                📄 Reports
-            </Link>
-            <Link href="/map"
-                className="text-sm bg-white/10 border border-white/20 text-white px-4 py-2 rounded-lg hover:bg-white/20 transition-colors">
-                🗺️ Map (Heatmap)
-            </Link>
+            {(isSupervisor || isAdmin) && (
+                <div className="flex gap-2 ml-2">
+                    <Link href="/officer/sanitation-dashboard"
+                        className="text-xs bg-emerald-500/20 text-emerald-100 border border-emerald-500/30 px-3 py-1.5 rounded-lg hover:bg-emerald-500/40 transition-colors">
+                        Sanitation
+                    </Link>
+                    <Link href="/officer/water-dashboard"
+                        className="text-xs bg-blue-500/20 text-blue-100 border border-blue-500/30 px-3 py-1.5 rounded-lg hover:bg-blue-500/40 transition-colors">
+                        Water
+                    </Link>
+                    <Link href="/officer/electrical-dashboard"
+                        className="text-xs bg-yellow-500/20 text-yellow-100 border border-yellow-500/30 px-3 py-1.5 rounded-lg hover:bg-yellow-500/40 transition-colors">
+                        Electricity
+                    </Link>
+                </div>
+            )}
         </div>
     );
 
@@ -569,9 +439,16 @@ export default function OfficerDashboard() {
             </div>
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-                {(isSupervisor || isAdmin) && <SupervisorDashboard user={user} />}
+                {isSupervisor && <SupervisorDashboard user={user} />}
                 {isJuniorEngineer && <JuniorEngineerDashboard user={user} />}
-                {isFieldStaff && <TechnicianDashboard />}
+                {(isAdmin || isFieldStaff || (!isSupervisor && !isJuniorEngineer && !isCouncillor)) && (
+                    <div className="text-center py-20 bg-white rounded-3xl border border-gray-100 shadow-sm">
+                        <p className="text-5xl mb-4">🔐</p>
+                        <h2 className="text-xl font-bold text-gray-800">Restricted Access</h2>
+                        <p className="text-gray-500 mt-2">Your account role ({role}) does not have an active operations dashboard.</p>
+                        <p className="text-xs text-gray-400 mt-4">Please contact the system administrator if you believe this is an error.</p>
+                    </div>
+                )}
                 {isCouncillor && (
                     <div className="text-center py-10">
                         <p className="text-gray-500 mb-4">As a Councillor, use the dedicated insights dashboard.</p>

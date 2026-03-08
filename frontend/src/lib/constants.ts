@@ -37,14 +37,12 @@ export const STATUS_LABELS: Record<string, string> = {
 };
 
 export const USER_ROLES: Record<string, string> = {
-    SUPER_ADMIN: "Super Admin",
-    COMMISSIONER: "Commissioner",
-    ZONAL_OFFICER: "Zonal Officer",
-    WARD_OFFICER: "Ward Officer",
-    DEPT_HEAD: "Department Head",
-    COUNCILLOR: "Councillor",
-    TECHNICIAN: "Technician",
-    PUBLIC_USER: "Public User",
+    SUPER_ADMIN: "Administrator",
+    SUPERVISOR: "Ward Supervisor",
+    JUNIOR_ENGINEER: "Junior Engineer",
+    FIELD_STAFF: "Field Staff",
+    COUNCILLOR: "Ward Councillor",
+    PUBLIC_USER: "Citizen",
 };
 
 export const GRADE_COLORS: Record<string, string> = {
