@@ -31,23 +31,18 @@ async def get_tickets(
     - TECHNICIAN → tickets assigned specifically to them
     - COMMISSIONER / SUPER_ADMIN → all tickets
     """
-    if current_user.role in {UserRole.WARD_OFFICER, UserRole.COUNCILLOR}:
+    if current_user.role in {UserRole.SUPERVISOR, UserRole.COUNCILLOR}:
         tickets = await TicketMongo.find(
             TicketMongo.ward_id == current_user.ward_id
         ).sort(-TicketMongo.priority_score).limit(limit).to_list()
 
-    elif current_user.role == UserRole.ZONAL_OFFICER:
-        tickets = await TicketMongo.find(
-            TicketMongo.zone_id == current_user.zone_id
-        ).sort(-TicketMongo.priority_score).limit(limit).to_list()
-
-    elif current_user.role == UserRole.DEPT_HEAD:
+    elif current_user.role == UserRole.JUNIOR_ENGINEER:
         tickets = await TicketMongo.find(
             TicketMongo.dept_id == current_user.dept_id,
             TicketMongo.ward_id == current_user.ward_id,
         ).sort(-TicketMongo.priority_score).limit(limit).to_list()
 
-    elif current_user.role == UserRole.TECHNICIAN:
+    elif current_user.role == UserRole.FIELD_STAFF:
         tickets = await TicketMongo.find(
             TicketMongo.technician_id == str(current_user.id)
         ).sort(-TicketMongo.priority_score).limit(limit).to_list()
@@ -66,7 +61,7 @@ async def get_my_tickets(
     current_user: UserMongo = Depends(get_current_user),
 ):
     """Returns tickets directly assigned to the current officer/technician."""
-    if current_user.role == UserRole.TECHNICIAN:
+    if current_user.role == UserRole.FIELD_STAFF:
         tickets = await TicketMongo.find(
             TicketMongo.technician_id == str(current_user.id)
         ).sort(-TicketMongo.priority_score).to_list()
@@ -88,11 +83,11 @@ async def get_dashboard_summary(
     """
     from datetime import datetime
 
-    if current_user.role in {UserRole.WARD_OFFICER, UserRole.COUNCILLOR}:
+    if current_user.role in {UserRole.SUPERVISOR, UserRole.COUNCILLOR}:
         all_tickets = await TicketMongo.find(
             TicketMongo.ward_id == current_user.ward_id
         ).to_list()
-    elif current_user.role == UserRole.DEPT_HEAD:
+    elif current_user.role == UserRole.JUNIOR_ENGINEER:
         all_tickets = await TicketMongo.find(
             TicketMongo.dept_id == current_user.dept_id,
             TicketMongo.ward_id == current_user.ward_id,
@@ -216,6 +211,156 @@ async def update_status(
 class AssignRequest(BaseModel):
     officer_id: Optional[str] = None
     technician_id: Optional[str] = None
+
+class ValidateRequest(BaseModel):
+    category_confirmed: bool
+    is_duplicate: bool
+    ward_confirmed: bool
+
+@router.post("/tickets/{ticket_id}/validate")
+async def validate_ticket(
+    ticket_id: str,
+    data: ValidateRequest,
+    current_user: UserMongo = Depends(require_ward_officer),
+):
+    """Supervisor validates a ticket before assignment."""
+    from beanie import PydanticObjectId
+    ticket = await TicketMongo.get(PydanticObjectId(ticket_id))
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+
+    ticket.is_validated = True
+    ticket.status_timeline.append({
+        "status": ticket.status,
+        "timestamp": datetime.utcnow().isoformat(),
+        "actor_role": current_user.role,
+        "note": f"Validated by {current_user.name}. Category OK: {data.category_confirmed}, Duplicate: {data.is_duplicate}, Ward OK: {data.ward_confirmed}.",
+    })
+    await ticket.save()
+    return {"id": str(ticket.id), "status": ticket.status, "is_validated": ticket.is_validated}
+
+@router.get("/staff/junior-engineers")
+async def get_junior_engineers(
+    current_user: UserMongo = Depends(require_ward_officer),
+):
+    """Fetch Junior Engineers for the current ward."""
+    engineers = await UserMongo.find(
+        UserMongo.role == UserRole.JUNIOR_ENGINEER,
+        UserMongo.ward_id == current_user.ward_id
+    ).to_list()
+    
+    return [
+        {"id": str(je.id), "name": je.name, "email": je.email}
+        for je in engineers
+    ]
+
+
+@router.get("/staff/field")
+async def get_field_staff(
+    current_user: UserMongo = Depends(require_ward_officer),
+):
+    """Fetch Field Staff for the current ward."""
+    staff = await UserMongo.find(
+        UserMongo.role == UserRole.FIELD_STAFF,
+        UserMongo.ward_id == current_user.ward_id
+    ).to_list()
+    
+    return [
+        {"id": str(s.id), "name": s.name, "email": s.email}
+        for s in staff
+    ]
+
+
+class AssignFieldRequest(BaseModel):
+    technician_id: str
+    scheduled_date: datetime
+
+
+@router.post("/tickets/{ticket_id}/assign-field")
+async def assign_field_staff(
+    ticket_id: str,
+    data: AssignFieldRequest,
+    current_user: UserMongo = Depends(require_ward_officer),
+):
+    """Assign a ticket specifically to field staff and set a schedule date."""
+    from beanie import PydanticObjectId
+    ticket = await TicketMongo.get(PydanticObjectId(ticket_id))
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+
+    ticket.technician_id = data.technician_id
+    ticket.scheduled_date = data.scheduled_date
+    if ticket.status in ["OPEN", "ASSIGNED"]:
+        ticket.status = TicketStatus.SCHEDULED
+    
+    ticket.status_timeline.append({
+        "status": "SCHEDULED",
+        "timestamp": datetime.utcnow().isoformat(),
+        "actor_role": current_user.role,
+        "note": f"Assigned to field staff and scheduled for {data.scheduled_date.strftime('%Y-%m-%d')} by {current_user.name}",
+    })
+    await ticket.save()
+    return {
+        "id": str(ticket.id), 
+        "status": ticket.status, 
+        "technician_id": ticket.technician_id, 
+        "scheduled_date": ticket.scheduled_date
+    }
+
+
+class ProofUploadRequest(BaseModel):
+    photo_url: str
+
+
+@router.post("/tickets/{ticket_id}/proof")
+async def upload_proof(
+    ticket_id: str,
+    data: ProofUploadRequest,
+    current_user: UserMongo = Depends(require_ward_officer),
+):
+    from beanie import PydanticObjectId
+    ticket = await TicketMongo.get(PydanticObjectId(ticket_id))
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+
+    ticket.after_photo_url = data.photo_url
+    ticket.status_timeline.append({
+        "status": ticket.status,
+        "timestamp": datetime.utcnow().isoformat(),
+        "actor_role": current_user.role,
+        "note": f"Proof uploaded by {current_user.name}",
+    })
+    await ticket.save()
+    return {"id": str(ticket.id), "after_photo_url": ticket.after_photo_url}
+
+
+@router.get("/tickets/{ticket_id}/location-history")
+async def get_location_history(
+    ticket_id: str,
+    current_user: UserMongo = Depends(get_current_user),
+):
+    """Get recent tickets in the same ward with the same category to identify recurring issues."""
+    from beanie import PydanticObjectId
+    ticket = await TicketMongo.get(PydanticObjectId(ticket_id))
+    if not ticket or not ticket.ward_id:
+        return []
+
+    history = await TicketMongo.find(
+        TicketMongo.ward_id == ticket.ward_id,
+        TicketMongo.issue_category == ticket.issue_category,
+        TicketMongo.id != ticket.id
+    ).sort(-TicketMongo.created_at).limit(5).to_list()
+
+    return [
+        {
+            "id": str(t.id),
+            "ticket_code": t.ticket_code,
+            "status": t.status,
+            "created_at": t.created_at,
+            "description": t.description
+        }
+        for t in history
+    ]
 
 
 @router.post("/tickets/{ticket_id}/assign")
@@ -592,10 +737,13 @@ async def get_verification_result(
 # ─── Helper ───────────────────────────────────────────────────────────────────
 
 def _ticket_list_item(t: TicketMongo) -> dict:
+    lat = t.location["coordinates"][1] if t.location and "coordinates" in t.location else None
+    lng = t.location["coordinates"][0] if t.location and "coordinates" in t.location else None
     return {
         "id": str(t.id),
         "ticket_code": t.ticket_code,
         "status": t.status,
+        "description": t.description,
         "dept_id": t.dept_id,
         "issue_category": t.issue_category,
         "priority_label": t.priority_label,
@@ -610,4 +758,6 @@ def _ticket_list_item(t: TicketMongo) -> dict:
         "ai_suggested_date": t.ai_suggested_date,
         "work_verified": t.work_verified,
         "work_verification_confidence": t.work_verification_confidence,
+        "lat": lat,
+        "lng": lng,
     }

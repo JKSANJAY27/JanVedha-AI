@@ -20,12 +20,10 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>;
 
 const ROLE_REDIRECTS: Record<string, string> = {
-    COMMISSIONER: "/officer/dashboard",
-    ZONAL_OFFICER: "/officer/dashboard",
-    WARD_OFFICER: "/officer/dashboard",
-    DEPT_HEAD: "/department/dashboard",
     COUNCILLOR: "/councillor/dashboard",
-    TECHNICIAN: "/officer/dashboard",
+    SUPERVISOR: "/officer/dashboard",
+    JUNIOR_ENGINEER: "/officer/dashboard",
+    FIELD_STAFF: "/officer/dashboard",
     SUPER_ADMIN: "/officer/dashboard",
     PUBLIC_USER: "/",
 };
@@ -126,7 +124,7 @@ export default function LoginPage() {
                     <div className="mt-5 bg-blue-500/10 border border-blue-400/20 rounded-xl p-4">
                         <p className="text-xs text-blue-200 font-medium mb-2">Supported Roles</p>
                         <div className="flex flex-wrap gap-1.5">
-                            {["Ward Officer", "Councillor", "Dept Head", "Zonal Officer", "Commissioner"].map((r) => (
+                            {["Supervisor", "Junior Engineer", "Field Staff", "Councillor"].map((r) => (
                                 <span key={r} className="text-xs bg-white/10 text-blue-100 rounded-full px-2.5 py-0.5">
                                     {r}
                                 </span>

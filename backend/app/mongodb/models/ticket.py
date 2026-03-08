@@ -71,6 +71,7 @@ class TicketMongo(Document):
     status: TicketStatus = TicketStatus.OPEN  # type: ignore[valid-type]
     report_count: int = 1
     requires_human_review: bool = False
+    is_validated: bool = False
 
     # Cost & satisfaction
     estimated_cost: Optional[float] = None

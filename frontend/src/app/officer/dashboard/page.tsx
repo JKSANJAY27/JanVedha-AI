@@ -12,11 +12,15 @@ import StatusBadge from "@/components/StatusBadge";
 import StatCard from "@/components/StatCard";
 import Link from "next/link";
 import { DEPT_NAMES } from "@/lib/constants";
+import dynamic from "next/dynamic";
+
+const IssueMap = dynamic(() => import("@/features/map/IssueMap"), { ssr: false });
 
 interface Ticket {
     id: string;
     ticket_code: string;
     status: string;
+    description: string;
     dept_id: string;
     issue_category?: string;
     priority_label: string;
@@ -29,6 +33,9 @@ interface Ticket {
     technician_id?: string;
     scheduled_date?: string;
     ai_suggested_date?: string;
+    after_photo_url?: string;
+    lat?: number;
+    lng?: number;
 }
 
 interface DeptStat {
@@ -133,64 +140,49 @@ function TicketList({ tickets, showAssign, onStatusUpdate }: {
                         </button>
 
                         {isExpanded && (
-                            <div className="divide-y divide-white/60">
+                            <div className="bg-white overflow-x-auto">
                                 {group.length === 0 ? (
                                     <p className="text-sm text-gray-400 px-5 py-4 italic">No {priority.toLowerCase()} tickets</p>
                                 ) : (
-                                    group.map((ticket, i) => {
-                                        const sla = getSlaCountdown(ticket.sla_deadline);
-                                        return (
-                                            <motion.div key={ticket.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.03 }}
-                                                className="px-5 py-4 bg-white hover:bg-gray-50 transition-colors">
-                                                <div className="flex flex-wrap items-start justify-between gap-3">
-                                                    <div className="flex-1 min-w-0">
-                                                        <div className="flex items-center gap-2 mb-1 flex-wrap">
-                                                            <span className="font-mono text-sm font-bold text-blue-700">{ticket.ticket_code}</span>
-                                                            <StatusBadge status={ticket.status} size="sm" />
-                                                            {ticket.seasonal_alert && (
-                                                                <span className="text-xs bg-orange-100 text-orange-700 rounded-full px-2 py-0.5">🌤️ Seasonal</span>
+                                    <table className="min-w-full divide-y divide-gray-200 text-sm">
+                                        <thead className="bg-gray-50 text-gray-500 font-medium text-xs">
+                                            <tr>
+                                                <th className="px-4 py-3 text-left">Ticket ID</th>
+                                                <th className="px-4 py-3 text-left">Category</th>
+                                                <th className="px-4 py-3 text-left">Location</th>
+                                                <th className="px-4 py-3 text-left">Assignee</th>
+                                                <th className="px-4 py-3 text-left">Status</th>
+                                                <th className="px-4 py-3 text-left">SLA</th>
+                                                <th className="px-4 py-3 text-right">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-100 bg-white">
+                                            {group.map((ticket, i) => {
+                                                const sla = getSlaCountdown(ticket.sla_deadline);
+                                                return (
+                                                    <motion.tr key={ticket.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.03 }} className="hover:bg-gray-50 transition-colors">
+                                                        <td className="px-4 py-3 font-mono font-bold text-blue-600">{ticket.ticket_code}</td>
+                                                        <td className="px-4 py-3 font-medium text-gray-800">{ticket.issue_category || "General Issue"}</td>
+                                                        <td className="px-4 py-3 text-gray-500">{ticket.ward_id ? `Ward ${ticket.ward_id}` : "Unspecified"}</td>
+                                                        <td className="px-4 py-3 text-gray-500">
+                                                            {ticket.technician_id ? `Staff (${ticket.technician_id.slice(-4)})` : ticket.assigned_officer_id ? `JE (${ticket.assigned_officer_id.slice(-4)})` : <span className="text-gray-400 italic">Unassigned</span>}
+                                                        </td>
+                                                        <td className="px-4 py-3"><StatusBadge status={ticket.status} size="sm" /></td>
+                                                        <td className={`px-4 py-3 ${sla ? sla.cls : "text-gray-400"}`}>{sla ? sla.label : "N/A"}</td>
+                                                        <td className="px-4 py-3 text-right space-x-2 whitespace-nowrap">
+                                                            {showAssign && ticket.status === "IN_PROGRESS" && (
+                                                                <button disabled={updatingId === ticket.id} onClick={() => handleQuickStatus(ticket.id, "PENDING_VERIFICATION")} className="text-xs bg-cyan-50 text-cyan-700 border border-cyan-200 rounded px-2.5 py-1.5 font-medium transition-colors disabled:opacity-50">Mark Done</button>
                                                             )}
-                                                            {ticket.scheduled_date && (
-                                                                <span className="text-xs bg-purple-100 text-purple-700 rounded-full px-2 py-0.5">
-                                                                    📅 {new Date(ticket.scheduled_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
-                                                                </span>
+                                                            {showAssign && ticket.status === "OPEN" && (
+                                                                <button disabled={updatingId === ticket.id} onClick={() => handleQuickStatus(ticket.id, "IN_PROGRESS")} className="text-xs bg-blue-50 text-blue-700 border border-blue-200 rounded px-2.5 py-1.5 font-medium transition-colors disabled:opacity-50">Start</button>
                                                             )}
-                                                        </div>
-                                                        <p className="text-sm text-gray-700 font-medium truncate">{ticket.issue_category || "General Issue"}</p>
-                                                        <div className="flex gap-3 mt-1 flex-wrap text-xs text-gray-400">
-                                                            <span>Dept: {DEPT_NAMES[ticket.dept_id] ?? ticket.dept_id}</span>
-                                                            {ticket.ward_id && <span>Ward {ticket.ward_id}</span>}
-                                                            <span>{formatRelative(ticket.created_at)}</span>
-                                                            {sla && <span className={sla.cls}>⏱ {sla.label}</span>}
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex items-center gap-2 flex-wrap">
-                                                        <PriorityBadge label={ticket.priority_label} score={ticket.priority_score} size="sm" />
-                                                        {showAssign && ticket.status === "IN_PROGRESS" && (
-                                                            <button
-                                                                disabled={updatingId === ticket.id}
-                                                                onClick={() => handleQuickStatus(ticket.id, "PENDING_VERIFICATION")}
-                                                                className="text-xs bg-cyan-50 hover:bg-cyan-100 text-cyan-700 border border-cyan-200 rounded-lg px-2.5 py-1.5 font-medium transition-colors disabled:opacity-50">
-                                                                Mark Done →
-                                                            </button>
-                                                        )}
-                                                        {showAssign && ticket.status === "OPEN" && (
-                                                            <button
-                                                                disabled={updatingId === ticket.id}
-                                                                onClick={() => handleQuickStatus(ticket.id, "IN_PROGRESS")}
-                                                                className="text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-lg px-2.5 py-1.5 font-medium transition-colors disabled:opacity-50">
-                                                                Start →
-                                                            </button>
-                                                        )}
-                                                        <Link href={`/officer/tickets/${ticket.id}`}
-                                                            className="text-sm font-medium text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 rounded-lg px-3 py-1.5 transition-colors">
-                                                            View →
-                                                        </Link>
-                                                    </div>
-                                                </div>
-                                            </motion.div>
-                                        );
-                                    })
+                                                            <Link href={`/officer/tickets/${ticket.id}`} className="text-xs font-medium text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 rounded px-3 py-1.5 transition-colors">View →</Link>
+                                                        </td>
+                                                    </motion.tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
                                 )}
                             </div>
                         )}
@@ -201,9 +193,10 @@ function TicketList({ tickets, showAssign, onStatusUpdate }: {
     );
 }
 
-// ─── PGO Supervisory View ─────────────────────────────────────────────────────
+// ─── Supervisor Operational View ─────────────────────────────────────────────────────
 
-function PGODashboard({ user }: { user: { name: string; ward_id?: number; role: string } }) {
+function SupervisorDashboard({ user }: { user: { name: string; ward_id?: number; role: string } }) {
+    const router = useRouter();
     const [summary, setSummary] = useState<DashboardSummary | null>(null);
     const [tickets, setTickets] = useState<Ticket[]>([]);
     const [loading, setLoading] = useState(true);
@@ -224,6 +217,14 @@ function PGODashboard({ user }: { user: { name: string; ward_id?: number; role: 
 
     return (
         <div className="space-y-8">
+            {/* Map Section */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden h-[450px]">
+                <IssueMap
+                    issues={tickets as any}
+                    onIssueClick={(issue) => router.push(`/officer/tickets/${issue.id}`)}
+                />
+            </div>
+
             {/* Stats Row */}
             {summary && (
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
@@ -286,14 +287,15 @@ function PGODashboard({ user }: { user: { name: string; ward_id?: number; role: 
     );
 }
 
-// ─── Dept Officer Operational View ───────────────────────────────────────────
+// ─── Junior Engineer Operational View ───────────────────────────────────────────
 
-function DeptOfficerDashboard({ user }: { user: { name: string; dept_id?: string; ward_id?: number } }) {
+function JuniorEngineerDashboard({ user }: { user: { name: string; dept_id?: string; ward_id?: number; role: string } }) {
+    const router = useRouter();
     const [tickets, setTickets] = useState<Ticket[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        officerApi.getTickets(200)
+        officerApi.getMyTickets()
             .then(res => setTickets(res.data))
             .catch(() => toast.error("Failed to load tickets"))
             .finally(() => setLoading(false));
@@ -305,7 +307,7 @@ function DeptOfficerDashboard({ user }: { user: { name: string; dept_id?: string
 
     const stats = {
         total: tickets.length,
-        open: tickets.filter(t => ["OPEN", "ASSIGNED", "IN_PROGRESS"].includes(t.status)).length,
+        open: tickets.filter(t => ["ASSIGNED", "SCHEDULED", "IN_PROGRESS"].includes(t.status)).length,
         critical: tickets.filter(t => t.priority_label === "CRITICAL").length,
         awaiting: tickets.filter(t => t.status === "AWAITING_MATERIAL").length,
     };
@@ -314,8 +316,16 @@ function DeptOfficerDashboard({ user }: { user: { name: string; dept_id?: string
 
     return (
         <div className="space-y-8">
+            {/* Map Section */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden h-[450px]">
+                <IssueMap
+                    issues={tickets as any}
+                    onIssueClick={(issue) => router.push(`/officer/tickets/${issue.id}`)}
+                />
+            </div>
+
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <StatCard label="Dept Tickets" value={stats.total} icon="📋" color="blue" />
+                <StatCard label="My Tickets" value={stats.total} icon="📋" color="blue" />
                 <StatCard label="Active" value={stats.open} icon="⚡" color="orange" />
                 <StatCard label="Critical" value={stats.critical} icon="🚨" color="red" />
                 <StatCard label="Awaiting Material" value={stats.awaiting} icon="📦" color="purple" />
@@ -328,8 +338,11 @@ function DeptOfficerDashboard({ user }: { user: { name: string; dept_id?: string
 // ─── Technician Task Board ────────────────────────────────────────────────────
 
 function TechnicianDashboard() {
+    const router = useRouter();
     const [tickets, setTickets] = useState<Ticket[]>([]);
     const [loading, setLoading] = useState(true);
+    const [proofUploads, setProofUploads] = useState<Record<string, string>>({});
+    const [updatingParams, setUpdatingParams] = useState<Record<string, boolean>>({});
 
     useEffect(() => {
         officerApi.getMyTickets()
@@ -338,104 +351,136 @@ function TechnicianDashboard() {
             .finally(() => setLoading(false));
     }, []);
 
-    const handleStatusUpdate = (id: string, status: string) => {
-        setTickets(prev => prev.map(t => t.id === id ? { ...t, status } : t));
+    const handleStatusUpdate = (id: string, status: string, additional?: Partial<Ticket>) => {
+        setTickets(prev => prev.map(t => t.id === id ? { ...t, status, ...additional } : t));
     };
 
     const stats = {
         total: tickets.length,
         inProgress: tickets.filter(t => t.status === "IN_PROGRESS").length,
-        pending: tickets.filter(t => ["OPEN", "ASSIGNED"].includes(t.status)).length,
-        done: tickets.filter(t => t.status === "PENDING_VERIFICATION").length,
+        pending: tickets.filter(t => ["OPEN", "ASSIGNED", "SCHEDULED"].includes(t.status)).length,
+        done: tickets.filter(t => ["PENDING_VERIFICATION", "CLOSED"].includes(t.status)).length,
     };
 
     const STATUS_FLOW: Record<string, { next: string; label: string; cls: string }> = {
-        OPEN: { next: "IN_PROGRESS", label: "▶ Start Work", cls: "bg-blue-600 text-white" },
-        ASSIGNED: { next: "IN_PROGRESS", label: "▶ Start Work", cls: "bg-blue-600 text-white" },
-        IN_PROGRESS: { next: "AWAITING_MATERIAL", label: "📦 Need Material", cls: "bg-yellow-500 text-white" },
-        AWAITING_MATERIAL: { next: "IN_PROGRESS", label: "✅ Got Material", cls: "bg-green-500 text-white" },
+        ASSIGNED: { next: "IN_PROGRESS", label: "▶ Start Work", cls: "bg-blue-600 hover:bg-blue-700 text-white" },
+        SCHEDULED: { next: "IN_PROGRESS", label: "▶ Start Work", cls: "bg-blue-600 hover:bg-blue-700 text-white" },
+        IN_PROGRESS: { next: "AWAITING_MATERIAL", label: "📦 Need Material", cls: "bg-yellow-500 hover:bg-yellow-600 text-white" },
+        AWAITING_MATERIAL: { next: "IN_PROGRESS", label: "✅ Got Material", cls: "bg-emerald-500 hover:bg-emerald-600 text-white" },
     };
 
     if (loading) return <div className="flex justify-center py-20"><div className="w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin" /></div>;
 
     return (
         <div className="space-y-6">
+            {/* Map Section for Mobile/Field view */}
+            {tickets.length > 0 && (
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden h-[300px]">
+                    <IssueMap
+                        issues={tickets.filter(t => !["PENDING_VERIFICATION", "CLOSED", "REJECTED"].includes(t.status)) as any}
+                        onIssueClick={(issue) => router.push(`/officer/tickets/${issue.id}`)}
+                    />
+                </div>
+            )}
+
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <StatCard label="My Tasks" value={stats.total} icon="📋" color="blue" />
                 <StatCard label="Pending" value={stats.pending} icon="⏳" color="orange" />
                 <StatCard label="In Progress" value={stats.inProgress} icon="🔧" color="purple" />
-                <StatCard label="Awaiting Check" value={stats.done} icon="✅" color="green" />
+                <StatCard label="Completed" value={stats.done} icon="✅" color="green" />
             </div>
 
             {tickets.length === 0 ? (
-                <div className="text-center py-20 text-gray-400">
+                <div className="text-center py-20 bg-white rounded-2xl border border-gray-100 text-gray-400">
                     <p className="text-5xl mb-3">🎉</p>
-                    <p className="text-lg font-medium">No tasks assigned yet!</p>
-                    <p className="text-sm mt-1">Check back with your supervisor.</p>
+                    <p className="text-lg font-medium text-gray-800">No tasks assigned yet!</p>
+                    <p className="text-sm mt-1">Check back later for new dispatches.</p>
                 </div>
             ) : (
                 <div className="space-y-4">
                     {tickets.map((ticket, i) => {
                         const nextAction = STATUS_FLOW[ticket.status];
-                        const slaMs = ticket.sla_deadline ? new Date(ticket.sla_deadline).getTime() - Date.now() : null;
-                        const slaDays = slaMs !== null ? Math.ceil(slaMs / 86400000) : null;
+                        const isCompleting = ticket.status === "IN_PROGRESS";
+                        const proofUrl = proofUploads[ticket.id] || "";
+                        const isUpdating = updatingParams[ticket.id] || false;
+
                         return (
                             <motion.div key={ticket.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
-                                className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                                <div className="flex flex-wrap items-start justify-between gap-3">
-                                    <div>
-                                        <div className="flex items-center gap-2 flex-wrap mb-1">
+                                className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 w-full">
+                                <div className="flex flex-col sm:flex-row gap-4">
+                                    <div className="flex-1">
+                                        <div className="flex items-center gap-2 flex-wrap mb-2">
                                             <span className="font-mono font-bold text-blue-700">{ticket.ticket_code}</span>
                                             <StatusBadge status={ticket.status} size="sm" />
                                             <PriorityBadge label={ticket.priority_label} score={ticket.priority_score} size="sm" />
                                         </div>
-                                        <p className="text-sm font-medium text-gray-800">{ticket.issue_category ?? "General Issue"}</p>
-                                        <div className="flex gap-3 mt-1 text-xs text-gray-400 flex-wrap">
-                                            <span>Dept: {DEPT_NAMES[ticket.dept_id] ?? ticket.dept_id}</span>
+                                        <p className="text-sm font-medium text-gray-900 mb-1">{ticket.issue_category ?? "General Issue"}</p>
+                                        <div className="flex gap-x-3 gap-y-1 mt-2 text-xs text-gray-500 flex-wrap">
+                                            <span className="flex items-center gap-1">📍 Ward {ticket.ward_id}</span>
                                             {ticket.scheduled_date && (
-                                                <span className="text-purple-600 font-medium">
+                                                <span className="flex items-center gap-1 text-purple-600 font-medium bg-purple-50 px-2 py-0.5 rounded-md">
                                                     📅 {new Date(ticket.scheduled_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
-                                                </span>
-                                            )}
-                                            {slaDays !== null && (
-                                                <span className={slaDays < 0 ? "text-red-600 font-bold" : slaDays <= 2 ? "text-orange-500 font-semibold" : ""}>
-                                                    {slaDays < 0 ? `⚠️ ${Math.abs(slaDays)}d overdue` : `⏱ ${slaDays}d left`}
                                                 </span>
                                             )}
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                        {nextAction && (
-                                            <button
-                                                onClick={async () => {
-                                                    try {
-                                                        await officerApi.updateStatus(ticket.id, nextAction.next);
-                                                        handleStatusUpdate(ticket.id, nextAction.next);
-                                                        toast.success("Status updated");
-                                                    } catch { toast.error("Update failed"); }
-                                                }}
-                                                className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors ${nextAction.cls}`}>
-                                                {nextAction.label}
-                                            </button>
-                                        )}
-                                        {ticket.status === "IN_PROGRESS" && (
-                                            <button
-                                                onClick={async () => {
-                                                    try {
-                                                        await officerApi.updateStatus(ticket.id, "PENDING_VERIFICATION");
-                                                        handleStatusUpdate(ticket.id, "PENDING_VERIFICATION");
-                                                        toast.success("Marked for verification!");
-                                                    } catch { toast.error("Update failed"); }
-                                                }}
-                                                className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-green-600 text-white transition-colors">
-                                                Work Done ✓
-                                            </button>
-                                        )}
-                                        <Link href={`/officer/tickets/${ticket.id}`}
-                                            className="text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg px-3 py-1.5 transition-colors">
-                                            View →
-                                        </Link>
-                                    </div>
+
+                                    {/* Action Buttons Column */}
+                                    {["PENDING_VERIFICATION", "CLOSED", "REJECTED"].includes(ticket.status) ? (
+                                        <div className="sm:self-center">
+                                            <Link href={`/officer/tickets/${ticket.id}`} className="block text-center text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-xl px-6 py-2 transition-colors">
+                                                View Review →
+                                            </Link>
+                                        </div>
+                                    ) : (
+                                        <div className="flex flex-col gap-2 min-w-[200px] bg-gray-50 rounded-xl p-3">
+                                            {nextAction && (
+                                                <button
+                                                    disabled={isUpdating}
+                                                    onClick={async () => {
+                                                        setUpdatingParams(p => ({ ...p, [ticket.id]: true }));
+                                                        try {
+                                                            await officerApi.updateStatus(ticket.id, nextAction.next);
+                                                            handleStatusUpdate(ticket.id, nextAction.next);
+                                                            toast.success(`Marked as ${nextAction.next.replace(/_/g, " ")}`);
+                                                        } catch { toast.error("Update failed"); }
+                                                        finally { setUpdatingParams(p => ({ ...p, [ticket.id]: false })); }
+                                                    }}
+                                                    className={`w-full text-xs font-semibold px-4 py-2.5 rounded-xl transition-colors disabled:opacity-50 ${nextAction.cls}`}>
+                                                    {isUpdating ? "..." : nextAction.label}
+                                                </button>
+                                            )}
+
+                                            {isCompleting && (
+                                                <div className="mt-2 pt-2 border-t border-gray-200">
+                                                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 px-1">Proof of Work</p>
+                                                    <input
+                                                        type="url"
+                                                        placeholder="Photo URL (required)"
+                                                        value={proofUrl}
+                                                        onChange={(e) => setProofUploads(p => ({ ...p, [ticket.id]: e.target.value }))}
+                                                        className="w-full text-xs border border-gray-300 rounded-lg px-2 py-2 mb-2 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                                    />
+                                                    <button
+                                                        disabled={isUpdating || !proofUrl.trim()}
+                                                        onClick={async () => {
+                                                            setUpdatingParams(p => ({ ...p, [ticket.id]: true }));
+                                                            try {
+                                                                await officerApi.uploadProof(ticket.id, proofUrl);
+                                                                toast.success("Proof uploaded");
+                                                                await officerApi.updateStatus(ticket.id, "PENDING_VERIFICATION");
+                                                                handleStatusUpdate(ticket.id, "PENDING_VERIFICATION", { after_photo_url: proofUrl });
+                                                                toast.success("Job marked complete!");
+                                                            } catch { toast.error("Completion failed"); }
+                                                            finally { setUpdatingParams(p => ({ ...p, [ticket.id]: false })); }
+                                                        }}
+                                                        className="w-full text-xs font-semibold px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white transition-colors disabled:opacity-50">
+                                                        {isUpdating ? "Submitting..." : "✓ Submit & Complete"}
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                             </motion.div>
                         );
@@ -449,7 +494,7 @@ function TechnicianDashboard() {
 // ─── Main Dashboard Controller ────────────────────────────────────────────────
 
 export default function OfficerDashboard() {
-    const { user, isOfficer, isWardPGO, isDeptOfficer, isTechnician, isCouncillor, isAdmin } = useAuth();
+    const { user, isOfficer, isSupervisor, isJuniorEngineer, isFieldStaff, isCouncillor, isAdmin } = useAuth();
     const router = useRouter();
 
     useEffect(() => {
@@ -459,24 +504,24 @@ export default function OfficerDashboard() {
     if (!user) return null;
 
     const getHeaderColor = () => {
-        if (isWardPGO || isAdmin) return "from-blue-800 to-indigo-900";
-        if (isDeptOfficer) return "from-teal-700 to-cyan-800";
-        if (isTechnician) return "from-slate-700 to-gray-800";
+        if (isSupervisor || isAdmin) return "from-blue-800 to-indigo-900";
         if (isCouncillor) return "from-emerald-700 to-teal-800";
+        if (isJuniorEngineer) return "from-teal-700 to-cyan-800";
+        if (isFieldStaff) return "from-slate-700 to-gray-800";
         return "from-blue-800 to-indigo-900";
     };
 
     const getTitle = () => {
-        if (isWardPGO) return "Ward PGO — Supervisory Dashboard";
-        if (isDeptOfficer) return `${DEPT_NAMES[user.dept_id ?? ""] ?? "Department"} — Operational Dashboard`;
-        if (isTechnician) return "My Task Board";
-        if (isCouncillor) return "Ward Dashboard";
+        if (isSupervisor) return "Ward Supervisor Dashboard";
+        if (isJuniorEngineer) return "Junior Engineer Dashboard";
+        if (isFieldStaff) return "Field Staff Task Board";
+        if (isCouncillor) return "Ward Councillor Dashboard";
         return `${user.role?.replace(/_/g, " ")} Dashboard`;
     };
 
     const navLinks = () => (
         <div className="flex gap-3 flex-wrap">
-            {(isWardPGO || isDeptOfficer || isAdmin) && (
+            {(isSupervisor || isJuniorEngineer || isAdmin) && (
                 <Link href="/officer/calendar"
                     className="text-sm bg-white/10 border border-white/20 text-white px-4 py-2 rounded-lg hover:bg-white/20 transition-colors">
                     📅 Calendar
@@ -488,7 +533,7 @@ export default function OfficerDashboard() {
                     🏛️ Ward Insights
                 </Link>
             )}
-            {(isWardPGO || isAdmin) && (
+            {(isSupervisor || isAdmin) && (
                 <Link href="/councillor"
                     className="text-sm bg-white/10 border border-white/20 text-white px-4 py-2 rounded-lg hover:bg-white/20 transition-colors">
                     📊 Analytics
@@ -500,7 +545,7 @@ export default function OfficerDashboard() {
             </Link>
             <Link href="/map"
                 className="text-sm bg-white/10 border border-white/20 text-white px-4 py-2 rounded-lg hover:bg-white/20 transition-colors">
-                🗺️ Map
+                🗺️ Map (Heatmap)
             </Link>
         </div>
     );
@@ -524,9 +569,9 @@ export default function OfficerDashboard() {
             </div>
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-                {(isWardPGO || isAdmin) && <PGODashboard user={user} />}
-                {isDeptOfficer && <DeptOfficerDashboard user={user} />}
-                {isTechnician && <TechnicianDashboard />}
+                {(isSupervisor || isAdmin) && <SupervisorDashboard user={user} />}
+                {isJuniorEngineer && <JuniorEngineerDashboard user={user} />}
+                {isFieldStaff && <TechnicianDashboard />}
                 {isCouncillor && (
                     <div className="text-center py-10">
                         <p className="text-gray-500 mb-4">As a Councillor, use the dedicated insights dashboard.</p>

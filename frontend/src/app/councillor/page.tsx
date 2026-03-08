@@ -106,7 +106,7 @@ function SatisfactionChart({ data }: { data: WeekData[] }) {
 }
 
 export default function CouncillorDashboard() {
-    const { user, isCouncillor, isAdmin, isWardPGO } = useAuth();
+    const { user, isCouncillor, isAdmin, isSupervisor } = useAuth();
     const router = useRouter();
 
     const [summary, setSummary] = useState<WardSummary | null>(null);
@@ -117,7 +117,7 @@ export default function CouncillorDashboard() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const allowed = isCouncillor || isAdmin || isWardPGO;
+        const allowed = isCouncillor || isAdmin || isSupervisor;
         if (!user) return;
         if (!allowed) { router.push("/officer/dashboard"); return; }
 

@@ -28,13 +28,48 @@ DEPARTMENTS = [
     {"dept_id": "D14", "dept_name": "Disaster Management", "sla_days": 1, "handles": "flood,cyclone,landslide,disaster"},
 ]
 
-ADMIN_USER = {
-    "name": "System Admin",
-    "email": "admin@janvedha.ai",
-    "phone": "0000000000",
-    "password": "Admin@123",
-    "role": UserRole.SUPER_ADMIN,
-}
+SEED_USERS = [
+    {
+        "name": "System Admin",
+        "email": "admin@janvedha.ai",
+        "phone": "0000000000",
+        "password": "Admin@123",
+        "role": UserRole.SUPER_ADMIN,
+        "ward_id": None
+    },
+    {
+        "name": "Ward Councillor",
+        "email": "councillor@janvedha.ai",
+        "phone": "1000000001",
+        "password": "Password123",
+        "role": UserRole.COUNCILLOR,
+        "ward_id": 1
+    },
+    {
+        "name": "Ward Supervisor",
+        "email": "supervisor@janvedha.ai",
+        "phone": "1000000002",
+        "password": "Password123",
+        "role": UserRole.SUPERVISOR,
+        "ward_id": 1
+    },
+    {
+        "name": "Junior Engineer",
+        "email": "je@janvedha.ai",
+        "phone": "1000000003",
+        "password": "Password123",
+        "role": UserRole.JUNIOR_ENGINEER,
+        "ward_id": 1
+    },
+    {
+        "name": "Field Staff Worker",
+        "email": "fieldstaff@janvedha.ai",
+        "phone": "1000000004",
+        "password": "Password123",
+        "role": UserRole.FIELD_STAFF,
+        "ward_id": 1
+    }
+]
 
 
 async def seed():
@@ -49,20 +84,24 @@ async def seed():
         else:
             print(f"  Department {dept_data['dept_id']} already exists, skipping.")
 
-    print("Seeding admin user...")
-    existing_admin = await UserMongo.find_one(UserMongo.email == ADMIN_USER["email"])
-    if not existing_admin:
-        admin = UserMongo(
-            name=ADMIN_USER["name"],
-            email=ADMIN_USER["email"],
-            phone=ADMIN_USER["phone"],
-            password_hash=AuthService.get_password_hash(ADMIN_USER["password"]),
-            role=ADMIN_USER["role"],
-        )
-        await admin.insert()
-        print(f"  Created admin: {ADMIN_USER['email']}")
-    else:
-        print(f"  Admin user already exists, skipping.")
+    print("Seeding users...")
+    for user_data in SEED_USERS:
+        existing_user = await UserMongo.find_one(UserMongo.email == user_data["email"])
+        if not existing_user:
+            user = UserMongo(
+                name=user_data["name"],
+                email=user_data["email"],
+                phone=user_data["phone"],
+                password_hash=AuthService.get_password_hash(user_data["password"]),
+                role=user_data["role"],
+                ward_id=user_data["ward_id"]
+            )
+            await user.insert()
+            print(f"  Created user: {user_data['email']} ({user_data['role'].value})")
+        else:
+            print(f"  User {user_data['email']} already exists, updating role.")
+            existing_user.role = user_data["role"]
+            await existing_user.save()
 
     await close_mongodb()
     print("Seeding complete!")

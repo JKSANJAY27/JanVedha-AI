@@ -30,14 +30,18 @@ interface TicketDetail {
     sla_deadline?: string;
     created_at: string;
     assigned_officer_id?: string;
+    technician_id?: string;
+    scheduled_date?: string;
+    after_photo_url?: string;
+    is_validated?: boolean;
 }
 
-const STATUSES = ["OPEN", "ASSIGNED", "IN_PROGRESS", "PENDING_VERIFICATION", "CLOSED", "REJECTED"];
+const STATUSES = ["OPEN", "ASSIGNED", "SCHEDULED", "IN_PROGRESS", "AWAITING_MATERIAL", "PENDING_VERIFICATION", "CLOSED", "REJECTED"];
 
 export default function TicketDetailPage() {
     const params = useParams();
     const router = useRouter();
-    const { isOfficer } = useAuth();
+    const { isOfficer, isSupervisor, isJuniorEngineer, isFieldStaff } = useAuth();
     const ticketId = params?.id as string;
 
     const [ticket, setTicket] = useState<TicketDetail | null>(null);
@@ -48,6 +52,23 @@ export default function TicketDetailPage() {
     const [overrideReason, setOverrideReason] = useState("");
     const [newStatus, setNewStatus] = useState("");
 
+    const [engineers, setEngineers] = useState<{ id: string; name: string; email: string }[]>([]);
+    const [selectedEngineer, setSelectedEngineer] = useState("");
+    const [validating, setValidating] = useState(false);
+    const [valCat, setValCat] = useState(true);
+    const [valDup, setValDup] = useState(false);
+    const [valWard, setValWard] = useState(true);
+
+    const [fieldStaffList, setFieldStaffList] = useState<{ id: string; name: string; email: string }[]>([]);
+    const [selectedFieldStaff, setSelectedFieldStaff] = useState("");
+    const [scheduledDate, setScheduledDate] = useState("");
+
+    const [locationHistory, setLocationHistory] = useState<any[]>([]);
+
+    const [proofUrl, setProofUrl] = useState("");
+    const [uploadingProof, setUploadingProof] = useState(false);
+    const [showProofUpload, setShowProofUpload] = useState(false);
+
     useEffect(() => {
         if (!isOfficer) { router.push("/login"); return; }
         officerApi.getTicket(ticketId)
@@ -57,7 +78,17 @@ export default function TicketDetailPage() {
             })
             .catch(() => toast.error("Ticket not found"))
             .finally(() => setLoading(false));
-    }, [ticketId]);
+
+        if (isSupervisor) {
+            officerApi.getJuniorEngineers().then(res => setEngineers(res.data)).catch(console.error);
+        }
+
+        if (isJuniorEngineer) {
+            officerApi.getFieldStaff().then(res => setFieldStaffList(res.data)).catch(console.error);
+        }
+
+        officerApi.getLocationHistory(ticketId).then(res => setLocationHistory(res.data)).catch(console.error);
+    }, [ticketId, isOfficer, isSupervisor, isJuniorEngineer, router]);
 
     const handleStatusUpdate = async () => {
         if (!ticket || newStatus === ticket.status) return;
@@ -66,10 +97,90 @@ export default function TicketDetailPage() {
             await officerApi.updateStatus(ticket.id, newStatus);
             setTicket((prev) => prev ? { ...prev, status: newStatus } : prev);
             toast.success(`Status updated to ${newStatus.replace(/_/g, " ")}`);
+            setShowProofUpload(false);
         } catch {
             toast.error("Failed to update status");
         } finally {
             setUpdating(false);
+        }
+    };
+
+    const handleQuickStatus = async (status: string) => {
+        setUpdating(true);
+        try {
+            await officerApi.updateStatus(ticketId, status);
+            setTicket((prev) => prev ? { ...prev, status } : prev);
+            setNewStatus(status);
+            toast.success(`Status updated to ${status.replace(/_/g, " ")}`);
+        } catch {
+            toast.error("Failed to update status");
+        } finally {
+            setUpdating(false);
+        }
+    };
+
+    const handleValidate = async () => {
+        setValidating(true);
+        try {
+            await officerApi.validateTicket(ticketId, {
+                category_confirmed: valCat,
+                is_duplicate: valDup,
+                ward_confirmed: valWard
+            });
+            setTicket(prev => prev ? { ...prev, is_validated: true } : prev);
+            toast.success("Ticket validated!");
+        } catch {
+            toast.error("Validation failed");
+        } finally {
+            setValidating(false);
+        }
+    };
+
+    const handleAssign = async () => {
+        if (!selectedEngineer) return;
+        setUpdating(true);
+        try {
+            await officerApi.assignTicket(ticketId, selectedEngineer);
+            setTicket(prev => prev ? { ...prev, assigned_officer_id: selectedEngineer, status: "ASSIGNED" } : prev);
+            setNewStatus("ASSIGNED");
+            toast.success("Assigned to Junior Engineer");
+        } catch {
+            toast.error("Assignment failed");
+        } finally {
+            setUpdating(false);
+        }
+    };
+
+    const handleAssignField = async () => {
+        if (!selectedFieldStaff || !scheduledDate) {
+            toast.error("Select staff and date");
+            return;
+        }
+        setUpdating(true);
+        try {
+            await officerApi.assignFieldStaff(ticketId, selectedFieldStaff, scheduledDate);
+            setTicket(prev => prev ? { ...prev, technician_id: selectedFieldStaff, scheduled_date: scheduledDate, status: "SCHEDULED" } : prev);
+            setNewStatus("SCHEDULED");
+            toast.success("Assigned to Field Staff!");
+        } catch {
+            toast.error("Field assignment failed");
+        } finally {
+            setUpdating(false);
+        }
+    };
+
+    const handleProofUpload = async () => {
+        if (!proofUrl.trim()) { toast.error("Please enter a photo URL"); return; }
+        setUploadingProof(true);
+        try {
+            await officerApi.uploadProof(ticketId, proofUrl);
+            setTicket(prev => prev ? { ...prev, after_photo_url: proofUrl } : prev);
+            await handleQuickStatus("PENDING_VERIFICATION");
+        } catch {
+            toast.error("Proof upload failed");
+        } finally {
+            setUploadingProof(false);
+            setShowProofUpload(false);
         }
     };
 
@@ -188,6 +299,14 @@ export default function TicketDetailPage() {
                                         </div>
                                     </div>
                                 )}
+
+                                {/* Proof Image (If Complete) */}
+                                {ticket.after_photo_url && (
+                                    <div className="bg-gray-50 rounded-xl p-4 mt-4">
+                                        <p className="text-xs text-gray-400 mb-2">Resolution Proof</p>
+                                        <img src={ticket.after_photo_url} alt="Proof" className="w-full rounded-lg border border-gray-200 object-cover max-h-64" />
+                                    </div>
+                                )}
                             </div>
                         </div>
 
@@ -221,8 +340,8 @@ export default function TicketDetailPage() {
                                 <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
                                     <div
                                         className={`h-full rounded-full transition-all duration-700 ${ticket.priority_score >= 80 ? "bg-gradient-to-r from-red-400 to-red-600" :
-                                                ticket.priority_score >= 60 ? "bg-gradient-to-r from-orange-400 to-orange-600" :
-                                                    ticket.priority_score >= 35 ? "bg-gradient-to-r from-yellow-400 to-yellow-600" : "bg-gradient-to-r from-green-400 to-green-600"
+                                            ticket.priority_score >= 60 ? "bg-gradient-to-r from-orange-400 to-orange-600" :
+                                                ticket.priority_score >= 35 ? "bg-gradient-to-r from-yellow-400 to-yellow-600" : "bg-gradient-to-r from-green-400 to-green-600"
                                             }`}
                                         style={{ width: `${ticket.priority_score}%` }}
                                     />
@@ -292,10 +411,167 @@ export default function TicketDetailPage() {
                                 </ol>
                             </div>
                         )}
+
+                        {/* Location History */}
+                        {locationHistory.length > 0 && (
+                            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mt-6">
+                                <h2 className="font-bold text-gray-900 mb-4">📍 Location History (Recurring Issues)</h2>
+                                <div className="space-y-3">
+                                    {locationHistory.map((t) => (
+                                        <div key={t.id} className="bg-gray-50 border border-gray-100 rounded-xl p-3 flex justify-between items-center">
+                                            <div>
+                                                <p className="font-mono font-bold text-blue-700 text-sm">{t.ticket_code}</p>
+                                                <p className="text-xs text-gray-500 mt-0.5">{t.description.substring(0, 50)}...</p>
+                                            </div>
+                                            <div className="text-right">
+                                                <StatusBadge status={t.status} size="sm" />
+                                                <p className="text-xs text-gray-400 mt-1">{formatRelative(t.created_at)}</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* Right column — actions, timeline */}
                     <div className="space-y-5">
+                        {/* Validation & Assignment logic for Supervisors */}
+                        {isSupervisor && (
+                            <>
+                                {/* Validation Block */}
+                                {!ticket.is_validated && (
+                                    <div className="bg-yellow-50 border border-yellow-200 rounded-2xl shadow-sm p-5">
+                                        <h3 className="font-bold text-yellow-800 mb-3 flex items-center gap-2">✔️ Validate Ticket</h3>
+                                        <div className="space-y-2 mb-4">
+                                            <label className="flex items-center gap-2 text-sm text-yellow-900 cursor-pointer">
+                                                <input type="checkbox" checked={valCat} onChange={e => setValCat(e.target.checked)} className="rounded text-yellow-600 focus:ring-yellow-500" />
+                                                Category confirmed
+                                            </label>
+                                            <label className="flex items-center gap-2 text-sm text-yellow-900 cursor-pointer">
+                                                <input type="checkbox" checked={valWard} onChange={e => setValWard(e.target.checked)} className="rounded text-yellow-600 focus:ring-yellow-500" />
+                                                Ward jurisdiction confirmed
+                                            </label>
+                                            <label className="flex items-center gap-2 text-sm text-yellow-900 cursor-pointer">
+                                                <input type="checkbox" checked={valDup} onChange={e => setValDup(e.target.checked)} className="rounded text-yellow-600 focus:ring-yellow-500" />
+                                                Flag as duplicate
+                                            </label>
+                                        </div>
+                                        <button
+                                            onClick={handleValidate}
+                                            disabled={validating}
+                                            className="w-full bg-yellow-500 hover:bg-yellow-600 text-white rounded-xl py-2 text-sm font-semibold transition-colors disabled:opacity-50"
+                                        >
+                                            {validating ? "Validating..." : "Confirm & Validate"}
+                                        </button>
+                                    </div>
+                                )}
+
+                                {/* Assignment Block */}
+                                {ticket.status === "OPEN" && ticket.is_validated && (
+                                    <div className="bg-blue-50 border border-blue-200 rounded-2xl shadow-sm p-5">
+                                        <h3 className="font-bold text-blue-800 mb-3 flex items-center gap-2">👤 Assign Junior Engineer</h3>
+                                        <select
+                                            value={selectedEngineer}
+                                            onChange={(e) => setSelectedEngineer(e.target.value)}
+                                            className="w-full border border-blue-200 bg-white rounded-xl px-3 py-2 text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        >
+                                            <option value="">-- Select Engineer --</option>
+                                            {engineers.map(je => (
+                                                <option key={je.id} value={je.id}>{je.name} ({je.email})</option>
+                                            ))}
+                                        </select>
+                                        <button
+                                            onClick={handleAssign}
+                                            disabled={updating || !selectedEngineer}
+                                            className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-xl py-2 text-sm font-semibold transition-colors disabled:opacity-50"
+                                        >
+                                            {updating ? "Assigning..." : "Assign Ticket"}
+                                        </button>
+                                    </div>
+                                )}
+                            </>
+                        )}
+
+                        {/* Field Staff Assignment Block */}
+                        {isJuniorEngineer && ticket.status === "ASSIGNED" && (
+                            <div className="bg-emerald-50 border border-emerald-200 rounded-2xl shadow-sm p-5">
+                                <h3 className="font-bold text-emerald-800 mb-3 flex items-center gap-2">👷 Assign Field Staff</h3>
+                                <select
+                                    value={selectedFieldStaff}
+                                    onChange={(e) => setSelectedFieldStaff(e.target.value)}
+                                    className="w-full border border-emerald-200 bg-white rounded-xl px-3 py-2 text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                >
+                                    <option value="">-- Select Field Staff --</option>
+                                    {fieldStaffList.map(fs => (
+                                        <option key={fs.id} value={fs.id}>{fs.name} ({fs.email})</option>
+                                    ))}
+                                </select>
+                                <input
+                                    type="date"
+                                    value={scheduledDate}
+                                    onChange={(e) => setScheduledDate(e.target.value)}
+                                    className="w-full border border-emerald-200 bg-white rounded-xl px-3 py-2 text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                    min={new Date().toISOString().split("T")[0]}
+                                />
+                                <button
+                                    onClick={handleAssignField}
+                                    disabled={updating || !selectedFieldStaff || !scheduledDate}
+                                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl py-2 text-sm font-semibold transition-colors disabled:opacity-50"
+                                >
+                                    {updating ? "Assigning..." : "Assign & Schedule"}
+                                </button>
+                            </div>
+                        )}
+
+                        {/* Execution Toolbar */}
+                        {(isJuniorEngineer || isFieldStaff) && ["SCHEDULED", "IN_PROGRESS", "AWAITING_MATERIAL"].includes(ticket.status) && (
+                            <div className="bg-indigo-50 border border-indigo-200 rounded-2xl shadow-sm p-5 space-y-3">
+                                <h3 className="font-bold text-indigo-800 flex items-center gap-2">⚙️ Execution Workflow</h3>
+
+                                {ticket.status === "SCHEDULED" && (
+                                    <button onClick={() => handleQuickStatus("IN_PROGRESS")} disabled={updating} className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-xl py-2 text-sm font-semibold transition-colors disabled:opacity-50">
+                                        ▶️ Start Work
+                                    </button>
+                                )}
+                                {ticket.status === "AWAITING_MATERIAL" && (
+                                    <button onClick={() => handleQuickStatus("IN_PROGRESS")} disabled={updating} className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-xl py-2 text-sm font-semibold transition-colors disabled:opacity-50">
+                                        ▶️ Resume Work (Got Material)
+                                    </button>
+                                )}
+                                {ticket.status === "IN_PROGRESS" && (
+                                    <>
+                                        <button onClick={() => handleQuickStatus("AWAITING_MATERIAL")} disabled={updating} className="w-full bg-yellow-500 hover:bg-yellow-600 text-white rounded-xl py-2 text-sm font-semibold transition-colors disabled:opacity-50">
+                                            📦 Awaiting Material
+                                        </button>
+                                        <button onClick={() => setShowProofUpload(true)} disabled={updating} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl py-2 text-sm font-semibold transition-colors disabled:opacity-50 mt-2">
+                                            ✅ Complete Work (Upload Proof)
+                                        </button>
+                                    </>
+                                )}
+
+                                {/* Proof Upload Modal/Block */}
+                                {showProofUpload && (
+                                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="mt-4 pt-4 border-t border-indigo-200 space-y-3">
+                                        <p className="text-sm font-medium text-indigo-900">Upload Photo Evidence</p>
+                                        <input
+                                            type="url"
+                                            value={proofUrl}
+                                            onChange={e => setProofUrl(e.target.value)}
+                                            placeholder="Valid image URL (e.g. https://imgur.com/...)"
+                                            className="w-full border border-indigo-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                        />
+                                        <div className="flex gap-2">
+                                            <button onClick={handleProofUpload} disabled={uploadingProof} className="flex-1 bg-indigo-600 text-white rounded-xl py-2 text-sm font-semibold transition-colors hover:bg-indigo-700">
+                                                {uploadingProof ? "Uploading..." : "Submit Proof"}
+                                            </button>
+                                            <button onClick={() => setShowProofUpload(false)} className="text-sm text-gray-500 px-3 hover:text-gray-800">Cancel</button>
+                                        </div>
+                                    </motion.div>
+                                )}
+                            </div>
+                        )}
+
                         {/* Status update */}
                         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
                             <h3 className="font-bold text-gray-900 mb-3">Update Status</h3>

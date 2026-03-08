@@ -1,22 +1,24 @@
 export type TicketStatus =
   | "OPEN"
   | "ASSIGNED"
+  | "SCHEDULED"
   | "IN_PROGRESS"
   | "PENDING_VERIFICATION"
   | "CLOSED"
   | "CLOSED_UNVERIFIED"
+  | "AWAITING_MATERIAL"
   | "REOPENED"
   | "REJECTED";
 
 export type PriorityLabel = "CRITICAL" | "HIGH" | "MEDIUM" | "LOW";
 
 export type UserRole =
-  | "WARD_OFFICER"
-  | "ZONAL_OFFICER"
-  | "DEPT_HEAD"
-  | "COMMISSIONER"
+  | "SUPER_ADMIN"
   | "COUNCILLOR"
-  | "SUPER_ADMIN";
+  | "SUPERVISOR"
+  | "JUNIOR_ENGINEER"
+  | "FIELD_STAFF"
+  | "PUBLIC_USER";
 
 export type DeptId =
   | "D01"

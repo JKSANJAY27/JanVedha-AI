@@ -73,6 +73,10 @@ export const officerApi = {
   getDashboardSummary: () =>
     api.get("/api/officer/dashboard/summary"),
   getTicket: (id: string) => api.get(`/api/officer/tickets/${id}`),
+  validateTicket: (id: string, data: { category_confirmed: boolean, is_duplicate: boolean, ward_confirmed: boolean }) =>
+    api.post(`/api/officer/tickets/${id}/validate`, data),
+  getJuniorEngineers: () => api.get("/api/officer/staff/junior-engineers"),
+  getFieldStaff: () => api.get("/api/officer/staff/field"),
   updateStatus: (id: string, status: string, reason?: string) =>
     api.patch(`/api/officer/tickets/${id}/status`, { status, reason }),
   assignTicket: (id: string, officerId?: string, technicianId?: string) =>
@@ -80,6 +84,15 @@ export const officerApi = {
       officer_id: officerId,
       technician_id: technicianId,
     }),
+  assignFieldStaff: (id: string, technicianId: string, scheduledDate: string) =>
+    api.post(`/api/officer/tickets/${id}/assign-field`, {
+      technician_id: technicianId,
+      scheduled_date: scheduledDate
+    }),
+  uploadProof: (id: string, photoUrl: string) =>
+    api.post(`/api/officer/tickets/${id}/proof`, { photo_url: photoUrl }),
+  getLocationHistory: (id: string) =>
+    api.get(`/api/officer/tickets/${id}/location-history`),
   addRemark: (id: string, text: string) =>
     api.post(`/api/officer/tickets/${id}/remark`, { text }),
   scheduleTicket: (id: string, scheduledDate: string) =>

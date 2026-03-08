@@ -20,9 +20,9 @@ interface AuthContextType {
     login: (token: string, user: User) => void;
     logout: () => void;
     isOfficer: boolean;
-    isWardPGO: boolean;
-    isDeptOfficer: boolean;
-    isTechnician: boolean;
+    isSupervisor: boolean;
+    isJuniorEngineer: boolean;
+    isFieldStaff: boolean;
     isCouncillor: boolean;
     isAdmin: boolean;
 }
@@ -34,9 +34,9 @@ const AuthContext = createContext<AuthContextType>({
     login: () => { },
     logout: () => { },
     isOfficer: false,
-    isWardPGO: false,
-    isDeptOfficer: false,
-    isTechnician: false,
+    isSupervisor: false,
+    isJuniorEngineer: false,
+    isFieldStaff: false,
     isCouncillor: false,
     isAdmin: false,
 });
@@ -72,16 +72,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const role = user?.role ?? "";
     const isOfficer = !!user && role !== "PUBLIC_USER";
-    const isWardPGO = role === "WARD_OFFICER";
-    const isDeptOfficer = role === "DEPT_HEAD";
-    const isTechnician = role === "TECHNICIAN";
+    const isSupervisor = role === "SUPERVISOR";
+    const isJuniorEngineer = role === "JUNIOR_ENGINEER";
+    const isFieldStaff = role === "FIELD_STAFF";
     const isCouncillor = role === "COUNCILLOR";
-    const isAdmin = role === "COMMISSIONER" || role === "SUPER_ADMIN";
+    const isAdmin = role === "SUPER_ADMIN";
 
     return (
         <AuthContext.Provider value={{
             user, token, loading, login, logout,
-            isOfficer, isWardPGO, isDeptOfficer, isTechnician, isCouncillor, isAdmin,
+            isOfficer, isSupervisor, isJuniorEngineer, isFieldStaff, isCouncillor, isAdmin,
         }}>
             {children}
         </AuthContext.Provider>
