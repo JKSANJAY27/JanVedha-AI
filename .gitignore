@@ -8,3 +8,5 @@ node_modules/
 uploads/
 venv/
 backend/.venv
+# Training model checkpoints (large binary files)
+backend/training/models/

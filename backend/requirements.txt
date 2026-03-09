@@ -17,6 +17,7 @@ langchain>=0.2.0
 langchain-core>=0.2.0
 langchain-google-genai>=1.0.0
 langchain-community>=0.2.0
+openai>=1.0.0              # Used for Sarvam-M via NVIDIA NIM API (OpenAI-compatible)
 
 # ── ML / Priority Model (LightGBM v2) ────────────────────────────────────────
 scikit-learn>=1.4.0          # Fallback if lightgbm unavailable

@@ -1,0 +1,30 @@
+# JanVedha AI — Core Backend Dependencies (Lightweight)
+# Excludes heavy ML/AI/Scraping libraries for faster setup
+
+# ── Web Framework ─────────────────────────────────────────────────────────────
+fastapi
+uvicorn[standard]
+pydantic-settings
+pydantic[email]
+python-multipart
+
+# ── MongoDB ───────────────────────────────────────────────────────────────────
+motor>=3.3.0
+beanie>=1.25.0
+
+# ── Auth & Security ───────────────────────────────────────────────────────────
+passlib[bcrypt]==1.7.4
+python-jose[cryptography]
+PyJWT==2.8.0
+
+# ── Caching / Sessions ────────────────────────────────────────────────────────
+redis==5.0.3
+
+# ── Storage ───────────────────────────────────────────────────────────────────
+aiofiles
+
+# ── HTTP ──────────────────────────────────────────────────────────────────────
+httpx
+
+# ── Documents / Templates (Optional but lightweight) ──────────────────────────
+jinja2
