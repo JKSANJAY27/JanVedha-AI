@@ -14,6 +14,7 @@ class Settings(BaseSettings):
 
     # AI keys
     GEMINI_API_KEY: str = ""
+    NVIDIA_API_KEY: str = ""
 
     # Comms keys
     TWILIO_ACCOUNT_SID: str = ""
@@ -22,6 +23,7 @@ class Settings(BaseSettings):
     TWILIO_WHATSAPP_NUMBER: str = ""
     MSG91_API_KEY: str = ""
     SENDGRID_API_KEY: str = ""
+    TELEGRAM_BOT_TOKEN: str = ""
 
     # Voice
     VOMYRA_API_KEY: str = ""
@@ -33,6 +35,10 @@ class Settings(BaseSettings):
     MINIO_SECRET_KEY: str = ""
     MINIO_BUCKET: str = "civicai"
     MINIO_USE_SSL: bool = False
+    
+    # GCP
+    GOOGLE_APPLICATION_CREDENTIALS: str = ""
+
     AWS_ACCESS_KEY_ID: str = ""
     AWS_SECRET_ACCESS_KEY: str = ""
     AWS_S3_BUCKET: str = ""

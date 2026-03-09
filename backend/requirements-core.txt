@@ -25,6 +25,9 @@ aiofiles
 
 # ── HTTP ──────────────────────────────────────────────────────────────────────
 httpx
+python-telegram-bot[webhooks]>=21.0
+google-cloud-speech
+google-cloud-texttospeech
 
 # ── Documents / Templates (Optional but lightweight) ──────────────────────────
 jinja2

@@ -27,9 +27,32 @@ async def lifespan(app: FastAPI):
     from app.services.ai.priority_agent import load_priority_model
     await load_priority_model()
 
+    # Start Telegram Bot if configured
+    from app.services.telegram_bot import get_bot_application
+    bot_app = get_bot_application()
+    if bot_app:
+        try:
+            await bot_app.initialize()
+            await bot_app.start()
+            import asyncio
+            # Run polling in background task to not block the FastAPI thread
+            asyncio.create_task(bot_app.updater.start_polling())
+            print("Telegram bot started.")
+        except Exception as e:
+            print(f"Failed to start telegram bot: {e}")
+
     yield
 
     # ── Shutdown ─────────────────────────────────────────────────────────────
+    bot_app = get_bot_application()
+    if bot_app:
+        try:
+            await bot_app.updater.stop()
+            await bot_app.stop()
+            await bot_app.shutdown()
+        except:
+            pass
+
     await close_mongodb()
 
 

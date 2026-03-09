@@ -12,6 +12,7 @@ class TicketSource(str, enum.Enum):
     SOCIAL_MEDIA = "SOCIAL_MEDIA"
     NEWS = "NEWS"
     CPGRAMS = "CPGRAMS"
+    TELEGRAM = "TELEGRAM"
 
 
 class TicketStatus(str, enum.Enum):
