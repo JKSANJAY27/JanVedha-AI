@@ -34,18 +34,27 @@ async def get_calendar_events(
     year: Optional[int] = Query(None),
     current_user: UserMongo = Depends(get_current_user),
 ):
-    """Return scheduled events filtered by dept/ward/month."""
+    """Return scheduled events filtered by dept/ward/month.
+    For JUNIOR_ENGINEER: always scoped to their own dept_id from their profile.
+    """
     from app.enums import UserRole
 
     query = {}
-    # Supervisors see all schedule events (since they route unassigned tickets too)
-    if current_user.role != UserRole.SUPERVISOR:
+
+    if current_user.role == UserRole.JUNIOR_ENGINEER:
+        # Hard-scope to JE's own department — cannot see other depts' calendars
+        if current_user.dept_id:
+            query["dept_id"] = current_user.dept_id
+        if current_user.ward_id:
+            query["ward_id"] = current_user.ward_id
+    else:
+        # All other roles: use query params if provided
         if dept_id:
             query["dept_id"] = dept_id
         if ward_id:
             query["ward_id"] = ward_id
-            
-    # Default to current year if not provided
+
+    # Month/year filter
     if month:
         now = datetime.utcnow()
         yr = year or now.year
@@ -56,9 +65,7 @@ async def get_calendar_events(
             end = datetime(yr, month + 1, 1)
         query["scheduled_date"] = {"$gte": start, "$lt": end}
 
-    print(f"DEBUG /events: Query -> {query}")
     events = await ScheduledEventMongo.find(query).sort("scheduled_date").to_list()
-    print(f"DEBUG /events: Found -> {len(events)} events")
 
     return [
         {

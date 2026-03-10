@@ -46,12 +46,12 @@ export default function NavBar() {
                         <div className="flex items-center gap-6">
                             {!isOfficer && (
                                 <>
+                                    {isPublicUser && navLink("/dashboard", "Dashboard")}
                                     {navLink("/", "Submit")}
-                                    {navLink("/track", "Track")}
                                 </>
                             )}
                             {navLink("/map", "Issue Heatmap")}
-                            {navLink("/ward-performance", "Leaderboard")}
+                            {!isPublicUser && navLink("/ward-performance", "Leaderboard")}
 
                             {/* Public user: My Tickets */}
                             {isPublicUser && navLink("/my-tickets", "My Tickets")}

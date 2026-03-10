@@ -9,7 +9,6 @@ import toast from "react-hot-toast";
 import { getErrorMessage } from "@/lib/getErrorMessage";
 import { publicApi } from "@/lib/api";
 import { formatDate } from "@/lib/formatters";
-import PriorityBadge from "@/components/PriorityBadge";
 import LoadingOverlay from "@/components/LoadingOverlay";
 import Link from "next/link";
 import { DEPT_NAMES } from "@/lib/constants";
@@ -46,6 +45,8 @@ const AI_STEPS = [
   "✅ Finalizing your ticket…",
 ];
 
+// ─── Main Submit Page ─────────────────────────────────────────────────────────
+
 export default function SubmitComplaintPage() {
   const { user } = useAuth();
   const isPublicUser = !!user && user.role === "PUBLIC_USER";
@@ -72,7 +73,6 @@ export default function SubmitComplaintPage() {
   const [aiStep, setAiStep] = useState(0);
   const [result, setResult] = useState<TicketResult | null>(null);
   const [locationLoading, setLocationLoading] = useState(false);
-  // Store the raw GPS coords so we can send them with the complaint payload
   const [gpsCoords, setGpsCoords] = useState<{ lat: number; lng: number } | null>(null);
   const locationRef = useRef<HTMLInputElement | null>(null);
 
@@ -85,7 +85,7 @@ export default function SubmitComplaintPage() {
 
   const detectLocation = () => {
     setLocationLoading(true);
-    setGpsCoords(null); // reset on each attempt
+    setGpsCoords(null);
 
     const fallbackToIp = async () => {
       try {
@@ -95,40 +95,30 @@ export default function SubmitComplaintPage() {
           const lat = parseFloat(data.latitude);
           const lng = parseFloat(data.longitude);
           setGpsCoords({ lat, lng });
-
           let addr = "";
           if (data.city) addr += data.city + ", ";
           if (data.region) addr += data.region + ", ";
           if (data.country) addr += data.country;
           if (!addr) addr = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
-
           if (locationRef.current) locationRef.current.value = addr;
           setValue("location_text", addr, { shouldValidate: true });
           toast.success("Location approximated via IP");
-        } else {
-          throw new Error("No IP location data");
-        }
-      } catch (err) {
+        } else throw new Error("No IP location data");
+      } catch {
         toast.error("Location access failed. Please enter manually.");
       } finally {
         setLocationLoading(false);
       }
     };
 
-    if (!navigator.geolocation) {
-      fallbackToIp();
-      return;
-    }
+    if (!navigator.geolocation) { fallbackToIp(); return; }
 
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         const { latitude, longitude } = pos.coords;
-        // Store exact coords to send with the ticket payload
         setGpsCoords({ lat: latitude, lng: longitude });
         try {
-          const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`
-          );
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`);
           const data = await res.json();
           const addr = data.display_name || `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
           if (locationRef.current) locationRef.current.value = addr;
@@ -140,10 +130,7 @@ export default function SubmitComplaintPage() {
         }
         setLocationLoading(false);
       },
-      (error) => {
-        console.warn("GPS Failed:", error.message);
-        fallbackToIp();
-      },
+      (error) => { console.warn("GPS Failed:", error.message); fallbackToIp(); },
       { enableHighAccuracy: true, timeout: 6000, maximumAge: 0 }
     );
   };
@@ -157,13 +144,10 @@ export default function SubmitComplaintPage() {
     reader.readAsDataURL(file);
   };
 
-  // Simulate progressive AI steps
   useEffect(() => {
     if (!isSubmitting) return;
     setAiStep(0);
-    const intervals = AI_STEPS.map((_, i) =>
-      setTimeout(() => setAiStep(i), i * 800)
-    );
+    const intervals = AI_STEPS.map((_, i) => setTimeout(() => setAiStep(i), i * 800));
     return () => intervals.forEach(clearTimeout);
   }, [isSubmitting]);
 
@@ -178,15 +162,11 @@ export default function SubmitComplaintPage() {
       consent_given: true,
       reporter_name: data.reporter_name || null,
       photo_url: null,
-      // Include GPS coords if user clicked the GPS button
       ...(gpsCoords ? { lat: gpsCoords.lat, lng: gpsCoords.lng } : {}),
     };
-    if (isPublicUser && user) {
-      jsonData.reporter_user_id = user.id;
-    }
+    if (isPublicUser && user) jsonData.reporter_user_id = user.id;
 
     try {
-      // Wait for animation
       await new Promise((r) => setTimeout(r, AI_STEPS.length * 850 + 500));
       const res = await publicApi.submitComplaint(jsonData as any);
       setResult(res.data);
@@ -196,7 +176,6 @@ export default function SubmitComplaintPage() {
       setPhotoPreview(null);
     } catch (err: any) {
       const detail = err?.response?.data?.detail;
-      // AI requested clarification → show the question prominently
       if (err?.response?.status === 400 && detail?.question) {
         toast.error(`💬 ${detail.question}`, { duration: 6000 });
       } else {
@@ -209,21 +188,16 @@ export default function SubmitComplaintPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 via-white to-slate-50">
-      {/* Hero */}
+
+      {/* ── Hero (shown to everyone as the header for the submit form) ── */}
       <section className="bg-gradient-to-br from-blue-700 via-blue-800 to-indigo-900 text-white py-16 px-4">
         <div className="max-w-3xl mx-auto text-center">
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
+          <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
             <div className="inline-flex items-center gap-2 bg-white/10 rounded-full px-4 py-1.5 mb-5 text-sm font-medium backdrop-blur-sm border border-white/20">
               <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
               AI-Powered Civic Management
             </div>
-            <h1 className="text-4xl md:text-5xl font-extrabold mb-4 leading-tight">
-              Report a Civic Issue
-            </h1>
+            <h1 className="text-4xl md:text-5xl font-extrabold mb-4 leading-tight">Report a Civic Issue</h1>
             <p className="text-blue-200 text-lg max-w-xl mx-auto">
               Submit your complaint and our AI pipeline will instantly classify, prioritize, and route it to the right department.
             </p>
@@ -242,60 +216,33 @@ export default function SubmitComplaintPage() {
               className="bg-white rounded-3xl shadow-xl p-8 border border-green-100"
             >
               <div className="text-center mb-6">
-                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center text-3xl mx-auto mb-4">
-                  ✅
-                </div>
-                <h2 className="text-2xl font-bold text-gray-900">Ticket Created!</h2>
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center text-3xl mx-auto mb-4">✅</div>
+                <h2 className="text-2xl font-bold text-gray-900">Complaint Submitted!</h2>
                 <p className="text-gray-500 mt-1">Your complaint has been processed by our AI pipeline</p>
               </div>
 
               <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-5 mb-5 text-center">
                 <p className="text-xs text-gray-500 mb-1">Your Ticket Code</p>
-                <p className="text-3xl font-mono font-extrabold text-blue-700 tracking-wider">
-                  {result.ticket_code}
-                </p>
+                <p className="text-3xl font-mono font-extrabold text-blue-700 tracking-wider">{result.ticket_code}</p>
+                <p className="text-xs text-gray-400 mt-1">Save this code for reference</p>
               </div>
 
               <div className="grid grid-cols-2 gap-4 mb-5">
                 <div className="bg-gray-50 rounded-xl p-3">
                   <p className="text-xs text-gray-500 mb-1">Department</p>
-                  <p className="font-semibold text-gray-800 text-sm">
-                    {DEPT_NAMES[result.dept_id] ?? result.dept_id}
-                  </p>
-                </div>
-                <div className="bg-gray-50 rounded-xl p-3">
-                  <p className="text-xs text-gray-500 mb-1">Priority</p>
-                  <PriorityBadge label={result.priority_label} score={result.priority_score} />
-                </div>
-                <div className="bg-gray-50 rounded-xl p-3">
-                  <p className="text-xs text-gray-500 mb-1">SLA Deadline</p>
-                  <p className="font-medium text-gray-800 text-sm">{formatDate(result.sla_deadline)}</p>
+                  <p className="font-semibold text-gray-800 text-sm">{DEPT_NAMES[result.dept_id] ?? result.dept_id}</p>
                 </div>
                 <div className="bg-gray-50 rounded-xl p-3">
                   <p className="text-xs text-gray-500 mb-1">Status</p>
                   <p className="font-medium text-blue-700 text-sm">{result.status}</p>
                 </div>
+                {result.sla_deadline && (
+                  <div className="bg-blue-50 rounded-xl p-3 col-span-2">
+                    <p className="text-xs text-blue-500 mb-1">Expected Resolution By</p>
+                    <p className="font-semibold text-blue-800 text-sm">{formatDate(result.sla_deadline)}</p>
+                  </div>
+                )}
               </div>
-
-              {result.ai_routing_reason && (
-                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4">
-                  <p className="text-xs font-medium text-amber-700 mb-1">🤖 AI Routing Reason</p>
-                  <p className="text-sm text-amber-800">{result.ai_routing_reason}</p>
-                </div>
-              )}
-
-              {result.suggestions && result.suggestions.length > 0 && (
-                <div className="mb-4">
-                  <p className="text-xs font-medium text-gray-500 mb-2">💡 AI Suggestions</p>
-                  <ul className="space-y-1.5">
-                    {result.suggestions.map((s, i) => (
-                      <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
-                        <span className="text-blue-500 mt-0.5">•</span> {s}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
 
               {result.seasonal_alert && (
                 <div className="bg-orange-50 border border-orange-200 rounded-xl p-3 mb-4 text-sm text-orange-800">
@@ -304,12 +251,21 @@ export default function SubmitComplaintPage() {
               )}
 
               <div className="flex gap-3 mt-5">
-                <Link
-                  href={`/track/${result.ticket_code}`}
-                  className="flex-1 text-center bg-blue-600 text-white rounded-xl py-3 font-semibold hover:bg-blue-700 transition-colors"
-                >
-                  Track My Ticket →
-                </Link>
+                {isPublicUser ? (
+                  <Link
+                    href="/dashboard"
+                    className="flex-1 text-center bg-blue-600 text-white rounded-xl py-3 font-semibold hover:bg-blue-700 transition-colors"
+                  >
+                    Go back to Dashboard →
+                  </Link>
+                ) : (
+                  <Link
+                    href={`/track/${result.ticket_code}`}
+                    className="flex-1 text-center bg-blue-600 text-white rounded-xl py-3 font-semibold hover:bg-blue-700 transition-colors"
+                  >
+                    Track My Ticket →
+                  </Link>
+                )}
                 <button
                   onClick={() => setResult(null)}
                   className="flex-1 text-center border border-gray-200 text-gray-600 rounded-xl py-3 font-semibold hover:bg-gray-50 transition-colors"
@@ -317,21 +273,13 @@ export default function SubmitComplaintPage() {
                   Submit Another
                 </button>
               </div>
-              {/* Map link — prominent so users know their ticket is on the map */}
+
               <Link
                 href="/map"
                 className="mt-3 flex items-center justify-center gap-2 w-full bg-green-50 border border-green-200 text-green-700 rounded-xl py-2.5 text-sm font-semibold hover:bg-green-100 transition-colors"
               >
                 📍 View on Issue Map
               </Link>
-              {isPublicUser && (
-                <Link
-                  href="/my-tickets"
-                  className="block text-center text-sm text-blue-500 font-medium mt-3 hover:text-blue-700 transition-colors"
-                >
-                  View in My Tickets →
-                </Link>
-              )}
             </motion.div>
           ) : (
             <motion.div
@@ -341,7 +289,9 @@ export default function SubmitComplaintPage() {
               exit={{ opacity: 0 }}
               className="bg-white rounded-3xl shadow-xl p-8 border border-gray-100"
             >
-              <h2 className="text-xl font-bold text-gray-900 mb-6">Submit a Complaint</h2>
+              <h2 className="text-xl font-bold text-gray-900 mb-6">
+                📝 Submit a Complaint
+              </h2>
 
               <form onSubmit={handleSubmit(handleJsonSubmit)} className="space-y-5">
                 {/* Description */}
@@ -355,43 +305,26 @@ export default function SubmitComplaintPage() {
                     placeholder="Describe the civic issue in detail (e.g., broken streetlight near St. Mary's School gate)…"
                     className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none placeholder:text-gray-400"
                   />
-                  {errors.description && (
-                    <p className="text-red-500 text-xs mt-1">{errors.description.message}</p>
-                  )}
+                  {errors.description && <p className="text-red-500 text-xs mt-1">{errors.description.message}</p>}
                 </div>
 
                 {/* Photo upload */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                    Photo Evidence (optional)
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Photo Evidence (optional)</label>
                   <div className="flex items-center gap-4">
                     <label className="flex-1 cursor-pointer border-2 border-dashed border-gray-200 rounded-xl p-4 text-center hover:border-blue-400 hover:bg-blue-50 transition-all">
                       <span className="text-2xl block mb-1">📷</span>
-                      <span className="text-sm text-gray-500">
-                        {photo ? photo.name : "Click to upload photo"}
-                      </span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={onPhotoChange}
-                      />
+                      <span className="text-sm text-gray-500">{photo ? photo.name : "Click to upload photo"}</span>
+                      <input type="file" accept="image/*" className="hidden" onChange={onPhotoChange} />
                     </label>
                     {photoPreview && (
                       <div className="relative">
-                        <img
-                          src={photoPreview}
-                          alt="Preview"
-                          className="w-20 h-20 object-cover rounded-xl border border-gray-200"
-                        />
+                        <img src={photoPreview} alt="Preview" className="w-20 h-20 object-cover rounded-xl border border-gray-200" />
                         <button
                           type="button"
                           onClick={() => { setPhoto(null); setPhotoPreview(null); }}
                           className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full text-xs flex items-center justify-center"
-                        >
-                          ✕
-                        </button>
+                        >✕</button>
                       </div>
                     )}
                   </div>
@@ -416,24 +349,16 @@ export default function SubmitComplaintPage() {
                       disabled={locationLoading}
                       className="px-4 py-3 bg-blue-50 border border-blue-200 text-blue-600 rounded-xl text-sm font-medium hover:bg-blue-100 transition-colors disabled:opacity-50 flex items-center gap-1.5"
                     >
-                      {locationLoading ? (
-                        <span className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
-                      ) : (
-                        "📍 GPS"
-                      )}
+                      {locationLoading ? <span className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" /> : "📍 GPS"}
                     </button>
                   </div>
-                  {errors.location_text && (
-                    <p className="text-red-500 text-xs mt-1">{errors.location_text.message}</p>
-                  )}
+                  {errors.location_text && <p className="text-red-500 text-xs mt-1">{errors.location_text.message}</p>}
                 </div>
 
                 {/* Name + Phone row */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                      Your Name (optional)
-                    </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Your Name (optional)</label>
                     <input
                       {...register("reporter_name")}
                       type="text"
@@ -451,9 +376,7 @@ export default function SubmitComplaintPage() {
                       placeholder="10-digit number"
                       className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
-                    {errors.reporter_phone && (
-                      <p className="text-red-500 text-xs mt-1">{errors.reporter_phone.message}</p>
-                    )}
+                    {errors.reporter_phone && <p className="text-red-500 text-xs mt-1">{errors.reporter_phone.message}</p>}
                   </div>
                 </div>
 
@@ -468,9 +391,7 @@ export default function SubmitComplaintPage() {
                     I consent to share my contact information with the municipal authority for complaint resolution
                   </span>
                 </label>
-                {errors.consent_given && (
-                  <p className="text-red-500 text-xs -mt-3">{errors.consent_given.message}</p>
-                )}
+                {errors.consent_given && <p className="text-red-500 text-xs -mt-3">{errors.consent_given.message}</p>}
 
                 <button
                   type="submit"
@@ -495,7 +416,7 @@ export default function SubmitComplaintPage() {
           )}
         </AnimatePresence>
 
-        {/* Info cards */}
+        {/* Info cards (shown for everyone on the submit page) */}
         <div className="grid grid-cols-3 gap-4 mt-8">
           {[
             { icon: "🤖", title: "AI-Powered", desc: "Instant classification & routing" },

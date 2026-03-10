@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
 import { officerApi } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
@@ -38,6 +38,12 @@ interface Ticket {
     lng?: number;
 }
 
+interface FieldStaff {
+    id: string;
+    name: string;
+    email: string;
+}
+
 interface DeptStat {
     dept_id: string;
     open: number;
@@ -67,6 +73,9 @@ const PRIORITY_ICONS: Record<string, string> = {
     CRITICAL: "🔴", HIGH: "🟠", MEDIUM: "🟡", LOW: "🟢",
 };
 
+// Valid statuses after removing deprecated ones
+const STATUS_FILTERS = ["ALL", "OPEN", "ASSIGNED", "SCHEDULED", "IN_PROGRESS", "CLOSED"];
+
 // ─── Ticket List Sub-component ────────────────────────────────────────────────
 
 function TicketList({ tickets, showAssign, onStatusUpdate, onOpenAssignModal }: {
@@ -77,7 +86,6 @@ function TicketList({ tickets, showAssign, onStatusUpdate, onOpenAssignModal }: 
 }) {
     const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({ CRITICAL: true });
     const [statusFilter, setStatusFilter] = useState("ALL");
-    const [updatingId, setUpdatingId] = useState<string | null>(null);
 
     const filtered = statusFilter === "ALL"
         ? tickets
@@ -87,19 +95,6 @@ function TicketList({ tickets, showAssign, onStatusUpdate, onOpenAssignModal }: 
         acc[p] = filtered.filter(t => t.priority_label === p);
         return acc;
     }, {});
-
-    const handleQuickStatus = async (ticketId: string, newStatus: string) => {
-        setUpdatingId(ticketId);
-        try {
-            await officerApi.updateStatus(ticketId, newStatus);
-            toast.success("Status updated");
-            onStatusUpdate?.(ticketId, newStatus);
-        } catch {
-            toast.error("Update failed");
-        } finally {
-            setUpdatingId(null);
-        }
-    };
 
     const getSlaCountdown = (deadline?: string) => {
         if (!deadline) return null;
@@ -116,7 +111,7 @@ function TicketList({ tickets, showAssign, onStatusUpdate, onOpenAssignModal }: 
             {/* Filter bar */}
             <div className="flex items-center gap-2 flex-wrap">
                 <p className="text-sm font-medium text-gray-600">Filter:</p>
-                {["ALL", "OPEN", "ASSIGNED", "IN_PROGRESS", "AWAITING_MATERIAL", "PENDING_VERIFICATION", "CLOSED"].map(s => (
+                {STATUS_FILTERS.map(s => (
                     <button key={s} onClick={() => setStatusFilter(s)}
                         className={`text-xs px-3 py-1.5 rounded-full font-medium transition-all ${statusFilter === s
                             ? "bg-blue-600 text-white shadow-sm" : "bg-white text-gray-600 border border-gray-200 hover:border-blue-300"}`}>
@@ -160,6 +155,7 @@ function TicketList({ tickets, showAssign, onStatusUpdate, onOpenAssignModal }: 
                                         <tbody className="divide-y divide-gray-100 bg-white">
                                             {group.map((ticket, i) => {
                                                 const sla = getSlaCountdown(ticket.sla_deadline);
+                                                const canAssign = showAssign && ["OPEN", "ASSIGNED", "SCHEDULED"].includes(ticket.status) && onOpenAssignModal;
                                                 return (
                                                     <motion.tr key={ticket.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.03 }} className="hover:bg-gray-50 transition-colors">
                                                         <td className="px-4 py-3 font-mono font-bold text-blue-600">{ticket.ticket_code}</td>
@@ -171,11 +167,10 @@ function TicketList({ tickets, showAssign, onStatusUpdate, onOpenAssignModal }: 
                                                         <td className="px-4 py-3"><StatusBadge status={ticket.status} size="sm" /></td>
                                                         <td className={`px-4 py-3 ${sla ? sla.cls : "text-gray-400"}`}>{sla ? sla.label : "N/A"}</td>
                                                         <td className="px-4 py-3 text-right space-x-2 whitespace-nowrap">
-                                                            {showAssign && ticket.status === "IN_PROGRESS" && (
-                                                                <button disabled={updatingId === ticket.id} onClick={() => handleQuickStatus(ticket.id, "PENDING_VERIFICATION")} className="text-xs bg-cyan-50 text-cyan-700 border border-cyan-200 rounded px-2.5 py-1.5 font-medium transition-colors disabled:opacity-50">Mark Done</button>
-                                                            )}
-                                                            {showAssign && ticket.status === "OPEN" && onOpenAssignModal && (
-                                                                <button onClick={() => onOpenAssignModal(ticket)} className="text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 rounded px-2.5 py-1.5 font-medium transition-colors hover:bg-emerald-100">Assign &amp; Schedule</button>
+                                                            {canAssign && (
+                                                                <button onClick={() => onOpenAssignModal(ticket)} className="text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 rounded px-2.5 py-1.5 font-medium transition-colors hover:bg-emerald-100">
+                                                                    {ticket.status === "SCHEDULED" ? "Assign Technician" : "Schedule & Assign"}
+                                                                </button>
                                                             )}
                                                             <Link href={`/officer/tickets/${ticket.id}`} className="text-xs font-medium text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 rounded px-3 py-1.5 transition-colors">View →</Link>
                                                         </td>
@@ -282,7 +277,7 @@ function SupervisorDashboard({ user }: { user: { name: string; ward_id?: number;
                 </div>
             )}
 
-            {/* Full ticket list */}
+            {/* Full ticket list — no assign actions for supervisor */}
             <TicketList tickets={tickets} />
         </div>
     );
@@ -295,14 +290,34 @@ function JuniorEngineerDashboard({ user }: { user: { name: string; dept_id?: str
     const [tickets, setTickets] = useState<Ticket[]>([]);
     const [loading, setLoading] = useState(true);
     const [assignModalTicket, setAssignModalTicket] = useState<Ticket | null>(null);
+
+    // Modal state: step 1 = set deadline, step 2 = assign technician
+    const [modalStep, setModalStep] = useState<1 | 2>(1);
+    const [completionDate, setCompletionDate] = useState("");
+    const [settingDeadline, setSettingDeadline] = useState(false);
+
+    // Step 2: technician selection
+    const [fieldStaff, setFieldStaff] = useState<FieldStaff[]>([]);
+    const [loadingStaff, setLoadingStaff] = useState(false);
+    const [selectedTechId, setSelectedTechId] = useState("");
+    const [assigningTech, setAssigningTech] = useState(false);
+
+    // AI Smart Schedule fallback
     const [smartSchedule, setSmartSchedule] = useState<any>(null);
     const [gettingSmartSchedule, setGettingSmartSchedule] = useState(false);
-    const [updating, setUpdating] = useState(false);
+    const [useAiMode, setUseAiMode] = useState(false);
+    const [applyingAi, setApplyingAi] = useState(false);
+
+    const refreshTickets = useCallback(() => {
+        officerApi.getTickets(100).then(res => {
+            const deptTickets = user.dept_id ? res.data.filter((t: Ticket) => t.dept_id === user.dept_id) : res.data;
+            setTickets(deptTickets);
+        });
+    }, [user.dept_id]);
 
     useEffect(() => {
         officerApi.getTickets(100)
             .then(res => {
-                // For safety, frontend filter as well, though backend already does it
                 const deptTickets = user.dept_id ? res.data.filter((t: Ticket) => t.dept_id === user.dept_id) : res.data;
                 setTickets(deptTickets);
             })
@@ -314,10 +329,81 @@ function JuniorEngineerDashboard({ user }: { user: { name: string; dept_id?: str
         setTickets(prev => prev.map(t => t.id === id ? { ...t, status } : t));
     };
 
-    const handleGetSmartSchedule = async (ticket: Ticket) => {
+    const handleOpenAssign = (ticket: Ticket) => {
+        setAssignModalTicket(ticket);
+        setSmartSchedule(null);
+        setUseAiMode(false);
+        setCompletionDate("");
+        setSelectedTechId("");
+        // If already SCHEDULED (deadline was set), jump to step 2 directly
+        if (ticket.status === "SCHEDULED") {
+            setModalStep(2);
+            loadFieldStaff();
+        } else {
+            setModalStep(1);
+        }
+    };
+
+    const closeModal = () => {
+        setAssignModalTicket(null);
+        setSmartSchedule(null);
+        setModalStep(1);
+    };
+
+    // Step 1: Set completion deadline → auto SCHEDULED
+    const handleSetDeadline = async () => {
+        if (!assignModalTicket || !completionDate) return;
+        setSettingDeadline(true);
+        try {
+            await officerApi.setCompletionDeadline(assignModalTicket.id, completionDate, false);
+            toast.success("Completion date set — ticket is now SCHEDULED");
+            handleStatusUpdate(assignModalTicket.id, "SCHEDULED");
+            setAssignModalTicket(prev => prev ? { ...prev, status: "SCHEDULED" } : null);
+            setModalStep(2);
+            loadFieldStaff();
+        } catch (err: any) {
+            const msg = err?.response?.data?.detail?.message || err?.response?.data?.detail || "Failed to set deadline";
+            toast.error(msg);
+        } finally {
+            setSettingDeadline(false);
+        }
+    };
+
+    const loadFieldStaff = async () => {
+        setLoadingStaff(true);
+        try {
+            const res = await officerApi.getFieldStaff();
+            setFieldStaff(res.data);
+        } catch {
+            toast.error("Could not load field staff");
+        } finally {
+            setLoadingStaff(false);
+        }
+    };
+
+    // Step 2: Assign technician → auto IN_PROGRESS
+    const handleAssignTechnician = async () => {
+        if (!assignModalTicket || !selectedTechId || !completionDate) return;
+        setAssigningTech(true);
+        try {
+            await officerApi.assignFieldStaff(assignModalTicket.id, selectedTechId, completionDate);
+            toast.success("Technician assigned — ticket is now IN PROGRESS");
+            handleStatusUpdate(assignModalTicket.id, "IN_PROGRESS");
+            closeModal();
+            refreshTickets();
+        } catch {
+            toast.error("Failed to assign technician");
+        } finally {
+            setAssigningTech(false);
+        }
+    };
+
+    // AI Smart Schedule alternative
+    const handleGetSmartSchedule = async () => {
+        if (!assignModalTicket) return;
         setGettingSmartSchedule(true);
         try {
-            const res = await officerApi.getSmartSchedule(ticket.id);
+            const res = await officerApi.getSmartSchedule(assignModalTicket.id);
             setSmartSchedule(res.data);
             toast.success("AI generated a schedule suggestion.");
         } catch (error: any) {
@@ -329,42 +415,34 @@ function JuniorEngineerDashboard({ user }: { user: { name: string; dept_id?: str
 
     const handleApplySmartSchedule = async () => {
         if (!assignModalTicket || !smartSchedule) return;
-        setUpdating(true);
+        setApplyingAi(true);
         try {
-            const payload = {
+            await officerApi.applySmartSchedule(assignModalTicket.id, {
                 suggested_date: smartSchedule.suggested_date,
                 suggested_technician_id: smartSchedule.suggested_technician_id,
-                postponed_tickets: smartSchedule.postponed_tickets
-            };
-            await officerApi.applySmartSchedule(assignModalTicket.id, payload);
-            toast.success("Assignment applied successfully!");
-            setSmartSchedule(null);
-            setAssignModalTicket(null);
-            // Refresh tickets
-            officerApi.getTickets(100).then(res => {
-                const deptTickets = user.dept_id ? res.data.filter((t: Ticket) => t.dept_id === user.dept_id) : res.data;
-                setTickets(deptTickets);
+                postponed_tickets: smartSchedule.postponed_tickets,
             });
+            toast.success("AI assignment applied — ticket is now IN PROGRESS");
+            closeModal();
+            refreshTickets();
         } catch {
-            toast.error("Failed to apply schedule");
+            toast.error("Failed to apply AI schedule");
         } finally {
-            setUpdating(false);
+            setApplyingAi(false);
         }
-    };
-
-    const handleOpenAssign = (ticket: Ticket) => {
-        setAssignModalTicket(ticket);
-        setSmartSchedule(null);
     };
 
     const stats = {
         total: tickets.length,
-        open: tickets.filter(t => ["ASSIGNED", "SCHEDULED", "IN_PROGRESS"].includes(t.status)).length,
+        scheduled: tickets.filter(t => t.status === "SCHEDULED").length,
+        inProgress: tickets.filter(t => t.status === "IN_PROGRESS").length,
         critical: tickets.filter(t => t.priority_label === "CRITICAL").length,
-        awaiting: tickets.filter(t => t.status === "AWAITING_MATERIAL").length,
     };
 
     if (loading) return <div className="flex justify-center py-20"><div className="w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin" /></div>;
+
+    // Today's min date for the date picker
+    const todayStr = new Date().toISOString().split("T")[0];
 
     return (
         <div className="space-y-8">
@@ -378,73 +456,178 @@ function JuniorEngineerDashboard({ user }: { user: { name: string; dept_id?: str
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <StatCard label="My Tickets" value={stats.total} icon="📋" color="blue" />
-                <StatCard label="Active" value={stats.open} icon="⚡" color="orange" />
+                <StatCard label="Scheduled" value={stats.scheduled} icon="📅" color="purple" />
+                <StatCard label="In Progress" value={stats.inProgress} icon="⚡" color="orange" />
                 <StatCard label="Critical" value={stats.critical} icon="🚨" color="red" />
-                <StatCard label="Awaiting Material" value={stats.awaiting} icon="📦" color="purple" />
             </div>
+
             <TicketList tickets={tickets} showAssign onStatusUpdate={handleStatusUpdate} onOpenAssignModal={handleOpenAssign} />
 
-            {/* Smart Assign Modal */}
-            {assignModalTicket && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-                    <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-white rounded-2xl w-full max-w-lg shadow-xl overflow-hidden">
-                        <div className="flex justify-between items-center p-5 border-b border-gray-100 bg-emerald-50 text-emerald-900">
-                            <div>
-                                <h3 className="font-bold text-lg flex items-center gap-2">👷 Assign Field Staff</h3>
-                                <p className="text-xs text-emerald-700 font-mono mt-1">{assignModalTicket.ticket_code} — {assignModalTicket.priority_label} PRIORITY</p>
-                            </div>
-                            <button onClick={() => setAssignModalTicket(null)} className="p-1 hover:bg-emerald-200/50 rounded-full transition-colors">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
-                            </button>
-                        </div>
-                        <div className="p-5">
-                            {!smartSchedule ? (
-                                <div className="text-center py-6">
-                                    <button
-                                        onClick={() => handleGetSmartSchedule(assignModalTicket)}
-                                        disabled={gettingSmartSchedule}
-                                        className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white rounded-xl py-3 font-semibold transition-colors disabled:opacity-50 shadow-sm flex items-center justify-center gap-2 text-lg"
-                                    >
-                                        ✨ {gettingSmartSchedule ? "Analyzing Staff & SLAs..." : "Generate AI Smart Schedule"}
-                                    </button>
-                                    <p className="text-xs text-gray-500 mt-4">The AI will optimally schedule this issue based on technician availability, existing SLAs, and priority criticalness.</p>
-                                </div>
-                            ) : (
-                                <div className="space-y-4">
-                                    <p className="text-sm font-semibold text-teal-800 uppercase tracking-wide">AI Recommendation</p>
-                                    <div className="space-y-2">
-                                        <p className="text-sm text-gray-800 border-b border-gray-100 pb-2"><span className="text-gray-500 w-24 inline-block">Technician:</span> <span className="font-semibold text-lg">{smartSchedule.technician_name}</span></p>
-                                        <p className="text-sm text-gray-800 border-b border-gray-100 pb-2"><span className="text-gray-500 w-24 inline-block">Date:</span> <span className="font-semibold text-lg">{new Date(smartSchedule.suggested_date).toLocaleDateString("en-IN", { dateStyle: "long" })}</span></p>
+            {/* ── Schedule & Assign Modal ── */}
+            <AnimatePresence>
+                {assignModalTicket && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-white rounded-2xl w-full max-w-lg shadow-xl overflow-hidden">
+                            {/* Header */}
+                            <div className="bg-teal-700 text-white p-5 flex justify-between items-start">
+                                <div>
+                                    <h3 className="font-bold text-lg">📋 Schedule & Assign Ticket</h3>
+                                    <p className="text-teal-200 text-xs font-mono mt-0.5">{assignModalTicket.ticket_code} — {assignModalTicket.priority_label}</p>
+                                    {/* Step progress */}
+                                    <div className="flex items-center gap-2 mt-3">
+                                        {[
+                                            { n: 1, label: "Set Date" },
+                                            { n: 2, label: "Assign Technician" },
+                                        ].map(s => (
+                                            <div key={s.n} className="flex items-center gap-1.5">
+                                                <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${modalStep >= s.n ? "bg-white text-teal-800" : "bg-teal-600 text-teal-300"}`}>{s.n}</span>
+                                                <span className={`text-xs font-medium ${modalStep >= s.n ? "text-white" : "text-teal-400"}`}>{s.label}</span>
+                                                {s.n < 2 && <span className="text-teal-500 text-xs mx-1">→</span>}
+                                            </div>
+                                        ))}
                                     </div>
-                                    {smartSchedule.postponed_tickets && smartSchedule.postponed_tickets.length > 0 && (
-                                        <div className="bg-orange-50 p-4 rounded-xl border border-orange-200 mt-4">
-                                            <p className="text-sm font-bold text-orange-800 flex items-center gap-2 mb-2">⚠️ Preemption Warning</p>
-                                            <p className="text-xs text-orange-700 mb-3 leading-relaxed">To accommodate an SLA-safe slot for this issue, the AI will postpone the following lower-priority tickets:</p>
-                                            <div className="space-y-2 max-h-32 overflow-y-auto">
-                                                {smartSchedule.postponed_tickets.map((pt: any) => (
-                                                    <div key={pt.ticket_id} className="bg-white/80 p-2 rounded border border-orange-100 text-xs">
-                                                        <span className="font-mono font-bold text-gray-700">{pt.ticket_code}</span> moved to <span className="font-semibold text-orange-800">{new Date(pt.new_date).toLocaleDateString("en-IN")}</span>
+                                </div>
+                                <button onClick={closeModal} className="p-1 hover:bg-teal-600 rounded-full transition-colors">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+                                </button>
+                            </div>
+
+                            <div className="p-5">
+                                {/* ── Step 1: Set Completion Date ── */}
+                                {modalStep === 1 && !useAiMode && (
+                                    <div className="space-y-4">
+                                        <div>
+                                            <p className="text-sm font-semibold text-gray-800 mb-1">Set Completion Deadline</p>
+                                            <p className="text-xs text-gray-500 mb-4">This date will be set as the work completion target. The ticket will automatically move to <strong>SCHEDULED</strong>.</p>
+                                            <label className="block text-xs font-medium text-gray-600 mb-1.5">Completion Date *</label>
+                                            <input
+                                                type="date"
+                                                min={todayStr}
+                                                value={completionDate}
+                                                onChange={e => setCompletionDate(e.target.value)}
+                                                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                                            />
+                                            {assignModalTicket.sla_deadline && (
+                                                <p className="text-xs text-amber-600 mt-1.5">⚠️ SLA deadline: {new Date(assignModalTicket.sla_deadline).toLocaleDateString("en-IN", { dateStyle: "medium" })}</p>
+                                            )}
+                                        </div>
+                                        <button
+                                            onClick={handleSetDeadline}
+                                            disabled={!completionDate || settingDeadline}
+                                            className="w-full bg-teal-600 hover:bg-teal-700 text-white rounded-xl py-3 font-semibold transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                                        >
+                                            {settingDeadline ? <><span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Setting…</> : "Confirm Date → Next Step"}
+                                        </button>
+                                        <div className="border-t border-gray-100 pt-3">
+                                            <button onClick={() => setUseAiMode(true)} className="w-full bg-purple-50 border border-purple-200 text-purple-700 rounded-xl py-2.5 text-sm font-semibold hover:bg-purple-100 transition-colors">
+                                                ✨ Use AI Smart Schedule instead
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* ── Step 1: AI Mode ── */}
+                                {modalStep === 1 && useAiMode && (
+                                    <div className="space-y-4">
+                                        <button onClick={() => setUseAiMode(false)} className="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1">← Back to manual</button>
+                                        {!smartSchedule ? (
+                                            <div className="text-center py-6">
+                                                <button
+                                                    onClick={handleGetSmartSchedule}
+                                                    disabled={gettingSmartSchedule}
+                                                    className="w-full bg-gradient-to-r from-purple-600 to-indigo-700 text-white rounded-xl py-3 font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
+                                                >
+                                                    ✨ {gettingSmartSchedule ? "Analyzing Staff & SLAs…" : "Generate AI Smart Schedule"}
+                                                </button>
+                                                <p className="text-xs text-gray-500 mt-3">AI picks the best date + technician based on availability and SLA priority.</p>
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-4">
+                                                <p className="text-sm font-semibold text-purple-800 uppercase tracking-wide">AI Recommendation</p>
+                                                <div className="space-y-2 bg-purple-50 rounded-xl p-4">
+                                                    <p className="text-sm text-gray-800"><span className="text-gray-500 w-24 inline-block">Technician:</span> <span className="font-bold">{smartSchedule.technician_name}</span></p>
+                                                    <p className="text-sm text-gray-800"><span className="text-gray-500 w-24 inline-block">Date:</span> <span className="font-bold">{new Date(smartSchedule.suggested_date).toLocaleDateString("en-IN", { dateStyle: "long" })}</span></p>
+                                                </div>
+                                                {smartSchedule.postponed_tickets?.length > 0 && (
+                                                    <div className="bg-orange-50 p-4 rounded-xl border border-orange-200">
+                                                        <p className="text-sm font-bold text-orange-800 mb-2">⚠️ Preemption Warning</p>
+                                                        <p className="text-xs text-orange-700 mb-2">To accommodate this ticket, the AI will postpone:</p>
+                                                        <div className="space-y-1.5 max-h-28 overflow-y-auto">
+                                                            {smartSchedule.postponed_tickets.map((pt: any) => (
+                                                                <div key={pt.ticket_id} className="bg-white/80 p-2 rounded border border-orange-100 text-xs">
+                                                                    <span className="font-mono font-bold text-gray-700">{pt.ticket_code}</span> → <span className="font-semibold text-orange-800">{new Date(pt.new_date).toLocaleDateString("en-IN")}</span>
+                                                                </div>
+                                                            ))}
+                                                        </div>
                                                     </div>
+                                                )}
+                                                <div className="flex gap-3">
+                                                    <button onClick={() => setSmartSchedule(null)} className="flex-1 bg-gray-100 text-gray-700 py-3 rounded-xl font-semibold">Go Back</button>
+                                                    <button onClick={handleApplySmartSchedule} disabled={applyingAi} className="flex-1 bg-purple-600 text-white py-3 rounded-xl font-semibold flex items-center justify-center gap-2">
+                                                        {applyingAi ? "Applying…" : "Confirm & Apply"}
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* ── Step 2: Pick Technician ── */}
+                                {modalStep === 2 && (
+                                    <div className="space-y-4">
+                                        <div>
+                                            <p className="text-sm font-semibold text-gray-800 mb-1">Assign Field Technician</p>
+                                            <p className="text-xs text-gray-500 mb-4">Select a technician from your department. Once assigned, ticket status becomes <strong>IN PROGRESS</strong>.</p>
+                                        </div>
+
+                                        {loadingStaff ? (
+                                            <div className="flex justify-center py-8"><div className="w-8 h-8 border-2 border-teal-200 border-t-teal-600 rounded-full animate-spin" /></div>
+                                        ) : fieldStaff.length === 0 ? (
+                                            <div className="text-center py-6 bg-amber-50 rounded-xl border border-amber-200">
+                                                <p className="text-sm font-semibold text-amber-800 mb-1">No Field Staff Found</p>
+                                                <p className="text-xs text-amber-600">No technicians are seeded for your ward/dept yet.</p>
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-2 max-h-60 overflow-y-auto">
+                                                {fieldStaff.map(staff => (
+                                                    <button
+                                                        key={staff.id}
+                                                        onClick={() => setSelectedTechId(staff.id)}
+                                                        className={`w-full flex items-center gap-3 p-3 rounded-xl border text-left transition-all ${selectedTechId === staff.id ? "border-teal-500 bg-teal-50 shadow-sm" : "border-gray-200 hover:border-teal-300 hover:bg-gray-50"}`}
+                                                    >
+                                                        <div className="w-9 h-9 rounded-full bg-teal-100 text-teal-700 flex items-center justify-center font-bold text-sm shrink-0">
+                                                            {staff.name.charAt(0).toUpperCase()}
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-sm font-semibold text-gray-800">{staff.name}</p>
+                                                            <p className="text-xs text-gray-400">{staff.email}</p>
+                                                        </div>
+                                                        {selectedTechId === staff.id && <span className="ml-auto text-teal-600 text-lg">✓</span>}
+                                                    </button>
                                                 ))}
                                             </div>
+                                        )}
+
+                                        <div className="flex gap-3 pt-2 border-t border-gray-100">
+                                            <button onClick={() => { setModalStep(1); setSelectedTechId(""); }} className="flex-1 bg-gray-100 text-gray-700 py-3 rounded-xl font-semibold hover:bg-gray-200 transition-colors">← Back</button>
+                                            <button
+                                                onClick={handleAssignTechnician}
+                                                disabled={!selectedTechId || assigningTech || !completionDate}
+                                                className="flex-1 bg-teal-600 text-white py-3 rounded-xl font-semibold hover:bg-teal-700 disabled:opacity-50 flex items-center justify-center gap-2 transition-colors"
+                                            >
+                                                {assigningTech ? <><span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Assigning…</> : "Assign → Mark In Progress"}
+                                            </button>
                                         </div>
-                                    )}
-                                    <div className="flex gap-3 pt-4 border-t border-gray-100 mt-4">
-                                        <button onClick={() => setSmartSchedule(null)} className="flex-1 bg-gray-100 text-gray-700 py-3 rounded-xl font-semibold hover:bg-gray-200 transition-colors">Go Back</button>
-                                        <button onClick={handleApplySmartSchedule} disabled={updating} className="flex-1 bg-teal-600 text-white py-3 rounded-xl font-semibold hover:bg-teal-700 transition-colors flex items-center justify-center gap-2">
-                                            {updating ? "Applying..." : "Confirm Assignment"}
-                                        </button>
                                     </div>
-                                </div>
-                            )}
-                        </div>
-                    </motion.div>
-                </div>
-            )}
+                                )}
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }
-
 
 
 // ─── Main Dashboard Controller ────────────────────────────────────────────────
@@ -493,7 +676,8 @@ export default function OfficerDashboard({ userOverride, forcedRole }: OfficerDa
 
     const navLinks = () => (
         <div className="flex gap-3 flex-wrap">
-            {(isSupervisor || isJuniorEngineer) && (
+            {/* Calendar is ONLY for Junior Engineers */}
+            {isJuniorEngineer && (
                 <Link href="/officer/calendar"
                     className="text-sm bg-white/10 border border-white/20 text-white px-4 py-2 rounded-lg hover:bg-white/20 transition-colors">
                     📅 Calendar

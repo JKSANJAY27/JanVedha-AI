@@ -117,7 +117,7 @@ async def get_dashboard_summary(
         all_tickets = await TicketMongo.find_all().to_list()
 
     now = datetime.utcnow()
-    open_statuses = {"OPEN", "ASSIGNED", "IN_PROGRESS", "AWAITING_MATERIAL", "PENDING_VERIFICATION"}
+    open_statuses = {"OPEN", "ASSIGNED", "SCHEDULED", "IN_PROGRESS"}
 
     dept_stats: dict = {}
     total_open = 0
@@ -305,7 +305,7 @@ async def assign_field_staff(
     data: AssignFieldRequest,
     current_user: UserMongo = Depends(require_ward_officer),
 ):
-    """Assign a ticket specifically to field staff and set a schedule date."""
+    """Assign a ticket to a field technician. Automatically sets status to IN_PROGRESS."""
     from beanie import PydanticObjectId
     ticket = await TicketMongo.get(PydanticObjectId(ticket_id))
     if not ticket:
@@ -313,20 +313,20 @@ async def assign_field_staff(
 
     ticket.technician_id = data.technician_id
     ticket.scheduled_date = data.scheduled_date
-    if ticket.status in ["OPEN", "ASSIGNED"]:
-        ticket.status = TicketStatus.SCHEDULED
-    
+    # Once a technician is assigned, work begins → IN_PROGRESS
+    ticket.status = TicketStatus.IN_PROGRESS  # type: ignore
+
     ticket.status_timeline.append({
-        "status": "SCHEDULED",
+        "status": "IN_PROGRESS",
         "timestamp": datetime.utcnow().isoformat(),
         "actor_role": current_user.role,
-        "note": f"Assigned to field staff and scheduled for {data.scheduled_date.strftime('%Y-%m-%d')} by {current_user.name}",
+        "note": f"Field technician assigned and work started for {data.scheduled_date.strftime('%Y-%m-%d')} by {current_user.name}",
     })
     await ticket.save()
     return {
-        "id": str(ticket.id), 
-        "status": ticket.status, 
-        "technician_id": ticket.technician_id, 
+        "id": str(ticket.id),
+        "status": ticket.status,
+        "technician_id": ticket.technician_id,
         "scheduled_date": ticket.scheduled_date
     }
 
@@ -624,8 +624,12 @@ async def set_completion_deadline(
     # ── Save deadline on ticket ───────────────────────────────────────────────
     ticket.completion_deadline = requested_deadline
     ticket.completion_deadline_confirmed_by = str(current_user.id)
+    # Setting the completion deadline means the JE has planned this — auto-set SCHEDULED
+    if ticket.status in ["OPEN", "ASSIGNED"]:
+        from app.enums import TicketStatus as _TS
+        ticket.status = _TS.SCHEDULED  # type: ignore
     ticket.status_timeline.append({
-        "status": ticket.status,
+        "status": "SCHEDULED",
         "timestamp": now_utc.isoformat(),
         "actor_role": current_user.role,
         "note": (

@@ -51,8 +51,13 @@ export default function OfficerCalendarPage() {
 
     useEffect(() => {
         if (!isOfficer) { router.push("/login"); return; }
+        // Calendar is for Junior Engineers only — supervisors no longer schedule
+        if (user?.role && user.role !== "JUNIOR_ENGINEER") {
+            router.push("/officer/dashboard");
+            return;
+        }
         loadEvents();
-    }, [isOfficer, router, loadEvents]);
+    }, [isOfficer, router, loadEvents, user?.role]);
 
     const getAISuggestions = async () => {
         if (!user?.dept_id || !user?.ward_id) {
@@ -175,8 +180,8 @@ export default function OfficerCalendarPage() {
                             )}
 
                             <span className={`mt-3 inline-block text-xs font-bold px-2 py-0.5 rounded-full ${selectedEvent.event_type === "deadline"
-                                    ? "bg-pink-100 text-pink-700 border border-pink-200"
-                                    : PRIORITY_BADGE[selectedEvent.priority_label ?? "LOW"]
+                                ? "bg-pink-100 text-pink-700 border border-pink-200"
+                                : PRIORITY_BADGE[selectedEvent.priority_label ?? "LOW"]
                                 }`}>
                                 {selectedEvent.event_type === "deadline" ? "🔔 Deadline" : selectedEvent.priority_label}
                             </span>

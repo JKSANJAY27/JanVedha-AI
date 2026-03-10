@@ -41,7 +41,7 @@ interface TicketDetail {
     work_verification_method?: string;
 }
 
-const STATUSES = ["OPEN", "ASSIGNED", "SCHEDULED", "IN_PROGRESS", "AWAITING_MATERIAL", "PENDING_VERIFICATION", "CLOSED", "REJECTED"];
+const STATUSES = ["OPEN", "ASSIGNED", "SCHEDULED", "IN_PROGRESS", "CLOSED", "REJECTED"];
 
 export default function TicketDetailPage() {
     const params = useParams();
@@ -574,143 +574,100 @@ export default function TicketDetailPage() {
 
                     {/* Right column — actions, timeline */}
                     <div className="space-y-5">
-                        {/* Validation & Assignment logic for Supervisors */}
-                        {isSupervisor && (
-                            <>
-                                {/* Validation Block */}
-                                {!ticket.is_validated && (
-                                    <div className="bg-yellow-50 border border-yellow-200 rounded-2xl shadow-sm p-5">
-                                        <h3 className="font-bold text-yellow-800 mb-3 flex items-center gap-2">✔️ Validate Ticket</h3>
-                                        <div className="space-y-2 mb-4">
-                                            <label className="flex items-center gap-2 text-sm text-yellow-900 cursor-pointer">
-                                                <input type="checkbox" checked={valCat} onChange={e => setValCat(e.target.checked)} className="rounded text-yellow-600 focus:ring-yellow-500" />
-                                                Category confirmed
-                                            </label>
-                                            <label className="flex items-center gap-2 text-sm text-yellow-900 cursor-pointer">
-                                                <input type="checkbox" checked={valWard} onChange={e => setValWard(e.target.checked)} className="rounded text-yellow-600 focus:ring-yellow-500" />
-                                                Ward jurisdiction confirmed
-                                            </label>
-                                            <label className="flex items-center gap-2 text-sm text-yellow-900 cursor-pointer">
-                                                <input type="checkbox" checked={valDup} onChange={e => setValDup(e.target.checked)} className="rounded text-yellow-600 focus:ring-yellow-500" />
-                                                Flag as duplicate
-                                            </label>
-                                        </div>
+                        {/* Supervisor: Assign to JE only (no validate, no deadline — those are JE's job) */}
+                        {isSupervisor && ticket.status === "OPEN" && (
+                            <div className="bg-blue-50 border border-blue-200 rounded-2xl shadow-sm p-5">
+                                <h3 className="font-bold text-blue-800 mb-3 flex items-center gap-2">👤 Assign Junior Engineer</h3>
+                                <select
+                                    value={selectedEngineer}
+                                    onChange={(e) => setSelectedEngineer(e.target.value)}
+                                    className="w-full border border-blue-200 bg-white rounded-xl px-3 py-2 text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                >
+                                    <option value="">-- Select Engineer --</option>
+                                    {engineers.map(je => (
+                                        <option key={je.id} value={je.id}>{je.name} ({je.email})</option>
+                                    ))}
+                                </select>
+                                <button
+                                    onClick={handleAssign}
+                                    disabled={updating || !selectedEngineer}
+                                    className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-xl py-2 text-sm font-semibold transition-colors disabled:opacity-50"
+                                >
+                                    {updating ? "Assigning..." : "Assign Ticket"}
+                                </button>
+                            </div>
+                        )}
+
+                        {/* JE: Completion Deadline — auto-sets SCHEDULED status */}
+                        {isJuniorEngineer && (
+                            <div className="bg-white border border-teal-200 rounded-2xl shadow-sm p-5">
+                                <h3 className="font-bold text-gray-900 mb-1 flex items-center gap-2">⏰ Completion Deadline</h3>
+                                <p className="text-xs text-gray-400 mb-4">Set a target completion date. This will auto-update the ticket to <strong>SCHEDULED</strong>.</p>
+
+                                {ticket.completion_deadline && (
+                                    <div className="bg-teal-50 border border-teal-200 rounded-xl p-3 mb-4">
+                                        <p className="text-xs text-teal-600 font-semibold mb-0.5">✅ Deadline Set</p>
+                                        <p className="text-sm font-bold text-teal-700">
+                                            {new Date(ticket.completion_deadline).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}
+                                        </p>
+                                        <p className="text-xs text-teal-400 mt-1">🔔 Calendar reminder added</p>
+                                    </div>
+                                )}
+
+                                {ticket.ai_suggested_date && (
+                                    <div className="bg-purple-50 border border-purple-200 rounded-xl p-3 mb-3">
+                                        <p className="text-xs text-purple-600 font-semibold mb-1">✨ AI Suggested Date</p>
+                                        <p className="text-sm font-bold text-purple-800">
+                                            {new Date(ticket.ai_suggested_date).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}
+                                        </p>
+                                        {ticket.sla_deadline && (
+                                            <p className="text-xs text-purple-400 mt-1">SLA: {new Date(ticket.sla_deadline).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</p>
+                                        )}
                                         <button
-                                            onClick={handleValidate}
-                                            disabled={validating}
-                                            className="w-full bg-yellow-500 hover:bg-yellow-600 text-white rounded-xl py-2 text-sm font-semibold transition-colors disabled:opacity-50"
+                                            onClick={() => handleSetDeadline(true)}
+                                            disabled={settingDeadline}
+                                            className="mt-2 w-full bg-purple-600 hover:bg-purple-700 text-white rounded-lg py-2 text-xs font-semibold transition-colors disabled:opacity-50"
                                         >
-                                            {validating ? "Validating..." : "Confirm & Validate"}
+                                            {settingDeadline ? "Saving…" : "✅ Accept AI Suggestion"}
                                         </button>
                                     </div>
                                 )}
 
-                                {/* ─── COMPLETION DEADLINE CARD ─────────────────── */}
-                                <div className="bg-white border border-pink-200 rounded-2xl shadow-sm p-5">
-                                    <h3 className="font-bold text-gray-900 mb-1 flex items-center gap-2">
-                                        ⏰ Completion Deadline
-                                    </h3>
-                                    <p className="text-xs text-gray-400 mb-4">Set a deadline before which the work must be completed. Must not breach the SLA.</p>
-
-                                    {/* Already confirmed */}
-                                    {ticket.completion_deadline && (
-                                        <div className="bg-pink-50 border border-pink-200 rounded-xl p-3 mb-4">
-                                            <p className="text-xs text-pink-500 font-semibold mb-0.5">✅ Deadline Confirmed</p>
-                                            <p className="text-sm font-bold text-pink-700">
-                                                {new Date(ticket.completion_deadline).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}
-                                            </p>
-                                            <p className="text-xs text-pink-400 mt-1">🔔 A calendar reminder has been added</p>
-                                        </div>
-                                    )}
-
-                                    {/* AI Suggestion */}
-                                    {ticket.ai_suggested_date && (
-                                        <div className="bg-purple-50 border border-purple-200 rounded-xl p-3 mb-3">
-                                            <p className="text-xs text-purple-600 font-semibold mb-1">✨ AI Suggested Date</p>
-                                            <p className="text-sm font-bold text-purple-800">
-                                                {new Date(ticket.ai_suggested_date).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}
-                                            </p>
-                                            {ticket.sla_deadline && (
-                                                <p className="text-xs text-purple-400 mt-1">
-                                                    SLA: {new Date(ticket.sla_deadline).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
-                                                </p>
-                                            )}
+                                {!showDeadlinePicker ? (
+                                    <button
+                                        onClick={() => setShowDeadlinePicker(true)}
+                                        className="w-full border border-teal-300 text-teal-700 rounded-xl py-2 text-xs font-semibold hover:bg-teal-50 transition-colors"
+                                    >
+                                        📅 {ticket.completion_deadline ? "Change Deadline" : "Set Completion Date"}
+                                    </button>
+                                ) : (
+                                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="space-y-2">
+                                        <p className="text-xs text-gray-600 font-medium">Pick a date (must be before SLA deadline):</p>
+                                        <input
+                                            type="date"
+                                            value={deadlineDate}
+                                            onChange={e => setDeadlineDate(e.target.value)}
+                                            min={new Date().toISOString().split("T")[0]}
+                                            max={ticket.sla_deadline ? new Date(ticket.sla_deadline).toISOString().split("T")[0] : undefined}
+                                            className="w-full border border-teal-200 bg-teal-50 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
+                                        />
+                                        <div className="flex gap-2">
                                             <button
-                                                onClick={() => handleSetDeadline(true)}
-                                                disabled={settingDeadline}
-                                                className="mt-2 w-full bg-purple-600 hover:bg-purple-700 text-white rounded-lg py-2 text-xs font-semibold transition-colors disabled:opacity-50"
+                                                onClick={() => handleSetDeadline(false)}
+                                                disabled={settingDeadline || !deadlineDate}
+                                                className="flex-1 bg-teal-600 hover:bg-teal-700 text-white rounded-xl py-2 text-xs font-semibold transition-colors disabled:opacity-50"
                                             >
-                                                {settingDeadline ? "Saving…" : "✅ Accept AI Suggestion"}
+                                                {settingDeadline ? "Saving…" : "Confirm & Schedule"}
                                             </button>
+                                            <button onClick={() => { setShowDeadlinePicker(false); setDeadlineDate(""); }} className="text-xs text-gray-500 px-3">Cancel</button>
                                         </div>
-                                    )}
-
-                                    {/* Manual Override */}
-                                    {!showDeadlinePicker ? (
-                                        <button
-                                            onClick={() => setShowDeadlinePicker(true)}
-                                            className="w-full border border-pink-300 text-pink-700 rounded-xl py-2 text-xs font-semibold hover:bg-pink-50 transition-colors"
-                                        >
-                                            📅 {ticket.completion_deadline ? "Change Deadline" : "Set Manual Deadline"}
-                                        </button>
-                                    ) : (
-                                        <motion.div
-                                            initial={{ opacity: 0, height: 0 }}
-                                            animate={{ opacity: 1, height: "auto" }}
-                                            className="space-y-2"
-                                        >
-                                            <p className="text-xs text-gray-600 font-medium">Pick a date (before SLA deadline):</p>
-                                            <input
-                                                type="date"
-                                                value={deadlineDate}
-                                                onChange={e => setDeadlineDate(e.target.value)}
-                                                min={new Date().toISOString().split("T")[0]}
-                                                max={ticket.sla_deadline ? new Date(ticket.sla_deadline).toISOString().split("T")[0] : undefined}
-                                                className="w-full border border-pink-200 bg-pink-50 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-400"
-                                            />
-                                            <div className="flex gap-2">
-                                                <button
-                                                    onClick={() => handleSetDeadline(false)}
-                                                    disabled={settingDeadline || !deadlineDate}
-                                                    className="flex-1 bg-pink-600 hover:bg-pink-700 text-white rounded-xl py-2 text-xs font-semibold transition-colors disabled:opacity-50"
-                                                >
-                                                    {settingDeadline ? "Saving…" : "Confirm Deadline"}
-                                                </button>
-                                                <button onClick={() => { setShowDeadlinePicker(false); setDeadlineDate(""); }} className="text-xs text-gray-500 px-3">
-                                                    Cancel
-                                                </button>
-                                            </div>
-                                        </motion.div>
-                                    )}
-                                </div>
-
-                                {/* Assignment Block */}
-                                {ticket.status === "OPEN" && ticket.is_validated && (
-                                    <div className="bg-blue-50 border border-blue-200 rounded-2xl shadow-sm p-5">
-                                        <h3 className="font-bold text-blue-800 mb-3 flex items-center gap-2">👤 Assign Junior Engineer</h3>
-                                        <select
-                                            value={selectedEngineer}
-                                            onChange={(e) => setSelectedEngineer(e.target.value)}
-                                            className="w-full border border-blue-200 bg-white rounded-xl px-3 py-2 text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        >
-                                            <option value="">-- Select Engineer --</option>
-                                            {engineers.map(je => (
-                                                <option key={je.id} value={je.id}>{je.name} ({je.email})</option>
-                                            ))}
-                                        </select>
-                                        <button
-                                            onClick={handleAssign}
-                                            disabled={updating || !selectedEngineer}
-                                            className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-xl py-2 text-sm font-semibold transition-colors disabled:opacity-50"
-                                        >
-                                            {updating ? "Assigning..." : "Assign Ticket"}
-                                        </button>
-                                    </div>
+                                    </motion.div>
                                 )}
-                            </>
+                            </div>
                         )}
 
                         {/* Field Staff Assignment Block */}
+
                         {isJuniorEngineer && ticket.status === "ASSIGNED" && (
                             <div className="bg-emerald-50 border border-emerald-200 rounded-2xl shadow-sm p-5">
                                 <div className="flex justify-between items-center mb-3">
@@ -782,7 +739,7 @@ export default function TicketDetailPage() {
                         )}
 
                         {/* Execution Toolbar */}
-                        {(isJuniorEngineer || isFieldStaff) && ["SCHEDULED", "IN_PROGRESS", "AWAITING_MATERIAL"].includes(ticket.status) && (
+                        {(isJuniorEngineer || isFieldStaff) && ["SCHEDULED", "IN_PROGRESS"].includes(ticket.status) && (
                             <div className="bg-indigo-50 border border-indigo-200 rounded-2xl shadow-sm p-5 space-y-3">
                                 <h3 className="font-bold text-indigo-800 flex items-center gap-2">⚙️ Execution Workflow</h3>
 
@@ -791,17 +748,9 @@ export default function TicketDetailPage() {
                                         ▶️ Start Work
                                     </button>
                                 )}
-                                {ticket.status === "AWAITING_MATERIAL" && (
-                                    <button onClick={() => handleQuickStatus("IN_PROGRESS")} disabled={updating} className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-xl py-2 text-sm font-semibold transition-colors disabled:opacity-50">
-                                        ▶️ Resume Work (Got Material)
-                                    </button>
-                                )}
                                 {ticket.status === "IN_PROGRESS" && (
                                     <>
-                                        <button onClick={() => handleQuickStatus("AWAITING_MATERIAL")} disabled={updating} className="w-full bg-yellow-500 hover:bg-yellow-600 text-white rounded-xl py-2 text-sm font-semibold transition-colors disabled:opacity-50">
-                                            📦 Awaiting Material
-                                        </button>
-                                        <button onClick={() => setShowProofUpload(true)} disabled={updating} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl py-2 text-sm font-semibold transition-colors disabled:opacity-50 mt-2">
+                                        <button onClick={() => setShowProofUpload(true)} disabled={updating} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl py-2 text-sm font-semibold transition-colors disabled:opacity-50">
                                             ✅ Complete Work (Upload Proof)
                                         </button>
                                     </>
@@ -849,15 +798,6 @@ export default function TicketDetailPage() {
                                 {updating ? "Updating…" : "Save Status"}
                             </button>
 
-                            {isJuniorEngineer && ticket.status === "PENDING_VERIFICATION" && (
-                                <button
-                                    onClick={() => handleQuickStatus("CLOSED")}
-                                    disabled={updating}
-                                    className="w-full mt-3 flex items-center justify-center gap-2 bg-emerald-600 text-white rounded-xl py-2.5 text-sm font-semibold hover:bg-emerald-700 transition-colors"
-                                >
-                                    ✅ Generate & Send Final Report
-                                </button>
-                            )}
 
                             {ticket.status === "CLOSED" && (
                                 <button

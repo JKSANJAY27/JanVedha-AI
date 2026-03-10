@@ -1,12 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
 import { publicApi } from "@/lib/api";
-import { formatDate, formatRelative, slaStatus } from "@/lib/formatters";
-import PriorityBadge from "@/components/PriorityBadge";
+import { formatDate, formatRelative } from "@/lib/formatters";
 import StatusBadge from "@/components/StatusBadge";
 import Timeline from "@/components/Timeline";
 import { DEPT_NAMES } from "@/lib/constants";
@@ -49,7 +48,6 @@ function SearchBar({ onSearch }: { onSearch: (code: string) => void }) {
 
 export default function TrackTicketPage() {
     const params = useParams();
-    const router = useRouter();
     const codeFromUrl = params?.code as string | undefined;
 
     const [ticket, setTicket] = useState<TicketData | null>(null);
@@ -75,8 +73,6 @@ export default function TrackTicketPage() {
     useEffect(() => {
         if (codeFromUrl) fetchTicket(codeFromUrl);
     }, [codeFromUrl]);
-
-    const sla = slaStatus(ticket?.sla_deadline);
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
@@ -135,10 +131,7 @@ export default function TrackTicketPage() {
                                         <p className="text-xs text-gray-400 mb-0.5">Ticket Code</p>
                                         <p className="text-2xl font-mono font-bold text-blue-700">{ticket.ticket_code}</p>
                                     </div>
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                        <PriorityBadge label={ticket.priority_label} score={ticket.priority_score} />
-                                        <StatusBadge status={ticket.status} />
-                                    </div>
+                                    <StatusBadge status={ticket.status} />
                                 </div>
 
                                 {/* Details grid */}
@@ -165,44 +158,14 @@ export default function TrackTicketPage() {
                                             <p className="text-sm font-medium text-gray-800">{formatDate(ticket.created_at)}</p>
                                             <p className="text-xs text-gray-400">{formatRelative(ticket.created_at)}</p>
                                         </div>
+                                        {ticket.sla_deadline && (
+                                            <div className="bg-blue-50 rounded-xl p-3">
+                                                <p className="text-xs text-blue-500 mb-0.5">Expected Resolution By</p>
+                                                <p className="text-sm font-semibold text-blue-800">{formatDate(ticket.sla_deadline)}</p>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
-
-                                {/* SLA progress */}
-                                {ticket.sla_deadline && (
-                                    <div className="mb-5">
-                                        <div className="flex justify-between items-center mb-2">
-                                            <p className="text-xs font-medium text-gray-600">SLA Progress</p>
-                                            <span
-                                                className={`text-xs font-semibold px-2 py-0.5 rounded-full ${sla.label.includes("Breached") ? "bg-red-100 text-red-700" : "bg-blue-100 text-blue-700"
-                                                    }`}
-                                            >
-                                                {sla.label}
-                                            </span>
-                                        </div>
-                                        <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
-                                            <div
-                                                className={`h-full rounded-full transition-all duration-700 ${sla.color}`}
-                                                style={{ width: `${sla.pct}%` }}
-                                            />
-                                        </div>
-                                        <p className="text-xs text-gray-400 mt-1">Deadline: {formatDate(ticket.sla_deadline)}</p>
-                                    </div>
-                                )}
-
-                                {/* AI Suggestions */}
-                                {ticket.suggestions && ticket.suggestions.length > 0 && (
-                                    <div className="bg-blue-50 rounded-2xl p-4 mb-4">
-                                        <p className="text-xs font-semibold text-blue-700 mb-2">💡 AI Action Tips</p>
-                                        <ul className="space-y-1">
-                                            {ticket.suggestions.map((s, i) => (
-                                                <li key={i} className="text-sm text-blue-800 flex gap-2">
-                                                    <span className="opacity-60">{i + 1}.</span> {s}
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    </div>
-                                )}
 
                                 {/* Seasonal alert */}
                                 {ticket.seasonal_alert && (
