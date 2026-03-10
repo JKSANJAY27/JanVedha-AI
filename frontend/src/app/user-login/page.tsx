@@ -235,14 +235,27 @@ function LoginContent() {
                                     <form onSubmit={signupForm.handleSubmit(onSignupSubmit)} className="space-y-3">
                                         <div>
                                             <input {...signupForm.register("name")} type="text" placeholder="Full Name" className={inputClass} />
+                                            {signupForm.formState.errors.name && <p className="text-red-400 text-xs mt-1.5 ml-1">{signupForm.formState.errors.name.message}</p>}
                                         </div>
                                         <div className="grid grid-cols-2 gap-3">
-                                            <input {...signupForm.register("email")} type="email" placeholder="Email" className={inputClass} />
-                                            <input {...signupForm.register("phone")} type="tel" placeholder="Mobile" className={inputClass} />
+                                            <div>
+                                                <input {...signupForm.register("email")} type="email" placeholder="Email" className={inputClass} />
+                                                {signupForm.formState.errors.email && <p className="text-red-400 text-xs mt-1.5 ml-1">{signupForm.formState.errors.email.message}</p>}
+                                            </div>
+                                            <div>
+                                                <input {...signupForm.register("phone")} type="tel" placeholder="Mobile" className={inputClass} />
+                                                {signupForm.formState.errors.phone && <p className="text-red-400 text-xs mt-1.5 ml-1">{signupForm.formState.errors.phone.message}</p>}
+                                            </div>
                                         </div>
                                         <div className="grid grid-cols-2 gap-3">
-                                            <input {...signupForm.register("password")} type="password" placeholder="Password" className={inputClass} />
-                                            <input {...signupForm.register("confirmPassword")} type="password" placeholder="Confirm" className={inputClass} />
+                                            <div>
+                                                <input {...signupForm.register("password")} type="password" placeholder="Password" className={inputClass} />
+                                                {signupForm.formState.errors.password && <p className="text-red-400 text-xs mt-1.5 ml-1">{signupForm.formState.errors.password.message}</p>}
+                                            </div>
+                                            <div>
+                                                <input {...signupForm.register("confirmPassword")} type="password" placeholder="Confirm" className={inputClass} />
+                                                {signupForm.formState.errors.confirmPassword && <p className="text-red-400 text-xs mt-1.5 ml-1">{signupForm.formState.errors.confirmPassword.message}</p>}
+                                            </div>
                                         </div>
                                         <button type="submit" disabled={loading} className="w-full bg-emerald-600/90 hover:bg-emerald-500 text-white rounded-xl py-3 block font-bold transition-all disabled:opacity-60 mt-4 border border-emerald-400/30">
                                             {loading ? "Creating..." : "Create Account"}

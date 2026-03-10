@@ -47,7 +47,9 @@ export default function ChatWidget() {
     // Connect WebSocket
     useEffect(() => {
         const sessionId = Math.random().toString(36).substring(7);
-        const wsUrl = `${process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8000"}/api/chat/ws`;
+        const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+        const wsBaseUrl = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8000";
+        const wsUrl = `${wsBaseUrl}/api/chat/ws${token ? `?token=${token}` : ""}`;
         const ws = new WebSocket(wsUrl);
         wsRef.current = ws;
 
@@ -175,8 +177,8 @@ export default function ChatWidget() {
                                     <div className={`max-w-[80%] ${msg.role === "user" ? "" : ""}`}>
                                         <div
                                             className={`rounded-2xl px-4 py-2.5 text-sm whitespace-pre-wrap ${msg.role === "user"
-                                                    ? "bg-blue-600 text-white rounded-tr-sm"
-                                                    : "bg-white text-gray-800 shadow-sm border border-gray-100 rounded-tl-sm"
+                                                ? "bg-blue-600 text-white rounded-tr-sm"
+                                                : "bg-white text-gray-800 shadow-sm border border-gray-100 rounded-tl-sm"
                                                 }`}
                                         >
                                             {msg.text}

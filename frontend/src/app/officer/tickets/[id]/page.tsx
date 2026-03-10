@@ -36,6 +36,9 @@ interface TicketDetail {
     completion_deadline?: string;
     after_photo_url?: string;
     is_validated?: boolean;
+    work_verified?: boolean | null;
+    work_verification_confidence?: number;
+    work_verification_method?: string;
 }
 
 const STATUSES = ["OPEN", "ASSIGNED", "SCHEDULED", "IN_PROGRESS", "AWAITING_MATERIAL", "PENDING_VERIFICATION", "CLOSED", "REJECTED"];
@@ -71,10 +74,13 @@ export default function TicketDetailPage() {
     const [uploadingProof, setUploadingProof] = useState(false);
     const [showProofUpload, setShowProofUpload] = useState(false);
 
-    // Completion deadline workflow
     const [deadlineDate, setDeadlineDate] = useState("");
     const [settingDeadline, setSettingDeadline] = useState(false);
     const [showDeadlinePicker, setShowDeadlinePicker] = useState(false);
+
+    // Smart Scheduling
+    const [smartSchedule, setSmartSchedule] = useState<any>(null);
+    const [gettingSmartSchedule, setGettingSmartSchedule] = useState(false);
 
     useEffect(() => {
         if (!isOfficer) { router.push("/login"); return; }
@@ -180,9 +186,20 @@ export default function TicketDetailPage() {
         if (!proofUrl.trim()) { toast.error("Please enter a photo URL"); return; }
         setUploadingProof(true);
         try {
-            await officerApi.uploadProof(ticketId, proofUrl);
-            setTicket(prev => prev ? { ...prev, after_photo_url: proofUrl } : prev);
-            await handleQuickStatus("PENDING_VERIFICATION");
+            const res = await officerApi.uploadProof(ticketId, proofUrl);
+            setTicket(prev => prev ? {
+                ...prev,
+                after_photo_url: proofUrl,
+                status: "PENDING_VERIFICATION",
+            } : prev);
+            setNewStatus("PENDING_VERIFICATION");
+            if (res.data.work_verified) {
+                toast.success(`AI Verification: VERIFIED (Confidence: ${Math.round(res.data.confidence * 100)}%)`);
+            } else if (res.data.work_verified === false) {
+                toast.error(`AI Verification: FAILED (Confidence: ${Math.round(res.data.confidence * 100)}%). Needs review.`);
+            } else {
+                toast.success("Proof uploaded. AI Verification unavailable. Manual review required.");
+            }
         } catch {
             toast.error("Proof upload failed");
         } finally {
@@ -237,6 +254,71 @@ export default function TicketDetailPage() {
             }
         } finally {
             setSettingDeadline(false);
+        }
+    };
+
+    const handleGetSmartSchedule = async () => {
+        if (!ticket) return;
+        setGettingSmartSchedule(true);
+        try {
+            const res = await officerApi.getSmartSchedule(ticket.id);
+            setSmartSchedule(res.data);
+            toast.success("AI generated a schedule suggestion.");
+        } catch (error: any) {
+            toast.error(error.response?.data?.detail || "Failed to get smart schedule");
+        } finally {
+            setGettingSmartSchedule(false);
+        }
+    };
+
+    const handleApplySmartSchedule = async () => {
+        if (!ticket || !smartSchedule) return;
+        setUpdating(true);
+        try {
+            const payload = {
+                suggested_date: smartSchedule.suggested_date,
+                suggested_technician_id: smartSchedule.suggested_technician_id,
+                postponed_tickets: smartSchedule.postponed_tickets
+            };
+            await officerApi.applySmartSchedule(ticket.id, payload);
+            toast.success("AI Smart Schedule applied successfully!");
+            setSmartSchedule(null);
+            const res = await officerApi.getTicket(ticket.id);
+            setTicket(res.data);
+            setNewStatus(res.data.status);
+        } catch {
+            toast.error("Failed to apply smart schedule");
+        } finally {
+            setUpdating(false);
+        }
+    };
+
+    const handleSeedTechnicians = async () => {
+        if (!ticket) return;
+        try {
+            const res = await officerApi.seedTechnicians(ticket.dept_id);
+            toast.success(res.data.message);
+            if (isJuniorEngineer) {
+                officerApi.getFieldStaff().then((res) => setFieldStaffList(res.data));
+            }
+        } catch {
+            toast.error("Failed to seed technicians");
+        }
+    };
+
+    const handleDownloadApr = async () => {
+        try {
+            const res = await officerApi.downloadApr(ticketId);
+            const url = window.URL.createObjectURL(new Blob([res.data]));
+            const link = document.createElement("a");
+            link.href = url;
+            link.setAttribute("download", `APR_${ticket?.ticket_code}.pdf`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            toast.success("APR document downloaded");
+        } catch {
+            toast.error("Failed to download APR document");
         }
     };
 
@@ -344,8 +426,23 @@ export default function TicketDetailPage() {
                                 {/* Proof Image (If Complete) */}
                                 {ticket.after_photo_url && (
                                     <div className="bg-gray-50 rounded-xl p-4 mt-4">
-                                        <p className="text-xs text-gray-400 mb-2">Resolution Proof</p>
-                                        <img src={ticket.after_photo_url} alt="Proof" className="w-full rounded-lg border border-gray-200 object-cover max-h-64" />
+                                        <div className="flex items-center justify-between mb-2">
+                                            <p className="text-xs text-gray-400">Resolution Proof</p>
+                                            {ticket.work_verified !== undefined && ticket.work_verified !== null && (
+                                                <span className={`text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full ${ticket.work_verified ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+                                                    {ticket.work_verified ? "✅ AI Verified" : "❌ AI Verification Failed"}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <img src={ticket.after_photo_url} alt="Proof" className="w-full rounded-lg border border-gray-200 object-cover max-h-64 mb-2" />
+
+                                        {ticket.work_verified !== undefined && ticket.work_verified !== null && (
+                                            <div className={`p-2 rounded-lg text-xs ${ticket.work_verified ? "bg-green-50 text-green-800" : "bg-red-50 text-red-800"}`}>
+                                                <span className="font-semibold">Match Confidence:</span> {ticket.work_verification_confidence ? Math.round(ticket.work_verification_confidence * 100) : 0}%
+                                                <br />
+                                                <span className="text-gray-500 opacity-80 text-[10px]">Method: {ticket.work_verification_method || "Gemini AI Vision"}</span>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
                             </div>
@@ -616,7 +713,10 @@ export default function TicketDetailPage() {
                         {/* Field Staff Assignment Block */}
                         {isJuniorEngineer && ticket.status === "ASSIGNED" && (
                             <div className="bg-emerald-50 border border-emerald-200 rounded-2xl shadow-sm p-5">
-                                <h3 className="font-bold text-emerald-800 mb-3 flex items-center gap-2">👷 Assign Field Staff</h3>
+                                <div className="flex justify-between items-center mb-3">
+                                    <h3 className="font-bold text-emerald-800 flex items-center gap-2">👷 Assign Field Staff</h3>
+                                    <button onClick={handleSeedTechnicians} className="text-xs text-emerald-600 hover:underline">🌱 Seed Techs</button>
+                                </div>
                                 <select
                                     value={selectedFieldStaff}
                                     onChange={(e) => setSelectedFieldStaff(e.target.value)}
@@ -637,10 +737,47 @@ export default function TicketDetailPage() {
                                 <button
                                     onClick={handleAssignField}
                                     disabled={updating || !selectedFieldStaff || !scheduledDate}
-                                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl py-2 text-sm font-semibold transition-colors disabled:opacity-50"
+                                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl py-2 text-sm font-semibold transition-colors disabled:opacity-50 mb-3"
                                 >
-                                    {updating ? "Assigning..." : "Assign & Schedule"}
+                                    {updating ? "Assigning..." : "Assign & Schedule (Manual)"}
                                 </button>
+
+                                <div className="border-emerald-200 pt-3 mt-3 border-t">
+                                    <button
+                                        onClick={handleGetSmartSchedule}
+                                        disabled={gettingSmartSchedule}
+                                        className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white rounded-xl py-2 text-sm font-semibold transition-colors disabled:opacity-50 shadow-sm flex items-center justify-center gap-2"
+                                    >
+                                        ✨ {gettingSmartSchedule ? "Analyzing..." : "Get AI Smart Schedule"}
+                                    </button>
+
+                                    {smartSchedule && (
+                                        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mt-4 p-4 rounded-xl border border-teal-200 bg-white">
+                                            <p className="text-xs font-semibold text-teal-800 mb-2 uppercase tracking-wide">AI Recommendation</p>
+                                            <div className="space-y-2 mb-4">
+                                                <p className="text-sm text-gray-800 border-b border-gray-100 pb-2"><span className="text-gray-500 w-16 inline-block">Tech:</span> <span className="font-semibold">{smartSchedule.technician_name}</span></p>
+                                                <p className="text-sm text-gray-800 border-b border-gray-100 pb-2"><span className="text-gray-500 w-16 inline-block">Date:</span> <span className="font-semibold">{new Date(smartSchedule.suggested_date).toLocaleDateString("en-IN", { dateStyle: "medium" })}</span></p>
+                                            </div>
+                                            {smartSchedule.postponed_tickets && smartSchedule.postponed_tickets.length > 0 && (
+                                                <div className="mb-4 bg-orange-50 p-3 rounded-lg border border-orange-200">
+                                                    <p className="text-xs font-bold text-orange-800 flex items-center gap-1 mb-1">⚠️ Preemption Warning</p>
+                                                    <p className="text-[11px] text-orange-700 mb-2 leading-tight">Assigning this critical issue will postpone lower-priority tickets to accommodate SLA constraints:</p>
+                                                    <ul className="space-y-1">
+                                                        {smartSchedule.postponed_tickets.map((pt: any) => (
+                                                            <li key={pt.ticket_id} className="text-xs text-orange-800">
+                                                                • <span className="font-mono font-semibold">{pt.ticket_code}</span> moved to {new Date(pt.new_date).toLocaleDateString("en-IN")}
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                            )}
+                                            <div className="flex gap-2">
+                                                <button onClick={handleApplySmartSchedule} disabled={updating} className="flex-1 bg-teal-600 text-white py-2 rounded-lg text-sm font-semibold hover:bg-teal-700 transition-colors">Apply</button>
+                                                <button onClick={() => setSmartSchedule(null)} className="flex-1 bg-gray-100 text-gray-700 py-2 rounded-lg text-sm font-semibold hover:bg-gray-200 transition-colors">Dismiss</button>
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </div>
                             </div>
                         )}
 
@@ -711,6 +848,15 @@ export default function TicketDetailPage() {
                             >
                                 {updating ? "Updating…" : "Save Status"}
                             </button>
+
+                            {ticket.status === "CLOSED" && (
+                                <button
+                                    onClick={handleDownloadApr}
+                                    className="w-full mt-3 flex items-center justify-center gap-2 bg-slate-800 text-white rounded-xl py-2.5 text-sm font-semibold hover:bg-slate-900 transition-colors"
+                                >
+                                    📄 Export APR Document (PDF)
+                                </button>
+                            )}
                         </div>
 
                         {/* Seasonal alert */}

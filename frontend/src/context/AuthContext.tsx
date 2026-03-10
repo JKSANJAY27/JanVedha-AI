@@ -24,6 +24,7 @@ interface AuthContextType {
     isJuniorEngineer: boolean;
     isFieldStaff: boolean;
     isCouncillor: boolean;
+    isCommissioner: boolean;
     isAdmin: boolean;
 }
 
@@ -38,6 +39,7 @@ const AuthContext = createContext<AuthContextType>({
     isJuniorEngineer: false,
     isFieldStaff: false,
     isCouncillor: false,
+    isCommissioner: false,
     isAdmin: false,
 });
 
@@ -76,12 +78,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const isJuniorEngineer = role === "JUNIOR_ENGINEER";
     const isFieldStaff = role === "FIELD_STAFF";
     const isCouncillor = role === "COUNCILLOR";
+    const isCommissioner = role === "COMMISSIONER" || role === "SUPER_ADMIN";
     const isAdmin = role === "SUPER_ADMIN";
 
     return (
         <AuthContext.Provider value={{
             user, token, loading, login, logout,
-            isOfficer, isSupervisor, isJuniorEngineer, isFieldStaff, isCouncillor, isAdmin,
+            isOfficer, isSupervisor, isJuniorEngineer, isFieldStaff, isCouncillor, isCommissioner, isAdmin,
         }}>
             {children}
         </AuthContext.Provider>

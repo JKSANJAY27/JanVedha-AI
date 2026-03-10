@@ -52,19 +52,10 @@ async def init_mongodb() -> None:
         ScheduledEventMongo,
     )
 
-    import certifi
     uri = settings.MONGODB_URI
-    is_remote = "mongodb+srv" in uri or ("localhost" not in uri and "127.0.0.1" not in uri)
 
-    if is_remote:
-        _motor_client = AsyncIOMotorClient(
-            uri,
-            tls=True,
-            tlsCAFile=certifi.where(),
-            tlsAllowInvalidCertificates=True
-        )
-    else:
-        _motor_client = AsyncIOMotorClient(uri)
+    import certifi
+    _motor_client = AsyncIOMotorClient(uri, tlsCAFile=certifi.where())
 
     # Extract DB name from URI (e.g. "mongodb://localhost:27017/civicai" → "civicai")
     db_name = settings.MONGODB_URI.rsplit("/", 1)[-1].split("?")[0] or "civicai"

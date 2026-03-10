@@ -39,7 +39,7 @@ export const publicApi = {
   trackTicket: (code: string) => api.get(`/api/public/track/${code}`),
   getStats: () => api.get("/api/public/stats"),
   getLeaderboard: () => api.get("/api/public/wards/leaderboard"),
-  getHeatmap: () => api.get("/api/public/heatmap"),
+  getHeatmap: (deptId?: string) => api.get("/api/public/heatmap", { params: { dept_id: deptId } }),
   getSeasonalAlerts: (wardId: number, month: number) =>
     api.get(`/api/public/seasonal-alerts?ward_id=${wardId}&month=${month}`),
   getMapIssues: (params?: Record<string, string>) =>
@@ -90,7 +90,7 @@ export const officerApi = {
       scheduled_date: scheduledDate
     }),
   uploadProof: (id: string, photoUrl: string) =>
-    api.post(`/api/officer/tickets/${id}/proof`, { photo_url: photoUrl }),
+    api.post(`/api/officer/tickets/${id}/verify-completion`, { after_photo_url: photoUrl }),
   getLocationHistory: (id: string) =>
     api.get(`/api/officer/tickets/${id}/location-history`),
   addRemark: (id: string, text: string) =>
@@ -107,6 +107,14 @@ export const officerApi = {
       completion_deadline: completionDeadline,
       use_ai_suggestion: useAiSuggestion,
     }),
+  downloadApr: (id: string) =>
+    api.get(`/api/documents/tickets/${id}/apr`, { responseType: 'blob' }),
+  getSmartSchedule: (id: string) =>
+    api.get(`/api/officer/tickets/${id}/smart-schedule`),
+  applySmartSchedule: (id: string, data: object) =>
+    api.post(`/api/officer/tickets/${id}/smart-assign`, data),
+  seedTechnicians: (deptId: string) =>
+    api.post("/api/officer/staff/seed-technicians", { dept_id: deptId }),
 };
 
 export const calendarApi = {
@@ -141,4 +149,11 @@ export const councillorApi = {
     api.get("/api/councillor/overdue-tickets", { params: wardId ? { ward_id: wardId } : {} }),
   getFeed: (wardId?: number) =>
     api.get("/api/councillor/announcement-feed", { params: wardId ? { ward_id: wardId } : {} }),
+};
+
+export const commissionerApi = {
+  getCitySummary: () => api.get("/api/commissioner/city-summary"),
+  getWardPerformance: () => api.get("/api/commissioner/ward-performance"),
+  getBudgetBurnRate: (weeks: number = 12) => api.get("/api/commissioner/budget-burn-rate", { params: { weeks } }),
+  getCriticalOpenTickets: (limit: number = 20) => api.get("/api/commissioner/critical-open-tickets", { params: { limit } }),
 };

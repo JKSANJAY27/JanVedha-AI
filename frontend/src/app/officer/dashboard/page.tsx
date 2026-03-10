@@ -69,10 +69,11 @@ const PRIORITY_ICONS: Record<string, string> = {
 
 // ─── Ticket List Sub-component ────────────────────────────────────────────────
 
-function TicketList({ tickets, showAssign, onStatusUpdate }: {
+function TicketList({ tickets, showAssign, onStatusUpdate, onOpenAssignModal }: {
     tickets: Ticket[];
     showAssign?: boolean;
     onStatusUpdate?: (id: string, status: string) => void;
+    onOpenAssignModal?: (ticket: Ticket) => void;
 }) {
     const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({ CRITICAL: true });
     const [statusFilter, setStatusFilter] = useState("ALL");
@@ -173,8 +174,8 @@ function TicketList({ tickets, showAssign, onStatusUpdate }: {
                                                             {showAssign && ticket.status === "IN_PROGRESS" && (
                                                                 <button disabled={updatingId === ticket.id} onClick={() => handleQuickStatus(ticket.id, "PENDING_VERIFICATION")} className="text-xs bg-cyan-50 text-cyan-700 border border-cyan-200 rounded px-2.5 py-1.5 font-medium transition-colors disabled:opacity-50">Mark Done</button>
                                                             )}
-                                                            {showAssign && ticket.status === "OPEN" && (
-                                                                <button disabled={updatingId === ticket.id} onClick={() => handleQuickStatus(ticket.id, "IN_PROGRESS")} className="text-xs bg-blue-50 text-blue-700 border border-blue-200 rounded px-2.5 py-1.5 font-medium transition-colors disabled:opacity-50">Start</button>
+                                                            {showAssign && ticket.status === "OPEN" && onOpenAssignModal && (
+                                                                <button onClick={() => onOpenAssignModal(ticket)} className="text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 rounded px-2.5 py-1.5 font-medium transition-colors hover:bg-emerald-100">Assign &amp; Schedule</button>
                                                             )}
                                                             <Link href={`/officer/tickets/${ticket.id}`} className="text-xs font-medium text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 rounded px-3 py-1.5 transition-colors">View →</Link>
                                                         </td>
@@ -293,16 +294,67 @@ function JuniorEngineerDashboard({ user }: { user: { name: string; dept_id?: str
     const router = useRouter();
     const [tickets, setTickets] = useState<Ticket[]>([]);
     const [loading, setLoading] = useState(true);
+    const [assignModalTicket, setAssignModalTicket] = useState<Ticket | null>(null);
+    const [smartSchedule, setSmartSchedule] = useState<any>(null);
+    const [gettingSmartSchedule, setGettingSmartSchedule] = useState(false);
+    const [updating, setUpdating] = useState(false);
 
     useEffect(() => {
-        officerApi.getMyTickets()
-            .then(res => setTickets(res.data))
+        officerApi.getTickets(100)
+            .then(res => {
+                // For safety, frontend filter as well, though backend already does it
+                const deptTickets = user.dept_id ? res.data.filter((t: Ticket) => t.dept_id === user.dept_id) : res.data;
+                setTickets(deptTickets);
+            })
             .catch(() => toast.error("Failed to load tickets"))
             .finally(() => setLoading(false));
-    }, []);
+    }, [user.dept_id]);
 
     const handleStatusUpdate = (id: string, status: string) => {
         setTickets(prev => prev.map(t => t.id === id ? { ...t, status } : t));
+    };
+
+    const handleGetSmartSchedule = async (ticket: Ticket) => {
+        setGettingSmartSchedule(true);
+        try {
+            const res = await officerApi.getSmartSchedule(ticket.id);
+            setSmartSchedule(res.data);
+            toast.success("AI generated a schedule suggestion.");
+        } catch (error: any) {
+            toast.error(error.response?.data?.detail || "Failed to get smart schedule");
+        } finally {
+            setGettingSmartSchedule(false);
+        }
+    };
+
+    const handleApplySmartSchedule = async () => {
+        if (!assignModalTicket || !smartSchedule) return;
+        setUpdating(true);
+        try {
+            const payload = {
+                suggested_date: smartSchedule.suggested_date,
+                suggested_technician_id: smartSchedule.suggested_technician_id,
+                postponed_tickets: smartSchedule.postponed_tickets
+            };
+            await officerApi.applySmartSchedule(assignModalTicket.id, payload);
+            toast.success("Assignment applied successfully!");
+            setSmartSchedule(null);
+            setAssignModalTicket(null);
+            // Refresh tickets
+            officerApi.getTickets(100).then(res => {
+                const deptTickets = user.dept_id ? res.data.filter((t: Ticket) => t.dept_id === user.dept_id) : res.data;
+                setTickets(deptTickets);
+            });
+        } catch {
+            toast.error("Failed to apply schedule");
+        } finally {
+            setUpdating(false);
+        }
+    };
+
+    const handleOpenAssign = (ticket: Ticket) => {
+        setAssignModalTicket(ticket);
+        setSmartSchedule(null);
     };
 
     const stats = {
@@ -330,7 +382,65 @@ function JuniorEngineerDashboard({ user }: { user: { name: string; dept_id?: str
                 <StatCard label="Critical" value={stats.critical} icon="🚨" color="red" />
                 <StatCard label="Awaiting Material" value={stats.awaiting} icon="📦" color="purple" />
             </div>
-            <TicketList tickets={tickets} showAssign onStatusUpdate={handleStatusUpdate} />
+            <TicketList tickets={tickets} showAssign onStatusUpdate={handleStatusUpdate} onOpenAssignModal={handleOpenAssign} />
+
+            {/* Smart Assign Modal */}
+            {assignModalTicket && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                    <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-white rounded-2xl w-full max-w-lg shadow-xl overflow-hidden">
+                        <div className="flex justify-between items-center p-5 border-b border-gray-100 bg-emerald-50 text-emerald-900">
+                            <div>
+                                <h3 className="font-bold text-lg flex items-center gap-2">👷 Assign Field Staff</h3>
+                                <p className="text-xs text-emerald-700 font-mono mt-1">{assignModalTicket.ticket_code} — {assignModalTicket.priority_label} PRIORITY</p>
+                            </div>
+                            <button onClick={() => setAssignModalTicket(null)} className="p-1 hover:bg-emerald-200/50 rounded-full transition-colors">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+                            </button>
+                        </div>
+                        <div className="p-5">
+                            {!smartSchedule ? (
+                                <div className="text-center py-6">
+                                    <button
+                                        onClick={() => handleGetSmartSchedule(assignModalTicket)}
+                                        disabled={gettingSmartSchedule}
+                                        className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white rounded-xl py-3 font-semibold transition-colors disabled:opacity-50 shadow-sm flex items-center justify-center gap-2 text-lg"
+                                    >
+                                        ✨ {gettingSmartSchedule ? "Analyzing Staff & SLAs..." : "Generate AI Smart Schedule"}
+                                    </button>
+                                    <p className="text-xs text-gray-500 mt-4">The AI will optimally schedule this issue based on technician availability, existing SLAs, and priority criticalness.</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-4">
+                                    <p className="text-sm font-semibold text-teal-800 uppercase tracking-wide">AI Recommendation</p>
+                                    <div className="space-y-2">
+                                        <p className="text-sm text-gray-800 border-b border-gray-100 pb-2"><span className="text-gray-500 w-24 inline-block">Technician:</span> <span className="font-semibold text-lg">{smartSchedule.technician_name}</span></p>
+                                        <p className="text-sm text-gray-800 border-b border-gray-100 pb-2"><span className="text-gray-500 w-24 inline-block">Date:</span> <span className="font-semibold text-lg">{new Date(smartSchedule.suggested_date).toLocaleDateString("en-IN", { dateStyle: "long" })}</span></p>
+                                    </div>
+                                    {smartSchedule.postponed_tickets && smartSchedule.postponed_tickets.length > 0 && (
+                                        <div className="bg-orange-50 p-4 rounded-xl border border-orange-200 mt-4">
+                                            <p className="text-sm font-bold text-orange-800 flex items-center gap-2 mb-2">⚠️ Preemption Warning</p>
+                                            <p className="text-xs text-orange-700 mb-3 leading-relaxed">To accommodate an SLA-safe slot for this issue, the AI will postpone the following lower-priority tickets:</p>
+                                            <div className="space-y-2 max-h-32 overflow-y-auto">
+                                                {smartSchedule.postponed_tickets.map((pt: any) => (
+                                                    <div key={pt.ticket_id} className="bg-white/80 p-2 rounded border border-orange-100 text-xs">
+                                                        <span className="font-mono font-bold text-gray-700">{pt.ticket_code}</span> moved to <span className="font-semibold text-orange-800">{new Date(pt.new_date).toLocaleDateString("en-IN")}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                    <div className="flex gap-3 pt-4 border-t border-gray-100 mt-4">
+                                        <button onClick={() => setSmartSchedule(null)} className="flex-1 bg-gray-100 text-gray-700 py-3 rounded-xl font-semibold hover:bg-gray-200 transition-colors">Go Back</button>
+                                        <button onClick={handleApplySmartSchedule} disabled={updating} className="flex-1 bg-teal-600 text-white py-3 rounded-xl font-semibold hover:bg-teal-700 transition-colors flex items-center justify-center gap-2">
+                                            {updating ? "Applying..." : "Confirm Assignment"}
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </motion.div>
+                </div>
+            )}
         </div>
     );
 }

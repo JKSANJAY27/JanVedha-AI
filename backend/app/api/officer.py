@@ -331,6 +331,106 @@ async def assign_field_staff(
     }
 
 
+@router.get("/tickets/{ticket_id}/smart-schedule")
+async def get_smart_schedule(
+    ticket_id: str,
+    current_user: UserMongo = Depends(require_ward_officer),
+):
+    from app.services.ai.smart_assigner import generate_smart_schedule
+    result = await generate_smart_schedule(ticket_id)
+    if not result:
+        raise HTTPException(status_code=400, detail="Cannot generate schedule. Ensure technicians exist in this ward/dept and the ticket is valid.")
+    return result
+
+
+class SmartAssignReassignment(BaseModel):
+    ticket_id: str
+    new_date: datetime
+    new_technician_id: str
+
+class SmartAssignRequest(BaseModel):
+    suggested_date: datetime
+    suggested_technician_id: str
+    postponed_tickets: List[SmartAssignReassignment] = []
+
+
+@router.post("/tickets/{ticket_id}/smart-assign")
+async def apply_smart_schedule(
+    ticket_id: str,
+    data: SmartAssignRequest,
+    current_user: UserMongo = Depends(require_ward_officer),
+):
+    from beanie import PydanticObjectId
+    
+    target_ticket = await TicketMongo.get(PydanticObjectId(ticket_id))
+    if not target_ticket:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+
+    target_ticket.technician_id = data.suggested_technician_id
+    target_ticket.scheduled_date = data.suggested_date
+    if target_ticket.status in [TicketStatus.OPEN, TicketStatus.ASSIGNED]:
+        target_ticket.status = TicketStatus.SCHEDULED  # type: ignore
+    
+    target_ticket.status_timeline.append({
+        "status": target_ticket.status,
+        "timestamp": datetime.utcnow().isoformat(),
+        "actor_role": current_user.role,
+        "note": f"Smart assigned to field staff and scheduled for {data.suggested_date.strftime('%Y-%m-%d')} by AI Suggestion",
+    })
+    await target_ticket.save()
+
+    # Apply postponements
+    for p in data.postponed_tickets:
+        pt_ticket = await TicketMongo.get(PydanticObjectId(p.ticket_id))
+        if pt_ticket:
+            old_date_str = pt_ticket.scheduled_date.strftime('%Y-%m-%d') if pt_ticket.scheduled_date else 'Unknown'
+            pt_ticket.technician_id = p.new_technician_id
+            pt_ticket.scheduled_date = p.new_date
+            pt_ticket.status_timeline.append({
+                "status": pt_ticket.status,
+                "timestamp": datetime.utcnow().isoformat(),
+                "actor_role": current_user.role,
+                "note": f"Automatically postponed from {old_date_str} to {p.new_date.strftime('%Y-%m-%d')} to accommodate higher priority issue.",
+            })
+            await pt_ticket.save()
+
+    return {"message": "Smart assignment applied successfully."}
+
+
+class SeedTechRequest(BaseModel):
+    dept_id: str
+
+@router.post("/staff/seed-technicians")
+async def seed_technicians(
+    data: SeedTechRequest,
+    current_user: UserMongo = Depends(require_ward_officer),
+):
+    ward_id = current_user.ward_id
+    if not ward_id:
+        raise HTTPException(status_code=400, detail="User must have a ward_id")
+    
+    # Check if already seeded
+    existing = await UserMongo.find(UserMongo.role == UserRole.FIELD_STAFF, UserMongo.ward_id == ward_id, UserMongo.dept_id == data.dept_id).to_list()
+    if existing:
+        return {"message": f"Technicians already exist in Ward {ward_id} for Dept {data.dept_id}"}
+    
+    import random
+    names = ["Raju", "Kartik", "Suresh"]
+    for i, name in enumerate(names):
+        code = str(random.randint(1000, 9999))
+        tech = UserMongo(
+            name=f"{name} (Tech)",
+            phone=f"9900{ward_id}{i}{code}",
+            email=f"tech_{ward_id}_{data.dept_id}_{i}_{code}@janvedha.local",
+            role=UserRole.FIELD_STAFF,
+            ward_id=ward_id,
+            dept_id=data.dept_id,
+        )
+        await tech.insert()
+    
+    return {"message": f"Successfully seeded 3 technicians in Ward {ward_id} for Dept {data.dept_id}"}
+
+
 class ProofUploadRequest(BaseModel):
     photo_url: str
 

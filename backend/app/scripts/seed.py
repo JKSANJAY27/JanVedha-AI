@@ -59,7 +59,8 @@ SEED_USERS = [
         "phone": "1000000003",
         "password": "Password123",
         "role": UserRole.JUNIOR_ENGINEER,
-        "ward_id": 1
+        "ward_id": 1,
+        "dept_id": "D01"
     },
     {
         "name": "Field Staff Worker",
@@ -67,7 +68,8 @@ SEED_USERS = [
         "phone": "1000000004",
         "password": "Password123",
         "role": UserRole.FIELD_STAFF,
-        "ward_id": 1
+        "ward_id": 1,
+        "dept_id": "D01"
     }
 ]
 
@@ -94,13 +96,16 @@ async def seed():
                 phone=user_data["phone"],
                 password_hash=AuthService.get_password_hash(user_data["password"]),
                 role=user_data["role"],
-                ward_id=user_data["ward_id"]
+                ward_id=user_data["ward_id"],
+                dept_id=user_data.get("dept_id")
             )
             await user.insert()
             print(f"  Created user: {user_data['email']} ({user_data['role'].value})")
         else:
-            print(f"  User {user_data['email']} already exists, updating role.")
+            print(f"  User {user_data['email']} already exists, updating role and dept.")
             existing_user.role = user_data["role"]
+            if "dept_id" in user_data:
+                existing_user.dept_id = user_data["dept_id"]
             await existing_user.save()
 
     await close_mongodb()

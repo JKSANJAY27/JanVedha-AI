@@ -84,12 +84,42 @@ export default function SubmitComplaintPage() {
   };
 
   const detectLocation = () => {
-    if (!navigator.geolocation) {
-      toast.error("Geolocation not supported");
-      return;
-    }
     setLocationLoading(true);
     setGpsCoords(null); // reset on each attempt
+
+    const fallbackToIp = async () => {
+      try {
+        const res = await fetch("https://get.geojs.io/v1/ip/geo.json");
+        const data = await res.json();
+        if (data.latitude && data.longitude) {
+          const lat = parseFloat(data.latitude);
+          const lng = parseFloat(data.longitude);
+          setGpsCoords({ lat, lng });
+
+          let addr = "";
+          if (data.city) addr += data.city + ", ";
+          if (data.region) addr += data.region + ", ";
+          if (data.country) addr += data.country;
+          if (!addr) addr = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+
+          if (locationRef.current) locationRef.current.value = addr;
+          setValue("location_text", addr, { shouldValidate: true });
+          toast.success("Location approximated via IP");
+        } else {
+          throw new Error("No IP location data");
+        }
+      } catch (err) {
+        toast.error("Location access failed. Please enter manually.");
+      } finally {
+        setLocationLoading(false);
+      }
+    };
+
+    if (!navigator.geolocation) {
+      fallbackToIp();
+      return;
+    }
+
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         const { latitude, longitude } = pos.coords;
@@ -102,18 +132,19 @@ export default function SubmitComplaintPage() {
           const data = await res.json();
           const addr = data.display_name || `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
           if (locationRef.current) locationRef.current.value = addr;
-          setValue("location_text", addr);
+          setValue("location_text", addr, { shouldValidate: true });
         } catch {
           const fallback = `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
           if (locationRef.current) locationRef.current.value = fallback;
-          setValue("location_text", fallback);
+          setValue("location_text", fallback, { shouldValidate: true });
         }
         setLocationLoading(false);
       },
-      () => {
-        toast.error("Location access denied. Please enter manually.");
-        setLocationLoading(false);
-      }
+      (error) => {
+        console.warn("GPS Failed:", error.message);
+        fallbackToIp();
+      },
+      { enableHighAccuracy: true, timeout: 6000, maximumAge: 0 }
     );
   };
 

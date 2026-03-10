@@ -7,6 +7,7 @@ import { PRIORITY_COLORS, PRIORITY_EMOJI, DEPT_NAMES } from "@/lib/constants";
 import PriorityBadge from "@/components/PriorityBadge";
 import StatusBadge from "@/components/StatusBadge";
 import { formatRelative } from "@/lib/formatters";
+import { useAuth } from "@/context/AuthContext";
 
 // Load Leaflet map only on client side to prevent SSR errors
 const MapComponent = dynamic(() => import("@/features/map/IssueMap"), { ssr: false });
@@ -31,6 +32,9 @@ const STATUSES_MAP = ["OPEN", "IN_PROGRESS", "ASSIGNED", "CLOSED"];
 const REFRESH_INTERVAL_MS = 30_000; // auto-refresh every 30 seconds
 
 export default function MapPage() {
+    const auth = useAuth();
+    const deptId = auth.isJuniorEngineer ? auth.user?.dept_id : undefined;
+
     const [issues, setIssues] = useState<MapIssue[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
@@ -42,9 +46,10 @@ export default function MapPage() {
     const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
     const fetchIssues = useCallback(async (isInitial = false) => {
+        if (auth.loading) return;
         if (!isInitial) setRefreshing(true);
         try {
-            const res = await publicApi.getHeatmap();
+            const res = await publicApi.getHeatmap(deptId);
             // API returns { data: [...] }, Axios wraps HTTP body in res.data
             const items: any[] = res.data?.data || res.data || [];
             const normalized = items.map((item: any) => ({
@@ -60,7 +65,7 @@ export default function MapPage() {
             if (isInitial) setLoading(false);
             else setRefreshing(false);
         }
-    }, []);
+    }, [auth.loading, deptId]);
 
     // Initial load
     useEffect(() => {

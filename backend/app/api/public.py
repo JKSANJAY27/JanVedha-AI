@@ -131,8 +131,8 @@ async def get_leaderboard():
 
 
 @router.get("/heatmap")
-async def get_heatmap():
-    return {"data": await StatsService.get_heatmap_data()}
+async def get_heatmap(dept_id: Optional[str] = None):
+    return {"data": await StatsService.get_heatmap_data(dept_id)}
 
 
 @router.get("/seasonal-alerts")
