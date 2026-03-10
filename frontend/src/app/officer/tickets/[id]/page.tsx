@@ -849,6 +849,16 @@ export default function TicketDetailPage() {
                                 {updating ? "Updating…" : "Save Status"}
                             </button>
 
+                            {isJuniorEngineer && ticket.status === "PENDING_VERIFICATION" && (
+                                <button
+                                    onClick={() => handleQuickStatus("CLOSED")}
+                                    disabled={updating}
+                                    className="w-full mt-3 flex items-center justify-center gap-2 bg-emerald-600 text-white rounded-xl py-2.5 text-sm font-semibold hover:bg-emerald-700 transition-colors"
+                                >
+                                    ✅ Generate & Send Final Report
+                                </button>
+                            )}
+
                             {ticket.status === "CLOSED" && (
                                 <button
                                     onClick={handleDownloadApr}
@@ -858,6 +868,7 @@ export default function TicketDetailPage() {
                                 </button>
                             )}
                         </div>
+
 
                         {/* Seasonal alert */}
                         {ticket.seasonal_alert && (

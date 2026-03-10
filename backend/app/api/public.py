@@ -17,6 +17,26 @@ from app.enums import TicketSource
 router = APIRouter()
 
 
+
+def get_public_status(ticket: TicketMongo) -> str:
+    """Helper to dynamically determine public ticket status based on logic."""
+    if ticket.status == "REJECTED":
+        return "REJECTED"
+    if ticket.status == "CLOSED" or ticket.after_photo_url is not None:
+        return "CLOSED"
+    
+    if ticket.scheduled_date:
+        now = datetime.utcnow()
+        if ticket.scheduled_date <= now:
+            return "IN_PROGRESS"
+        else:
+            return "SCHEDULED"
+            
+    if ticket.technician_id or ticket.assigned_officer_id:
+        return "ASSIGNED"
+        
+    return "OPEN"
+
 @router.get("/my-tickets")
 async def get_my_tickets(
     current_user: UserMongo = Depends(get_current_user),
@@ -34,7 +54,7 @@ async def get_my_tickets(
         {
             "id": str(t.id),
             "ticket_code": t.ticket_code,
-            "status": t.status,
+            "status": get_public_status(t),
             "description": t.description,
             "dept_id": t.dept_id,
             "issue_category": t.issue_category,
@@ -83,7 +103,7 @@ async def create_complaint(data: ComplaintCreateEvent):
     )
     response = {
         "ticket_code": ticket.ticket_code,
-        "status": ticket.status,
+        "status": get_public_status(ticket),
         "dept_id": ticket.dept_id,
         "priority_label": ticket.priority_label,
         "priority_score": ticket.priority_score,
@@ -107,7 +127,7 @@ async def track_ticket(ticket_code: str):
 
     return {
         "ticket_code": ticket.ticket_code,
-        "status": ticket.status,
+        "status": get_public_status(ticket),
         "description": ticket.description,
         "department": ticket.dept_id,
         "issue_category": ticket.issue_category,
@@ -119,6 +139,82 @@ async def track_ticket(ticket_code: str):
         "seasonal_alert": ticket.seasonal_alert,
     }
 
+
+@router.get("/track/{ticket_code}/apr")
+async def public_download_apr(ticket_code: str):
+    """
+    Publicly accessible endpoint to download the Action Taken Report (APR)
+    for a given ticket. Allowed only if the ticket status is CLOSED.
+    """
+    ticket = await TicketMongo.find_one(TicketMongo.ticket_code == ticket_code)
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+
+    if get_public_status(ticket) != "CLOSED":
+        raise HTTPException(
+            status_code=400, 
+            detail="Final report is only available for closed tickets."
+        )
+
+    try:
+        from weasyprint import HTML
+        from jinja2 import Environment, FileSystemLoader
+        import hashlib
+        import os
+        from datetime import datetime
+    except ImportError:
+        raise HTTPException(status_code=500, detail="PDF generation libraries are not installed.")
+
+    # Prepare template context
+    template_dir = os.path.join(os.path.dirname(__file__), "..", "templates")
+    if not os.path.exists(template_dir):
+        raise HTTPException(status_code=500, detail="Templates directory not found")
+        
+    env = Environment(loader=FileSystemLoader(template_dir))
+    
+    try:
+        template = env.get_template("apr_template.html")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to load template: {str(e)}")
+
+    doc_hash = hashlib.sha256(f"{ticket.id}-{datetime.utcnow().isoformat()}".encode('utf-8')).hexdigest()[:12].upper()
+    
+    context = {
+        "ticket_code": ticket.ticket_code,
+        "generated_at": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC"),
+        "priority": ticket.priority_label,
+        "department": ticket.dept_id,
+        "ward_id": ticket.ward_id or "Unassigned",
+        "status": ticket.status,
+        "reporter_name": ticket.reporter_name or "Anonymous",
+        "issue_category": ticket.issue_category,
+        "description": ticket.description,
+        "created_at": ticket.created_at.strftime("%Y-%m-%d %H:%M"),
+        "officer_id": ticket.assigned_officer_id or "N/A",
+        "technician_id": ticket.technician_id or "N/A",
+        "resolved_at": ticket.resolved_at.strftime("%Y-%m-%d %H:%M") if ticket.resolved_at else "N/A",
+        "verification_verdict": "Verified" if ticket.work_verified else ("Failed" if ticket.work_verified is False else "Manual / Pending"),
+        "verification_confidence": f"{ticket.work_verification_confidence*100:.1f}%" if ticket.work_verification_confidence is not None else "N/A",
+        "verification_explanation": ticket.work_verification_explanation or "No explanation available.",
+        "before_photo_url": ticket.before_photo_url or ticket.photo_url,
+        "after_photo_url": ticket.after_photo_url,
+        "doc_hash": doc_hash
+    }
+
+    try:
+        rendered_html = template.render(context)
+        pdf_bytes = HTML(string=rendered_html).write_pdf()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to render PDF: {str(e)}")
+
+    from fastapi.responses import Response
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f"attachment; filename=APR_{ticket.ticket_code}.pdf"
+        }
+    )
 
 @router.get("/stats")
 async def get_stats():

@@ -212,6 +212,26 @@ export default function TrackTicketPage() {
                                 )}
                             </div>
 
+                            {/* Actions card (if closed) */}
+                            {ticket.status === "CLOSED" && (
+                                <div className="bg-emerald-50 rounded-3xl shadow-sm p-6 border border-emerald-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+                                    <div>
+                                        <h3 className="font-bold text-emerald-900 flex items-center gap-2">
+                                            <span>✅</span> Issue Resolved
+                                        </h3>
+                                        <p className="text-sm text-emerald-700 mt-1">
+                                            This complaint has been closed. You can view the final verified report below.
+                                        </p>
+                                    </div>
+                                    <button
+                                        onClick={() => window.open(`http://localhost:8001/api/v1/public/track/${ticket.ticket_code}/apr`, '_blank')}
+                                        className="whitespace-nowrap px-6 py-3 bg-emerald-600 text-white font-semibold rounded-xl hover:bg-emerald-700 transition-colors shadow-sm flex items-center gap-2"
+                                    >
+                                        📄 Download Final Report
+                                    </button>
+                                </div>
+                            )}
+
                             {/* Timeline card */}
                             <div className="bg-white rounded-3xl shadow-xl p-6 border border-gray-100">
                                 <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
@@ -233,6 +253,7 @@ export default function TrackTicketPage() {
                         </motion.div>
                     </AnimatePresence>
                 )}
+
             </div>
         </div>
     );
