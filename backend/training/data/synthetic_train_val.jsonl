@@ -1,39 +1,389 @@
-{"text": "यमुना पार्क में रात 3 बजे से लगातार बिजली चमक रही है, तेज आँधी से पेड़ गिर रहे हैं।", "dept_id": "D14", "dept_name": "Disaster Management", "language": "hi"}
-{"text": "Chawri Bazaar ki gali me gutter ka paani bahar, dukaan ke saaman kharab ho rahe.", "dept_id": "D04", "dept_name": "Sewage & Drainage", "language": "hi-en"}
-{"text": "মনসুনের আগে শ্যামপুর নদীর পাড়ে সাইরেন বাজে না, সতর্কতা শূন্য।", "dept_id": "D14", "dept_name": "Disaster Management", "language": "bn"}
-{"text": "Shanti Vihar ke park ke paas kaafi din se kachra pile ho rakha hai, bimari fail rahi hai, please jaldi uthwaye.", "dept_id": "D05", "dept_name": "Solid Waste Management", "language": "hi-en"}
-{"text": "Hudson Lines Mukherjee Nagar mein gutter ka paani road pe chal raha hai, ho gaya hai slippery.", "dept_id": "D08", "dept_name": "Health & Sanitation", "language": "hi-en"}
-{"text": "Signal at Green Park junction stuck on red for 8 minutes, causing chaos this evening.", "dept_id": "D10", "dept_name": "Traffic & Transport", "language": "en"}
-{"text": "Shakurpur near DTC depot, do road light jal nahi rahi, raat mein andhera, koi accident ho sakta hai.", "dept_id": "D06", "dept_name": "Street Lighting", "language": "hi-en"}
-{"text": "KG kids at Lotus Valley sit on the floor because termite-eated desks removed last month still not replaced.", "dept_id": "D13", "dept_name": "Education", "language": "en"}
-{"text": "Littered alcohol bottles behind community centre lawns every weekend.", "dept_id": "D07", "dept_name": "Parks & Greenery", "language": "en"}
-{"text": "বন্দর টাউনে আগামী ঘণ্টায় জলোচ্ছ্বাসের সাইরেন টেস্ট করা হয়নি, শিশুরা ভয় পাচ্ছে।", "dept_id": "D14", "dept_name": "Disaster Management", "language": "bn"}
-{"text": "भांडूप पश्चिमेकडील मैदानात आग लागली, कोरडे झाड-झुडपे जळताहेत, येथे सुमारे २५ घरांना इजा होण्याची शक्यता आहे.", "dept_id": "D14", "dept_name": "Disaster Management", "language": "mr"}
-{"text": "म्हाडा भागात रात्री दोन वाजता वादळानं झाड पडल्याने वीज खांब नादखाली, वीज अडचण.", "dept_id": "D14", "dept_name": "Disaster Management", "language": "mr"}
-{"text": "लोकमान्य चौकात उच्च वाऱ्यामुळे होर्डिंग पडलं, रस्ता बंद, तात्काळ हटवण्याची गरज.", "dept_id": "D14", "dept_name": "Disaster Management", "language": "mr"}
-{"text": "Cyclone alert ignored at Marina Layout seafront; residents still on rooftops—boats washed ashore, need immediate shelter.", "dept_id": "D14", "dept_name": "Disaster Management", "language": "en"}
-{"text": "Dumpsters near Orion Mall left open; stray dogs drag trash onto roads.", "dept_id": "D05", "dept_name": "Solid Waste Management", "language": "en"}
-{"text": "चंद्रा डैम का ओवरफ्लो अलर्ट है, नीचे के गाँव को तुरंत खाली कराएँ।", "dept_id": "D14", "dept_name": "Disaster Management", "language": "hi"}
-{"text": "Rani Garden Primary's roof leaks right above the Grade 4 classroom—books drenched since yesterday's rain!", "dept_id": "D13", "dept_name": "Education", "language": "en"}
-{"text": "गजानन विद्यालयाच्या रस्त्यावर खड्डे, मुलांचे बस थांबले, पालकांनी ऑटो बुक केले.", "dept_id": "D13", "dept_name": "Education", "language": "mr"}
-{"text": "गुलमोहर कॉलोनी के सरकारी स्कूल की शौचालय सीट टूटी है, बच्चे बाहर जाने को मजबूर हैं।", "dept_id": "D13", "dept_name": "Education", "language": "hi"}
-{"text": "Lodhi Garden ke gate no 3 ke inside left side ka rose bed sookh gaya hai, koi paani de raha nahi.", "dept_id": "D07", "dept_name": "Parks & Greenery", "language": "hi-en"}
-{"text": "नदी किनारे बसे गंगा नगर में बाढ़ का पानी घुस गया है, नाव की व्यवस्था कराइए।", "dept_id": "D14", "dept_name": "Disaster Management", "language": "hi"}
-{"text": "Dry grass patches in Willow Green look like a dust bowl—water daily.", "dept_id": "D07", "dept_name": "Parks & Greenery", "language": "en"}
-{"text": "Railway colony ke पास chemical warehouse se toxic smell aa rahi hai, evacuation plan batao, mask bhi chahiye.", "dept_id": "D14", "dept_name": "Disaster Management", "language": "hi-en"}
-{"text": "Our school bus driver, route B-12, lets unrelated adults hop on daily—parents terrified for kids' safety.", "dept_id": "D13", "dept_name": "Education", "language": "en"}
-{"text": "Illegal restaurant on Terrace of Maple Plaza has open LPG connections, risk of blast is high.", "dept_id": "D09", "dept_name": "Fire & Emergency", "language": "en"}
-{"text": "Punjabi Bagh Club road pe ek dead dog pade hai since morning, please remove kar do warna smell badhegi.", "dept_id": "D08", "dept_name": "Health & Sanitation", "language": "hi-en"}
-{"text": "Landslide at Tunnel Road cut off 3 hamlets, zero contact for 12 hrs—satellite phone and med team requested.", "dept_id": "D14", "dept_name": "Disaster Management", "language": "en"}
-{"text": "Ashok Vihar ke internal road pe paver blocks utar gaye, baarish mein quicksand lagta hai.", "dept_id": "D01", "dept_name": "Roads & Bridges", "language": "hi-en"}
-{"text": "Kids are burning crackers too close to the petrol pump on Old Ring Road after 9 pm.", "dept_id": "D09", "dept_name": "Fire & Emergency", "language": "en"}
-{"text": "Morning 6 baje se tanki khali, Janak Puri ka pressure zero — brushing bhi nahi hua!", "dept_id": "D03", "dept_name": "Water Supply", "language": "hi-en"}
-{"text": "Entire Maple Crossing dark since last storm—replace poles urgently.", "dept_id": "D06", "dept_name": "Street Lighting", "language": "en"}
-{"text": "Janakpuri C-block ki pocket park mein swing toot gayi hai, iron bars khule, koi injured ho sakta.", "dept_id": "D07", "dept_name": "Parks & Greenery", "language": "hi-en"}
-{"text": "चांदनी चौक ke electrical pole se sparks aa rahe hain, short-circuit se fire ho sakta hai, team bhejo siren pe.", "dept_id": "D14", "dept_name": "Disaster Management", "language": "hi-en"}
-{"text": "Encroachment by new mobile tower on rooftop of Ganga Apartments without permission.", "dept_id": "D11", "dept_name": "Revenue & Property", "language": "en"}
-{"text": "वायु विहार के ऊँचे टावर में आग लगी है, दमकल 20 मिनट से नहीं पहुँची।", "dept_id": "D14", "dept_name": "Disaster Management", "language": "hi"}
-{"text": "Mayur Vihar Phase-3 ki central median lights 50% off hain, please check karo.", "dept_id": "D06", "dept_name": "Street Lighting", "language": "hi-en"}
-{"text": "রায়েরবাজার বন্যা সুরক্ষা বাঁধ ভেঙে বৃষ্টির পানি ঢুকছে, টের পাচ্ছি হুমকি।", "dept_id": "D14", "dept_name": "Disaster Management", "language": "bn"}
-{"text": "हिमांशी एन्क्लेव के construction site pe illegal LPG cylinders stored hain, earthquake ki news aa rahi hai, check karo.", "dept_id": "D14", "dept_name": "Disaster Management", "language": "hi-en"}
-{"text": "Palam Vihar phase-2 ki lane 5 mein saara string off hai, kal raat power cut ke baad band hai.", "dept_id": "D06", "dept_name": "Street Lighting", "language": "hi-en"}
+{"text": "আমি জানাতে চাই যে, আমাদের এলাকায় জলের ট্যাঙ্ক নিয়মিত পরিষ্কার করা হয় না। এর ফলে জলের মান খারাপ হচ্ছে। ঠিকানা: রবীন্দ্র সরণী, হুগলী।", "dept_id": "D03", "dept_name": "Water Supply", "language": "bn"}
+{"text": "No proper computer lab in our school, ward 23.", "dept_id": "D13", "dept_name": "Education", "language": "en"}
+{"text": "డ్రైనేజీ నీరు ఇళ్లలోకి వస్తోంది. నివారించడానికి చర్యలు తీసుకోండి. గాంధీనగర్, 3వ వార్డు.", "dept_id": "D04", "dept_name": "Sewage & Drainage", "language": "te"}
+{"text": "నీటి ఒత్తిడి చాలా తక్కువగా ఉంది. పై అంతస్తులకు నీరు చేరడం లేదు. సాయిబాబా గుడి దగ్గర.", "dept_id": "D03", "dept_name": "Water Supply", "language": "te"}
+{"text": "माझी तक्रार आहे की, धनकवडी, वॉर्ड क्रमांक 30 मध्ये कचरा व्यवस्थापन योग्य प्रकारे होत नाही. उपाययोजना करावी.", "dept_id": "D05", "dept_name": "Solid Waste Management", "language": "mr"}
+{"text": "దిల్సుఖ్నగర్ మెయిన్ రోడ్డు పక్కన చెత్త కుప్పలు ఉన్నాయి! ఇదెక్కడి న్యాయం?", "dept_id": "D05", "dept_name": "Solid Waste Management", "language": "te"}
+{"text": "డ్రైనేజీ నీటిని శుద్ధి చేయకపోవడం వల్ల పర్యావరణం కలుషితం అవుతోంది. గౌతమ్ నగర్, 8వ లైన్.", "dept_id": "D04", "dept_name": "Sewage & Drainage", "language": "te"}
+{"text": "मैं आपको सूचित करना चाहता/चाहती हूँ कि वार्ड 3, जनकपुरी के स्कूल में पीने के पानी की समस्या है। कृपया इसे ठीक कराएं।", "dept_id": "D13", "dept_name": "Education", "language": "hi"}
+{"text": "ಶಾಲೆಯಲ್ಲಿ ಫೀಸ್ ತುಂಬಾ ಜಾಸ್ತಿ ಇದೆ. ಕಟ್ಟೋಕೆ ಆಗಲ್ಲ. ಬನ್ನೇರುಘಟ್ಟ ರಸ್ತೆಯಲ್ಲಿ ವಾಸ.", "dept_id": "D13", "dept_name": "Education", "language": "kn"}
+{"text": "13 নম্বর ওয়ার্ডের অবস্থা খুব খারাপ। আবর্জনা জমে আছে চারিদিকে।", "dept_id": "D05", "dept_name": "Solid Waste Management", "language": "bn"}
+{"text": "ஊனமுற்றோருக்கான உதவித்தொகை கிடைக்குமா?", "dept_id": "D12", "dept_name": "Social Welfare", "language": "ta"}
+{"text": "ನಾನು ಚಾಮರಾಜಪೇಟೆಯ ನಿವಾಸಿ. ಹತ್ತಿರದ ಪೆಟ್ರೋಲ್ ಬಂಕ್‌ನ ಸುರಕ್ಷತೆಯನ್ನು ಖಚಿತಪಡಿಸಿಕೊಳ್ಳಿ.", "dept_id": "D09", "dept_name": "Fire & Emergency", "language": "kn"}
+{"text": "मैं चाहता हूँ कि आप ग्रीन पार्क में स्ट्रीट लाइटों को ठीक करवाएं।", "dept_id": "D06", "dept_name": "Street Lighting", "language": "hi"}
+{"text": "சேத்துப்பட்டு ஏரியில் படகு சவாரி நிறுத்திவிட்டார்கள்! ஏன்? உடனடியாக தொடங்க வேண்டும்!", "dept_id": "D07", "dept_name": "Parks & Greenery", "language": "ta"}
+{"text": "फेस 3 पार्क में कुत्ते बहुत घूमते हैं। बच्चो को डर लगता है।", "dept_id": "D07", "dept_name": "Parks & Greenery", "language": "hi"}
+{"text": "మా అపార్ట్‌మెంట్ దగ్గర రోడ్డు మొత్తం బురదగా ఉంది, నడవలేకపోతున్నాం.", "dept_id": "D01", "dept_name": "Roads & Bridges", "language": "te"}
+{"text": "শুনেছি চন্দননগরে নাকি অনেক লাইট খারাপ। এটা কি সত্যি?", "dept_id": "D06", "dept_name": "Street Lighting", "language": "bn"}
+{"text": "சாக்கடை அடைப்பு எடுக்க யாரையும் காணோம். என்ன பண்றீங்க நீங்க?", "dept_id": "D04", "dept_name": "Sewage & Drainage", "language": "ta"}
+{"text": "ನಮ್ಮ ಏರಿಯಾದಲ್ಲಿ ಮರಗಳು ತುಂಬಾ ದೊಡ್ಡದಾಗಿವೆ, ಕಡಿಯಿರಿ. ಕೋರಮಂಗಲದಲ್ಲಿ ವಾಸ.", "dept_id": "D14", "dept_name": "Disaster Management", "language": "kn"}
+{"text": "सड़क पर पत्थर पड़े हैं, बच्चों को चोट लग सकती है।", "dept_id": "D01", "dept_name": "Roads & Bridges", "language": "hi"}
+{"text": "दादा, ते नेहरू गार्डन मध्ये खेळायला जागा नाहीये, जरा बघा.", "dept_id": "D07", "dept_name": "Parks & Greenery", "language": "mr"}
+{"text": "ये जो मकान है वो बहुत पुराना है, कभी भी गिर सकता है। वार्ड 5।", "dept_id": "D02", "dept_name": "Buildings & Planning", "language": "hi"}
+{"text": "அய்யா, எழும்பூரில் உள்ள சிக்னலில் கேமரா பொருத்த வேண்டும். போக்குவரத்து விதிமீறல்களை கண்காணிக்க வசதியாக இருக்கும்.", "dept_id": "D10", "dept_name": "Traffic & Transport", "language": "ta"}
+{"text": "উল্টোডাঙার রাস্তায় বিপজ্জনকভাবে তার ঝুলে আছে! কারোর কি হেলদোল নেই?", "dept_id": "D01", "dept_name": "Roads & Bridges", "language": "bn"}
+{"text": "आग विझवण्यासाठी मदत पाठवा, कसबा पेठ.", "dept_id": "D09", "dept_name": "Fire & Emergency", "language": "mr"}
+{"text": "నీటి సరఫరా గురించి ముందే సమాచారం ఇవ్వండి. అప్పుడు మేము సిద్ధంగా ఉంటాము. జవహర్ లాల్ నెహ్రూ కాలనీ.", "dept_id": "D03", "dept_name": "Water Supply", "language": "te"}
+{"text": "ये बिल्डिंग बिना नक्शे के बन रही है, दुर्गा मंदिर के सामने।", "dept_id": "D02", "dept_name": "Buildings & Planning", "language": "hi"}
+{"text": "मैं आपका ध्यान शक्ति नगर में खराब स्ट्रीट लाइटों की ओर दिलाना चाहता हूँ। अंधेरे के कारण दुर्घटना का खतरा है।", "dept_id": "D06", "dept_name": "Street Lighting", "language": "hi"}
+{"text": "भाऊ, ते उद्यानात प्रेमी युगुलं खूप त्रास देतात, काहीतरी करा.", "dept_id": "D07", "dept_name": "Parks & Greenery", "language": "mr"}
+{"text": "ನಮ್ಮ ಏರಿಯಾದಲ್ಲಿ ಕಸದ ಸಮಸ್ಯೆ ಜಾಸ್ತಿ ಆಗಿದೆ.", "dept_id": "D05", "dept_name": "Solid Waste Management", "language": "kn"}
+{"text": "ರಾಮಮೂರ್ತಿ ನಗರದಲ್ಲಿ ಪ್ರೆಷರ್ ಇಲ್ಲ ನೀರಿಗೆ. ಪಂಪ್ ಸರಿ ಮಾಡಿ.", "dept_id": "D03", "dept_name": "Water Supply", "language": "kn"}
+{"text": "ಕಸ ತುಂಬಿ ನಾರುತ್ತಿದೆ. ಬೇಗ ತೆಗೆಯಿರಿ.", "dept_id": "D05", "dept_name": "Solid Waste Management", "language": "kn"}
+{"text": "मी निदर्शनास आणू इच्छितो की, डेक्कन जिमखाना परिसरातील कचरापेटी नियमितपणे रिकामी केली जात नाही. कृपया लक्ष द्यावे.", "dept_id": "D05", "dept_name": "Solid Waste Management", "language": "mr"}
+{"text": "The road near Chandni Chowk is completely torn up! It's impossible to drive through! Do something!", "dept_id": "D01", "dept_name": "Roads & Bridges", "language": "en"}
+{"text": "லைட் ரொம்ப நாளா எரியல. பூச்சி நிறைய இருக்கு. கிழக்கு மாசி வீதி.", "dept_id": "D06", "dept_name": "Street Lighting", "language": "ta"}
+{"text": "दुर्गापुरी में एक फैक्ट्री में आग लग गई है।", "dept_id": "D09", "dept_name": "Fire & Emergency", "language": "hi"}
+{"text": "भारती विद्यापीठ परिसरात पाण्याची समस्या आहे! खूप त्रास होत आहे!", "dept_id": "D03", "dept_name": "Water Supply", "language": "mr"}
+{"text": "మాదాపూర్‌లోని స్కూల్‌లో లైబ్రరీ లేదు! పిల్లలు ఎలా చదవాలి?! వెంటనే లైబ్రరీ ఏర్పాటు చేయండి!", "dept_id": "D13", "dept_name": "Education", "language": "te"}
+{"text": "विठ्ठलवाडीत पाणीपुरवठा कधी सुरु होणार आहे? तीन दिवसांपासून पाणी नाही! काय चाललं आहे हे?", "dept_id": "D03", "dept_name": "Water Supply", "language": "mr"}
+{"text": "সোদপুরের রাস্তায় বড় বড় পাথর ছড়িয়ে আছে! গাড়ি চালানো যায় না!", "dept_id": "D01", "dept_name": "Roads & Bridges", "language": "bn"}
+{"text": "சைதாப்பேட்டை பூங்காவில் விளக்குகள் எரியவில்லை! இரவு நேரத்தில் பயமாக இருக்கிறது! எப்போது சரி செய்வீர்கள்?", "dept_id": "D07", "dept_name": "Parks & Greenery", "language": "ta"}
+{"text": "Food packets are not reaching everyone. Distribution problem.", "dept_id": "D14", "dept_name": "Disaster Management", "language": "en"}
+{"text": "Fees bohot zyada hai private schools ki. Pls control.", "dept_id": "D13", "dept_name": "Education", "language": "en"}
+{"text": "सड़क किनारे रेलिंग नहीं है, खतरा है। कृष्णा कॉलोनी, नाला के पास।", "dept_id": "D01", "dept_name": "Roads & Bridges", "language": "hi"}
+{"text": "ये क्या बकवास है! वार्ड 12, शास्त्री नगर में तीन दिन से पानी नहीं आ रहा! कब ठीक करोगे इसे?", "dept_id": "D03", "dept_name": "Water Supply", "language": "hi"}
+{"text": "The entire pavement near Dadar station is uneven and cracked! Senior citizens are tripping! This is negligence!", "dept_id": "D01", "dept_name": "Roads & Bridges", "language": "en"}
+{"text": "I wish to bring to your notice a possible water contamination issue in our apartment complex in Juhu. Please check.", "dept_id": "D03", "dept_name": "Water Supply", "language": "en"}
+{"text": "லைட் எரியாதனால வழி தெரியாம இருக்கு. சீக்கிரம் சரி பண்ணுங்க. திருவள்ளுவர் நகர்.", "dept_id": "D06", "dept_name": "Street Lighting", "language": "ta"}
+{"text": "పన్ను కట్టడానికి సులభమైన మార్గం చెప్పండి. గవర్నమెంట్ క్వార్టర్స్.", "dept_id": "D11", "dept_name": "Revenue & Property", "language": "te"}
+{"text": "ராயப்பேட்டை குப்பை தொட்டி நிரம்பி வழிகிறது! எப்பொழுது சுத்தம் செய்வீர்கள்?! உடனடியாக சுத்தம் செய்யுங்கள்!", "dept_id": "D08", "dept_name": "Health & Sanitation", "language": "ta"}
+{"text": "बिजली के बिल में यूनिट दर बहुत ज्यादा है! ये क्या लूट है? द्वारका सेक्टर 8 में सब त्रस्त हैं!", "dept_id": "D11", "dept_name": "Revenue & Property", "language": "hi"}
+{"text": "బోరబండలో చెత్త సమస్య రోజురోజుకు పెరుగుతోంది! పరిష్కారం లేదా?", "dept_id": "D05", "dept_name": "Solid Waste Management", "language": "te"}
+{"text": "ಶಾಲೆಯಲ್ಲಿ ಲೈಬ್ರರಿ ಇಲ್ಲ. ಮಕ್ಕಳಿಗೆ ಓದೋಕೆ ಹೇಗೆ ಸಾಧ್ಯ? ಸದಾಶಿವನಗರದಲ್ಲಿರುವ ಶಾಲೆ.", "dept_id": "D13", "dept_name": "Education", "language": "kn"}
+{"text": "सीवेज की समस्या हल करो! सेक्टर 18, गुड़गांव में लोग परेशान हैं!", "dept_id": "D04", "dept_name": "Sewage & Drainage", "language": "hi"}
+{"text": "भाई, नाली जाम है, पानी भर गया है, कृष्णा नगर में।", "dept_id": "D08", "dept_name": "Health & Sanitation", "language": "hi"}
+{"text": "School results kharab aa rahe hain! Teachers ko training do! Greater Kailash mein padhai sudharo!", "dept_id": "D13", "dept_name": "Education", "language": "hi-en"}
+{"text": "ಲೈಟ್ ಸರಿಪಡಿಸಲು ಸಹಾಯ ಮಾಡಿ.", "dept_id": "D06", "dept_name": "Street Lighting", "language": "kn"}
+{"text": "विनंती आहे की, औंध, वॉर्ड क्रमांक 10 मधील पथदिव्यांकडे लक्ष द्यावे. काही दिवे पूर्णपणे बंद आहेत.", "dept_id": "D06", "dept_name": "Street Lighting", "language": "mr"}
+{"text": "పింఛను డబ్బులు తక్కువ వస్తున్నాయి. ఎందుకు? విజయవాడ రూరల్.", "dept_id": "D12", "dept_name": "Social Welfare", "language": "te"}
+{"text": "Bhaiyya, kuch karo. Building ke neeche bahut gandagi hai. Ashram pe", "dept_id": "D02", "dept_name": "Buildings & Planning", "language": "hi-en"}
+{"text": "குடிநீர்ல கலங்கல் அதிகமா இருக்கு. சுத்தமா இல்ல. ராம் நகர்ல", "dept_id": "D03", "dept_name": "Water Supply", "language": "ta"}
+{"text": "We are facing issues with the water quality in our area, Rohini Sector 8. There are sediments in the water, even after filtering.", "dept_id": "D03", "dept_name": "Water Supply", "language": "en"}
+{"text": "ಬಿ.ಟಿ.ಎಂ ಲೇಔಟ್‌ನಲ್ಲಿರುವ ಸಿಗ್ನಲ್‌ನಲ್ಲಿ ಟೈಮರ್ ಸರಿಯಾಗಿಲ್ಲ. ಸರಿಪಡಿಸಿ.", "dept_id": "D10", "dept_name": "Traffic & Transport", "language": "kn"}
+{"text": "The new construction in Indirapuram is blocking my view! This is not fair! I'm contacting a lawyer!", "dept_id": "D02", "dept_name": "Buildings & Planning", "language": "en"}
+{"text": "Syllabus pura nahi kiya! Exam aa rahe hain! Ab bachche kya karenge? Preet Vihar mein padhai kaise hogi?", "dept_id": "D13", "dept_name": "Education", "language": "hi-en"}
+{"text": "గల్లీలో కొత్త రోడ్డు వేస్తామని చెప్పారు, కానీ ఇంకా వేయలేదు.", "dept_id": "D01", "dept_name": "Roads & Bridges", "language": "te"}
+{"text": "ఎల్బీనగర్ లో చెట్లు పడిపోయి కరెంటు లేదు, ఫోన్ కూడా పనిచేయడం లేదు! ఏం చేస్తున్నారు మీరు అక్కడ?!", "dept_id": "D14", "dept_name": "Disaster Management", "language": "te"}
+{"text": "मी आपल्याला कळवू इच्छितो की, शहरात आपत्कालीन परिस्थितीत वापरण्यासाठी रुग्णवाहिका (ambulances) उपलब्ध असाव्यात.", "dept_id": "D14", "dept_name": "Disaster Management", "language": "mr"}
+{"text": "ಯಲಹಂಕ ಹತ್ತಿರ ನೀರಿಲ್ಲ. ಟ್ಯಾಂಕರ್ ಕಳಿಸಿ ಬೇಗ.", "dept_id": "D03", "dept_name": "Water Supply", "language": "kn"}
+{"text": "We are experiencing a major drainage issue in our colony, Model Town, due to recent heavy rains. Kindly resolve the issue.", "dept_id": "D04", "dept_name": "Sewage & Drainage", "language": "en"}
+{"text": "ನಮ್ಮ ಏರಿಯಾದಲ್ಲಿ ಒಳ್ಳೆ ಶಾಲೆ ಇಲ್ಲ. ಬೇರೆ ಕಡೆ ಕಳಿಸೋಕೆ ಆಗಲ್ಲ. ಜೆ.ಪಿ. ನಗರದಲ್ಲಿ ವಾಸ.", "dept_id": "D13", "dept_name": "Education", "language": "kn"}
+{"text": "School mein clean drinking water nahi hai! Bachche bimar ho rahe hain! Vasant Kunj mein pani saaf karo!", "dept_id": "D13", "dept_name": "Education", "language": "hi-en"}
+{"text": "ಚಾಮರಾಜಪೇಟೆಯಲ್ಲಿ ಚರಂಡಿ ತುಂಬಿ ರಸ್ತೆಗೆ ಬರುತ್ತಿದೆ! ನಿಮಗೆ ಕಣ್ಣಿಲ್ಲವೇ?", "dept_id": "D08", "dept_name": "Health & Sanitation", "language": "kn"}
+{"text": "I am writing to complain about the rude and unhelpful behavior of staff at the property tax assessment office in Kochi.", "dept_id": "D11", "dept_name": "Revenue & Property", "language": "en"}
+{"text": "कृष्णा नगरमध्ये पाण्याची समस्या गंभीर आहे! अधिकारी काय करतात?", "dept_id": "D03", "dept_name": "Water Supply", "language": "mr"}
+{"text": "చాదర్‌ఘాట్‌లో ఎప్పుడు చూసినా మురుగు కాలువలు పొంగిపొర్లుతున్నాయి! ఎప్పుడో చర్య తీసుకుంటారా?! ఇది చాలా దారుణం!", "dept_id": "D14", "dept_name": "Disaster Management", "language": "te"}
+{"text": "Yeh safai karamchari kab ayenge Nehru Enclave mein?! Kutte aa rahe hain kachre ke peeche!", "dept_id": "D05", "dept_name": "Solid Waste Management", "language": "hi-en"}
+{"text": "நம்ம வார்டுல ரொம்ப ஏழ்மையானவங்க இருக்காங்க. உதவி பண்ணுங்க", "dept_id": "D12", "dept_name": "Social Welfare", "language": "ta"}
+{"text": "सिग्नल व्यवस्थित दिसत नाही, दुरुस्त करा. निगडी.", "dept_id": "D10", "dept_name": "Traffic & Transport", "language": "mr"}
+{"text": "Sir, the condition of the public toilet near the railway station in Nizamuddin is appalling. Please take action.", "dept_id": "D08", "dept_name": "Health & Sanitation", "language": "hi-en"}
+{"text": "ನಮ್ಮ ಲೇಔಟ್, ವಿದ್ಯಾರಣ್ಯಪುರದಲ್ಲಿ ಡ್ರೈನೇಜ್ ಪ್ರಾಬ್ಲಮ್ ಸರಿ ಮಾಡಿ.", "dept_id": "D04", "dept_name": "Sewage & Drainage", "language": "kn"}
+{"text": "ಕಳೆದ ವಾರ ನಮ್ಮ ಏರಿಯಾದಲ್ಲಿ ಒಂದು ಸಣ್ಣ ಬೆಂಕಿ ಕಾಣಿಸಿಕೊಂಡಿತು. ಅಗ್ನಿಶಾಮಕ ದಳ ತಲುಪಲು ಬಹಳ ಸಮಯ ತೆಗೆದುಕೊಂಡಿತು. ದಯವಿಟ್ಟು ಪ್ರತಿಕ್ರಿಯೆ ಸಮಯವನ್ನು ಸುಧಾರಿಸಿ.", "dept_id": "D09", "dept_name": "Fire & Emergency", "language": "kn"}
+{"text": "सिद्धार्थ नगरमध्ये पाण्याची टंचाई आहे! टँकरने पाणीपुरवठा करा!", "dept_id": "D03", "dept_name": "Water Supply", "language": "mr"}
+{"text": "The building plans for the new complex in Whitefield are clearly violating regulations! I DEMAND an investigation!", "dept_id": "D02", "dept_name": "Buildings & Planning", "language": "en"}
+{"text": "சாக்கடை அடைப்ப சரி பண்ணுங்க ப்ளீஸ். ரொம்ப கஷ்டமா இருக்கு.", "dept_id": "D04", "dept_name": "Sewage & Drainage", "language": "ta"}
+{"text": "ತುಂಬಾ ಮಳೆ ಬಂದ್ರೆ ಮನೆಗೆ ಹೋಗೋಕೆ ಆಗಲ್ಲ. ಇಂದಿರಾನಗರದಲ್ಲಿ ವಾಸ.", "dept_id": "D14", "dept_name": "Disaster Management", "language": "kn"}
+{"text": "ಲೈಟ್ ಕಂಬಕ್ಕೆ ಬಣ್ಣ ಬಳಿಯಿರಿ.", "dept_id": "D06", "dept_name": "Street Lighting", "language": "kn"}
+{"text": "Dustbin hi gayab kar diya. Ab log kachra kaha dalenge? CR Park.", "dept_id": "D05", "dept_name": "Solid Waste Management", "language": "en"}
+{"text": "টালিগঞ্জে একটা বহুতলে আগুন লেগেছে! মানুষজন ছাদে আটকা পরে আছে! তাড়াতাড়ি আসুন!", "dept_id": "D09", "dept_name": "Fire & Emergency", "language": "bn"}
+{"text": "The illegal shops are operating without licenses in my area in T Nagar! It's unfair to legitimate businesses!", "dept_id": "D02", "dept_name": "Buildings & Planning", "language": "en"}
+{"text": "माझ्या सोसायटीच्या बाजूला डंपिंग ग्राऊंड बनवलंय काय?", "dept_id": "D08", "dept_name": "Health & Sanitation", "language": "mr"}
+{"text": "Paani ka pressure low hai, aur sirf subah aata hai. Durga puri mein.", "dept_id": "D03", "dept_name": "Water Supply", "language": "hi-en"}
+{"text": "संपत्ति कर रसीद में गलती है, सुधार के लिए कहाँ जाएं? चांदनी चौक में कोई सुनने वाला नहीं है!", "dept_id": "D11", "dept_name": "Revenue & Property", "language": "hi"}
+{"text": "బోరబండ కమ్యూనిటీ హాల్ దగ్గర లైట్లు లేవు! పరిష్కారం లేదా?", "dept_id": "D06", "dept_name": "Street Lighting", "language": "te"}
+{"text": "ये क्या हाल है? गोमती नगर में सड़क पर सीवेज बह रहा है!", "dept_id": "D04", "dept_name": "Sewage & Drainage", "language": "hi"}
+{"text": "அண்ணா நகர் பகுதியில் தெரு நாய்கள் தொல்லை அதிகமாக உள்ளது! ஏதாவது நடவடிக்கை எடுங்கள்!", "dept_id": "D08", "dept_name": "Health & Sanitation", "language": "ta"}
+{"text": "मेरी जमीन का सीमांकन कब होगा? पड़ोसी कब्जा कर रहा है! सेक्टर 44, गुड़गांव में कोई मदद नहीं करता!", "dept_id": "D11", "dept_name": "Revenue & Property", "language": "hi"}
+{"text": "மழைனால எங்க கடை எல்லாம் மூடிட்டோம். வியாபாரம் எதுவும் இல்ல.", "dept_id": "D14", "dept_name": "Disaster Management", "language": "ta"}
+{"text": "ಕಸ ತೆಗೆಯುವವರು ಲಂಚ ಕೇಳ್ತಾರೆ.", "dept_id": "D05", "dept_name": "Solid Waste Management", "language": "kn"}
+{"text": "साई मंदिराच्या जवळ नवीन बांधकाम सुरू आहे, लोकांना त्रास होतो आहे.", "dept_id": "D02", "dept_name": "Buildings & Planning", "language": "mr"}
+{"text": "கொசு தொல்லை தாங்க முடியல. குப்பை தொட்டி சுத்தம் பண்ணுங்க. உசிலம்பட்டி.", "dept_id": "D05", "dept_name": "Solid Waste Management", "language": "ta"}
+{"text": "ಬೆಂಗಳೂರು ಪೂರ್ವ ವಲಯದ ಹೊಸಕೋಟೆಯಲ್ಲಿ ಅಗ್ನಿ ಅವಘಡ ಸಂಭವಿಸಿದೆ. ತಕ್ಷಣ ಸ್ಪಂದಿಸಿ.", "dept_id": "D09", "dept_name": "Fire & Emergency", "language": "kn"}
+{"text": "பிளாஸ்டிக் குப்பை அதிகமா இருக்கு. யாரும் எடுக்க மாட்றாங்க. எம்.ஜி.ஆர் நகர்.", "dept_id": "D05", "dept_name": "Solid Waste Management", "language": "ta"}
+{"text": "வணக்கம். பசும்பொன் முத்துராமலிங்கத் தேவர் தெருவில் கட்டடத்தின் முன் பகுதியை ஆக்கிரமிப்பு செய்கிறார்கள். தடுக்க வேண்டுகிறேன்.", "dept_id": "D02", "dept_name": "Buildings & Planning", "language": "ta"}
+{"text": "ನಾನು ಇಂದಿರಾ ನಗರದ ನಿವಾಸಿ. ನಮ್ಮ ಏರಿಯಾದಲ್ಲಿ ರಸ್ತೆಗಳು ತುಂಬಾ ಹಾಳಾಗಿವೆ. ದುರಸ್ತಿ ಮಾಡಿಸಿ.", "dept_id": "D10", "dept_name": "Traffic & Transport", "language": "kn"}
+{"text": "Rickshaws are charging exorbitant fares! Who is regulating them?!", "dept_id": "D10", "dept_name": "Traffic & Transport", "language": "en"}
+{"text": "বিরাটিতে সব লাইট বন্ধ। রাতে বেরোনো যায় না!", "dept_id": "D06", "dept_name": "Street Lighting", "language": "bn"}
+{"text": "మురుగు నీటి వల్ల దోమలు ఎక్కువగా ఉన్నాయి. జ్వరాలు వస్తున్నాయి. అంబేద్కర్ కాలనీ.", "dept_id": "D04", "dept_name": "Sewage & Drainage", "language": "te"}
+{"text": "শ্যামবাজারের কাছে গ্যাস লিক হচ্ছে! এক্ষুনি লোক পাঠান, না হলে বড় বিপদ হবে!", "dept_id": "D09", "dept_name": "Fire & Emergency", "language": "bn"}
+{"text": "ಲೈಟ್ ಇಲ್ಲದೆ ದಾರಿ ಕಾಣಿಸುವುದಿಲ್ಲ.", "dept_id": "D06", "dept_name": "Street Lighting", "language": "kn"}
+{"text": "ये जो नया रोड बनाया है उसमे बड़े बड़े पत्थर है, गीता कॉलोनी में।", "dept_id": "D01", "dept_name": "Roads & Bridges", "language": "hi"}
+{"text": "শিক্ষক দের ব্যবহার ভালো না। কথা বলতেও ভয় লাগে।", "dept_id": "D13", "dept_name": "Education", "language": "bn"}
+{"text": "ಸರ್, ನನ್ನ ತಂದೆಗೆ ವಯಸ್ಸಾಗಿದೆ. ಅವರಿಗೆ ಏನಾದ್ರೂ ಸಹಾಯ ಸಿಗುತ್ತಾ?", "dept_id": "D12", "dept_name": "Social Welfare", "language": "kn"}
+{"text": "எங்க ஊருல யாரும் டாக்டர் இல்ல. உடம்பு சரியில்லாதவங்கள எப்படி பாத்துக்கிறது?", "dept_id": "D14", "dept_name": "Disaster Management", "language": "ta"}
+{"text": "क्या आप लोग सो रहे हैं? शक्ति खंड में नालियां भरी पड़ी हैं! जल्दी सफाई करो!", "dept_id": "D04", "dept_name": "Sewage & Drainage", "language": "hi"}
+{"text": "ಲೈಟ್ ಬಲ್ಬ್ ಬದಲಾಯಿಸಿ.", "dept_id": "D06", "dept_name": "Street Lighting", "language": "kn"}
+{"text": "शिवाजी मार्केटजवळ एक इमारत धोकादायक स्थितीत आहे.", "dept_id": "D02", "dept_name": "Buildings & Planning", "language": "mr"}
+{"text": "घरात कोणीतरी अडकले आहे, मदत करा. राजेंद्र नगर.", "dept_id": "D09", "dept_name": "Fire & Emergency", "language": "mr"}
+{"text": "ಮಹಾಲಕ್ಷ್ಮಿ ಲೇಔಟ್ ನ ಉದ್ಯಾನವನದಲ್ಲಿ ಕಸದ ತೊಟ್ಟಿಗಳೇ ಇಲ್ಲ! ಏನು ಸಾರ್ ಇದು?", "dept_id": "D07", "dept_name": "Parks & Greenery", "language": "kn"}
+{"text": "ಅಕ್ಕಾ, ನಮ್ ಫ್ಯಾಮಿಲಿಗೆ ಏನಾದ್ರೂ ರೇಷನ್ ಕಾರ್ಡ್ ಸಿಗುತ್ತಾ?", "dept_id": "D12", "dept_name": "Social Welfare", "language": "kn"}
+{"text": "ಮನೆ ಹತ್ರ ನೀರು ನಿಂತಿದೆ, ಸೊಳ್ಳೆ ಜಾಸ್ತಿ ಆಗಿದೆ. ಬನ್ನೇರುಘಟ್ಟ ರಸ್ತೆಯಲ್ಲಿ ವಾಸ.", "dept_id": "D14", "dept_name": "Disaster Management", "language": "kn"}
+{"text": "माझी अशी इच्छा आहे की, आपण लक्ष घालून येरवडा भागातील शाळेतील गैरसोय दूर करावी.", "dept_id": "D13", "dept_name": "Education", "language": "mr"}
+{"text": "School fees online pay nahi hoti! Line mein lagna padta hai! Kab digital India banega? Dwarka mein pareshaani hai!", "dept_id": "D13", "dept_name": "Education", "language": "hi-en"}
+{"text": "Kachre ka dher laga hai Geeta Colony ke paas! Koi sunta hi nahi hai!", "dept_id": "D05", "dept_name": "Solid Waste Management", "language": "hi-en"}
+{"text": "আমার অনুরোধ, আমাদের এলাকায় একটি নতুন নর্দমা তৈরি করা হোক। জলের নিকাশি ব্যবস্থা উন্নত করা প্রয়োজন। ঠিকানা: যাদবপুর, কলকাতা।", "dept_id": "D04", "dept_name": "Sewage & Drainage", "language": "bn"}
+{"text": "सड़क पर बहुत कूड़ा पड़ा है, सफाई करवाओ, चांदनी चौक।", "dept_id": "D10", "dept_name": "Traffic & Transport", "language": "hi"}
+{"text": "ಮಳೆ ಬಂದು ರಸ್ತೆ ಹಾಳಾಗಿದೆ, ಹೋಗೋಕೆ ಆಗಲ್ಲ. ಶಿವಮೊಗ್ಗ ರಸ್ತೆಯಲ್ಲಿ ವಾಸ.", "dept_id": "D14", "dept_name": "Disaster Management", "language": "kn"}
+{"text": "Kachra wala aaj fir nahi aaya. Rohini sector 7.", "dept_id": "D05", "dept_name": "Solid Waste Management", "language": "en"}
+{"text": "Bhai, road pe pani jama rehta hai. Drainage system theek karo, Shastri Nagar", "dept_id": "D01", "dept_name": "Roads & Bridges", "language": "hi-en"}
+{"text": "यार, वो जो वाटिका है, उसमें तो मच्छर भिनभिना रहे हैं।", "dept_id": "D08", "dept_name": "Health & Sanitation", "language": "hi"}
+{"text": "வணக்கம். ஜி.எஸ்.டி சாலையில் சர்வீஸ் ரோடு மிகவும் மோசமாக உள்ளது. சீர் செய்ய வேண்டுகிறேன்.", "dept_id": "D01", "dept_name": "Roads & Bridges", "language": "ta"}
+{"text": "Broken speed bump, sector 50. Fix it asap", "dept_id": "D01", "dept_name": "Roads & Bridges", "language": "hi-en"}
+{"text": "कृष्णा नगर मधील रस्त्यावर खूप खड्डे आहेत. लवकर दुरुस्त करा.", "dept_id": "D01", "dept_name": "Roads & Bridges", "language": "mr"}
+{"text": "माझी तक्रार आहे की, कर्वेनगरमधील कचरा डेपोच्या आजूबाजूला खूप दुर्गंधी पसरली आहे. यावर योग्य उपाययोजना करावी.", "dept_id": "D05", "dept_name": "Solid Waste Management", "language": "mr"}
+{"text": "கழிவுகள் ரோட்ல கிடக்கு. நாயி தொல்லை அதிகமா இருக்கு. சீக்கிரம் வாங்க, அண்ணா சாலை.", "dept_id": "D05", "dept_name": "Solid Waste Management", "language": "ta"}
+{"text": "विधवा पेंशन के लिए ऑनलाइन आवेदन कैसे करें? मॉडल टाउन, फेज 2 में हम कहां जाएं!", "dept_id": "D12", "dept_name": "Social Welfare", "language": "hi"}
+{"text": "The public toilet near the Sector 10 market park is not being maintained properly. It is very unhygienic. Request immediate attention.", "dept_id": "D07", "dept_name": "Parks & Greenery", "language": "hi-en"}
+{"text": "पानी की किल्लत से परेशान हो गए हैं! तिलक नगर में कब तक टैंकरों पर निर्भर रहना पड़ेगा?", "dept_id": "D03", "dept_name": "Water Supply", "language": "hi"}
+{"text": "ಗಂಗಮ್ಮನ ಗುಡಿಯಲ್ಲಿ ಚರಂಡಿ ನೀರು ಉಕ್ಕಿ ಬರ್ತಿದೆ. ಬೇಗ ಬನ್ನಿ.", "dept_id": "D04", "dept_name": "Sewage & Drainage", "language": "kn"}
+{"text": "ஸ்கூல்ல டாய்லெட் சுத்தமா இல்ல. பசங்க ரொம்ப கஷ்டப்படுறாங்க. காந்தி தெரு.", "dept_id": "D13", "dept_name": "Education", "language": "ta"}
+{"text": "தண்ணீர் தொட்டில கரப்பான் பூச்சி நிறைய இருக்கு. சுத்தம் பண்ணுங்க சீக்கிரம்!", "dept_id": "D03", "dept_name": "Water Supply", "language": "ta"}
+{"text": "గుంటూరు, తెనాలిలో వీధుల్లో చెత్త పేరుకుపోయింది, తొలగించవలసిందిగా మనవి.", "dept_id": "D08", "dept_name": "Health & Sanitation", "language": "te"}
+{"text": "कल्पना सोसायटीमध्ये पाण्याची समस्या आहे! तक्रार करूनही कोणी ऐकत नाही!", "dept_id": "D03", "dept_name": "Water Supply", "language": "mr"}
+{"text": "श्रीमान, मेरा आपसे आग्रह है कि प्रीत विहार कॉलोनी के स्कूल में शिक्षकों के लिए आवास की व्यवस्था नहीं है। कृपया आवास की व्यवस्था करें।", "dept_id": "D13", "dept_name": "Education", "language": "hi"}
+{"text": "পাড়ার কলে নোংরা জল বেরোচ্ছে, কী করব?, রিজেন্ট পার্ক।", "dept_id": "D08", "dept_name": "Health & Sanitation", "language": "bn"}
+{"text": "স্কুল এর দেওয়াল টা ভেঙে গেছে। মেরামত করানো দরকার।", "dept_id": "D13", "dept_name": "Education", "language": "bn"}
+{"text": "சாக்கடை தண்ணி தெருவுல ஓடுது. சரியா கவனிக்க மாட்டேங்கிறீங்க.", "dept_id": "D04", "dept_name": "Sewage & Drainage", "language": "ta"}
+{"text": "बसमध्ये गर्दी खूप असते, बसेस वाढवा. पिंपरी चिंचवड.", "dept_id": "D10", "dept_name": "Traffic & Transport", "language": "mr"}
+{"text": "সল্টলেকে রাস্তার ধারে অবৈধ পার্কিং! হাঁটার উপায় নেই! কবে ব্যবস্থা নেবেন?", "dept_id": "D10", "dept_name": "Traffic & Transport", "language": "bn"}
+{"text": "ಮಾಗಡಿ ರಸ್ತೆಯಲ್ಲಿರುವ ಬಸ್ ನಿಲ್ದಾಣದಲ್ಲಿ ಸರಿಯಾದ ಆಸನ ವ್ಯವಸ್ಥೆ ಇಲ್ಲ. ದಯವಿಟ್ಟು ಗಮನಹರಿಸಿ.", "dept_id": "D10", "dept_name": "Traffic & Transport", "language": "kn"}
+{"text": "ভবানীপুরে রাস্তার ওপর গাড়ি পার্ক করে রাখে! যাওয়ার রাস্তা থাকে না! কবে দেখবেন?", "dept_id": "D10", "dept_name": "Traffic & Transport", "language": "bn"}
+{"text": "विधवा पेंशन के लिए आवेदन किया था, अभी तक कोई जवाब नहीं! कब तक इंतजार करना होगा? कमला नगर में कोई सुनता है क्या!", "dept_id": "D12", "dept_name": "Social Welfare", "language": "hi"}
+{"text": "স্কুল বাস টা রোজ দেরি করে আসছে। অফিসে জানাতেও কিছু হয় না।", "dept_id": "D13", "dept_name": "Education", "language": "bn"}
+{"text": "Roads are damaged due to landslides, Himachal.", "dept_id": "D14", "dept_name": "Disaster Management", "language": "en"}
+{"text": "தொட்டில குப்பைய நிரப்பி வெளிய கொட்டுறாங்க. பாருங்க. இந்திரா நகர்.", "dept_id": "D05", "dept_name": "Solid Waste Management", "language": "ta"}
+{"text": "আমি বিনয়ের সাথে জানাচ্ছি যে, আমার বাড়ির মিউটেশন করার জন্য আবেদন করেছিলাম, কিন্তু এখনও কোনো খবর নেই।", "dept_id": "D11", "dept_name": "Revenue & Property", "language": "bn"}
+{"text": "మా ప్రాంతంలో వారానికి ఒకసారి మాత్రమే నీరు వస్తోంది. ఇది సరికాదు. అశోక్ నగర్, 6వ లైన్.", "dept_id": "D03", "dept_name": "Water Supply", "language": "te"}
+{"text": "ಲೈಟ್ ಸಮಸ್ಯೆಯಿಂದ ತುಂಬಾ ತೊಂದರೆಯಾಗಿದೆ.", "dept_id": "D06", "dept_name": "Street Lighting", "language": "kn"}
+{"text": "I want to bring to your attention that the drainage system is clogged at Patel Nagar, Block 14, causing unsanitary conditions.", "dept_id": "D04", "dept_name": "Sewage & Drainage", "language": "en"}
+{"text": "ప్యాట్నీ సెంటర్ లో వీధి లైట్లు వెలగడం లేదు! వెంటనే రిపేర్ చేయండి!!", "dept_id": "D06", "dept_name": "Street Lighting", "language": "te"}
+{"text": "सीवेज का पानी सड़क पर बह रहा है! ये क्या हाल है? प्रीत विहार में तत्काल सफाई कराओ!", "dept_id": "D04", "dept_name": "Sewage & Drainage", "language": "hi"}
+{"text": "रस्त्यावर जनावरे फिरतात, अपघात होऊ शकतो. चाकण.", "dept_id": "D10", "dept_name": "Traffic & Transport", "language": "mr"}
+{"text": "రామంతపూర్‌లోని పాఠశాలలో ఫీజుల పేరుతో దోపిడీ చేస్తున్నారు! ఇది ఎంతవరకు న్యాయం?! వెంటనే ఆపండి!", "dept_id": "D13", "dept_name": "Education", "language": "te"}
+{"text": "ಕೋರಮಂಗಲದ ಕೆರೆಯಲ್ಲಿ ಕಸದ ರಾಶಿ! ಮೀನುಗಳು ಸಾಯುತ್ತಿವೆ! ನಿಮಗೆ ಕಣ್ಣಿಲ್ಲವೇ?!", "dept_id": "D07", "dept_name": "Parks & Greenery", "language": "kn"}
+{"text": "বেহালা চৌরাস্তার পার্কে রাতে আলো জ্বলে না, খুব অসুবিধা হয়।", "dept_id": "D07", "dept_name": "Parks & Greenery", "language": "bn"}
+{"text": "నీటి సరఫరా సమయం చాలా తక్కువగా ఉంది. కనీసం రెండు గంటలు ఇవ్వండి. రామాలయం వీధి, హనుమాన్ పేట.", "dept_id": "D03", "dept_name": "Water Supply", "language": "te"}
+{"text": "मेरा निवेदन है कि सिविल लाइंस में स्ट्रीट लाइटें खराब हैं।", "dept_id": "D06", "dept_name": "Street Lighting", "language": "hi"}
+{"text": "ভাই, উল্টোডাঙায় 2 দিন ধরে স্ট্রিট লাইট নেই। অন্ধকার!", "dept_id": "D06", "dept_name": "Street Lighting", "language": "bn"}
+{"text": "अरे गार्डन मध्ये पाण्याची सोय नाहीये, काय चाललंय?", "dept_id": "D07", "dept_name": "Parks & Greenery", "language": "mr"}
+{"text": "सीवर का पानी घरों में घुस रहा है! कृष्णा नगर में शिकायत करने के बाद भी कोई सुनवाई नहीं!", "dept_id": "D04", "dept_name": "Sewage & Drainage", "language": "hi"}
+{"text": "நம்ம லேண்ட் ரெக்கார்ட்ஸ் சரியில்ல போல. கொஞ்சம் பாருங்க.", "dept_id": "D11", "dept_name": "Revenue & Property", "language": "ta"}
+{"text": "அன்புடன், ராஜாஜி சாலையில் கட்டப்படும் கட்டிடத்தின் உயரம் விதிமீறி உள்ளது. கவனிக்கவும்.", "dept_id": "D02", "dept_name": "Buildings & Planning", "language": "ta"}
+{"text": "श्रीमान, मेरा आपसे आग्रह है कि डिफेंस कॉलोनी में परमाणु आपदा के दौरान सुरक्षित रहने के लिए आश्रय स्थल बनाए जाएं।", "dept_id": "D14", "dept_name": "Disaster Management", "language": "hi"}
+{"text": "Uniform ka price bhi bohot hai! Kahan se layenge?", "dept_id": "D13", "dept_name": "Education", "language": "en"}
+{"text": "தெருவுல லைட் எரியாதனால பிள்ளைங்க வெளிய போக பயப்படுறாங்க. 10வது வார்டு.", "dept_id": "D06", "dept_name": "Street Lighting", "language": "ta"}
+{"text": "2 நாளா தண்ணி இல்ல. ரொம்ப கஷ்டமா இருக்கு", "dept_id": "D03", "dept_name": "Water Supply", "language": "ta"}
+{"text": "I am writing to inquire about a discrepancy in my recent property tax bill for the property located at 45, Nehru Road, Sector 11. The amount due does not match my records.", "dept_id": "D11", "dept_name": "Revenue & Property", "language": "en"}
+{"text": "గుంటూరు, లాలాపేటలోని పార్కులో లైట్లు వెలగడం లేదు, కావున త్వరగా చర్యలు తీసుకోగలరు.", "dept_id": "D07", "dept_name": "Parks & Greenery", "language": "te"}
+{"text": "No proper warning system for disasters. Prepare now!", "dept_id": "D14", "dept_name": "Disaster Management", "language": "en"}
+{"text": "আমার অভিযোগ, ঠাকুরপুকুর এলাকার কিছু জমির মালিক তাদের জমির কর ফাঁকি দিচ্ছেন।", "dept_id": "D11", "dept_name": "Revenue & Property", "language": "bn"}
+{"text": "I wish to report the non-payment of promised financial assistance to victims of a natural disaster in the region of Uttarakhand.", "dept_id": "D12", "dept_name": "Social Welfare", "language": "en"}
+{"text": "அசஸ்மெண்ட் வேல்யூ எப்படி டிசைட் பண்றாங்க?", "dept_id": "D11", "dept_name": "Revenue & Property", "language": "ta"}
+{"text": "गणपती विसर्जन झाल्यावर सगळा कचरा तसाच पडलाय, कधी काढणार?", "dept_id": "D07", "dept_name": "Parks & Greenery", "language": "mr"}
+{"text": "Yeh log sirf VIP area saaf karte hain, humare yaha kaun aayega? Sadar Bazaar.", "dept_id": "D05", "dept_name": "Solid Waste Management", "language": "en"}
+{"text": "जवाहर कॉलनीत पाण्याची समस्या आहे! लवकर लक्ष द्या!", "dept_id": "D03", "dept_name": "Water Supply", "language": "mr"}
+{"text": "मेरा संपत्ति कर बिल गलत है! इसे कब ठीक करोगे? शास्त्री नगर, वार्ड 7 में यह क्या मजाक चल रहा है!", "dept_id": "D11", "dept_name": "Revenue & Property", "language": "hi"}
+{"text": "Sewerage ka bahut bad problem hai. Khan market mein.", "dept_id": "D04", "dept_name": "Sewage & Drainage", "language": "hi-en"}
+{"text": "The streetlights in my area, Indira Nagar, are not working! It's a safety hazard!", "dept_id": "D10", "dept_name": "Traffic & Transport", "language": "en"}
+{"text": "गाड़ी कब आएगी कचरा लेने? 2 दिन हो गए। बुराड़ी।", "dept_id": "D05", "dept_name": "Solid Waste Management", "language": "en"}
+{"text": "பல்லாவரம் ஏரியாவுல சாக்கடை அடைச்சு தண்ணி தேங்கி நிக்குது!", "dept_id": "D08", "dept_name": "Health & Sanitation", "language": "ta"}
+{"text": "सेक्टर 22 वाला पार्क एकदम बेकार है। कुछ सुधार करो।", "dept_id": "D07", "dept_name": "Parks & Greenery", "language": "hi"}
+{"text": "मला असे सांगावयाचे आहे की, कोथरूडमधील शाळेत खेळाचे मैदान नाही.", "dept_id": "D13", "dept_name": "Education", "language": "mr"}
+{"text": "यह सड़क बहुत फिसलन भरी है, गिर जाएंगे।", "dept_id": "D10", "dept_name": "Traffic & Transport", "language": "hi"}
+{"text": "बेरोजगारों के लिए कौशल विकास कार्यक्रम कब शुरू होगा? जनकपुरी में जीना मुश्किल कर दिया है!", "dept_id": "D12", "dept_name": "Social Welfare", "language": "hi"}
+{"text": "Sir/Madam, the public toilet in the main market of Sarojini Nagar is unusable. It needs urgent repair and cleaning.", "dept_id": "D08", "dept_name": "Health & Sanitation", "language": "hi-en"}
+{"text": "पानी का बिल गलत आया है! मेरा मीटर चेक करो! ये क्या लूट मची है? शास्त्रीपुरम में सुनवाई नहीं होती!", "dept_id": "D03", "dept_name": "Water Supply", "language": "hi"}
+{"text": "ಅಣ್ಣಾ, ನನ್ನ ಮಗನಿಗೆ ಹಾಸ್ಟೆಲ್ ಬೇಕು. ಎಲ್ಲಿ ಕೇಳೋದು?", "dept_id": "D12", "dept_name": "Social Welfare", "language": "kn"}
+{"text": "দমদম এর বস্তিগুলো কবে উচ্ছেদ করবেন? ওগুলো শহরের লজ্জা!", "dept_id": "D02", "dept_name": "Buildings & Planning", "language": "bn"}
+{"text": "கிருஷ்ணா தெருவுல சாக்கடை ரொம்ப நாளா அடைச்சு இருக்கு. யாரும் வரல", "dept_id": "D04", "dept_name": "Sewage & Drainage", "language": "ta"}
+{"text": "আমি জানাতে চাই, রবীন্দ্র সরণীর ধারে যে অবৈধ নির্মাণগুলি হয়েছে, সেগুলোর উপর নজর রাখা উচিত।", "dept_id": "D11", "dept_name": "Revenue & Property", "language": "bn"}
+{"text": "வணக்கம். சைதாப்பேட்டையில் உள்ள அடுக்குமாடி குடியிருப்பில் தீ பாதுகாப்பு உபகரணங்கள் பழுதடைந்துள்ளன. கவனிக்க வேண்டுகிறேன்.", "dept_id": "D09", "dept_name": "Fire & Emergency", "language": "ta"}
+{"text": "Street light band hai Andrews Ganj mein! Kab theek hoga?!", "dept_id": "D06", "dept_name": "Street Lighting", "language": "hi-en"}
+{"text": "Hadd hai! Model Town mein kachra phaila hua hai aur koi dekhne wala nahi!", "dept_id": "D05", "dept_name": "Solid Waste Management", "language": "hi-en"}
+{"text": "ವಿಜಯನಗರದ ಕೆರೆಯಲ್ಲಿ ಕಸ ತುಂಬಿದೆ! ದುರ್ವಾಸನೆ! ಏನು ಮಾಡುತ್ತಿದ್ದೀರಿ ನೀವು?!", "dept_id": "D07", "dept_name": "Parks & Greenery", "language": "kn"}
+{"text": "স্কুল এর ফ্যান টা খারাপ। গরমে খুব কষ্ট হচ্ছে।", "dept_id": "D13", "dept_name": "Education", "language": "bn"}
+{"text": "Agar property transfer hui hai toh tax kiske naam pe jayega? Ghaziabad.", "dept_id": "D11", "dept_name": "Revenue & Property", "language": "hi-en"}
+{"text": "मी लक्ष वेधू इच्छितो की, चंदननगरमधील काही पथदिवे खूप जुने झाले आहेत. नवीन दिवे लावावे.", "dept_id": "D06", "dept_name": "Street Lighting", "language": "mr"}
+{"text": "agar tax late pay kiya toh kitna interest lagega? Faridabad.", "dept_id": "D11", "dept_name": "Revenue & Property", "language": "hi-en"}
+{"text": "சாக்கடைல நிறைய குப்பை இருக்கு. கிளீன் பண்ணுங்க சீக்கிரம்", "dept_id": "D04", "dept_name": "Sewage & Drainage", "language": "ta"}
+{"text": "पंचवटीतील एका इमारतीला नोटीस दिली आहे, तरी पण बांधकाम चालू आहे.", "dept_id": "D02", "dept_name": "Buildings & Planning", "language": "mr"}
+{"text": "ये जो बिल्डिंग है वो गलत तरीके से बन रही है, कमला नगर में।", "dept_id": "D02", "dept_name": "Buildings & Planning", "language": "hi"}
+{"text": "Aadarneey, I want to report that the lights in the children's play area of Rose Garden, Indira Nagar are not working. It's dangerous in the evening.", "dept_id": "D07", "dept_name": "Parks & Greenery", "language": "hi-en"}
+{"text": "The rumble strips on the road near Sector 62, Noida are TOO HIGH! My car almost flipped! Get them lowered IMMEDIATELY!", "dept_id": "D01", "dept_name": "Roads & Bridges", "language": "en"}
+{"text": "నెల్లూరు, వెంకటేశ్వరపురం పార్కులో పిచ్చి మొక్కలు పెరిగిపోయాయి, వాటిని తొలగించగలరు.", "dept_id": "D07", "dept_name": "Parks & Greenery", "language": "te"}
+{"text": "विनम्र निवेदन है कि मालवीय नगर में कुछ स्ट्रीट लाइटें खराब हैं, कृपया इन्हें ठीक करवाएं।", "dept_id": "D06", "dept_name": "Street Lighting", "language": "hi"}
+{"text": "ನಮ್ಮ ಏರಿಯಾದಲ್ಲಿ ಲೈಟ್ ಇಲ್ಲ, ರಾತ್ರಿ ತುಂಬಾ ಕತ್ತಲೆ. ಸದಾಶಿವನಗರದಲ್ಲಿರುವ ಮನೆ.", "dept_id": "D14", "dept_name": "Disaster Management", "language": "kn"}
+{"text": "আমি আপনার দৃষ্টি আকর্ষণ করতে চাই যে আমার বয়স্ক মায়ের বিধবা ভাতা গত দুই মাস ধরে আসছে না। ওয়ার্ড নং ২০, বেলঘরিয়া।", "dept_id": "D12", "dept_name": "Social Welfare", "language": "bn"}
+{"text": "I am reporting a water leakage near the main gate of our colony, RK Puram, Sector 12. Please repair it.", "dept_id": "D03", "dept_name": "Water Supply", "language": "en"}
+{"text": "தெருவுல குப்பை நிறைய கிடக்கு. பிள்ளைங்க வெளிய போக பயப்படுறாங்க. 10வது வார்டு.", "dept_id": "D05", "dept_name": "Solid Waste Management", "language": "ta"}
+{"text": "గచ్చిబౌలిలో చెత్త సమస్య తీవ్రంగా ఉంది! మీరేం చేస్తున్నారో తెలుసా?", "dept_id": "D05", "dept_name": "Solid Waste Management", "language": "te"}
+{"text": "ತುಂಬಾ ಗಾಳಿ ಬೀಸುತ್ತಿದೆ, ಮರ ಬಿದ್ದಿದೆ. ರಾಮಣ್ಣ ಲೇಔಟ್ ಹತ್ತಿರ.", "dept_id": "D14", "dept_name": "Disaster Management", "language": "kn"}
+{"text": "সোনারপুরের পার্কে বাচ্চারা খেলতে গিয়ে আহত হচ্ছে, ধারালো কিছু আছে মনে হয়।", "dept_id": "D07", "dept_name": "Parks & Greenery", "language": "bn"}
+{"text": "The drain covers are missing in Anna Nagar! Children could fall in! REPLACE THEM IMMEDIATELY!", "dept_id": "D01", "dept_name": "Roads & Bridges", "language": "en"}
+{"text": "मी आपल्याला नम्रपणे विचारतो, औंध भागातील शाळेत विद्यार्थ्यांना मार्गदर्शन मिळत नाही.", "dept_id": "D13", "dept_name": "Education", "language": "mr"}
+{"text": "கழிவு வண்டி ஒழுங்கா வரது இல்ல. ரொம்ப கஷ்டமா இருக்கு. பெரியார் காலனி.", "dept_id": "D05", "dept_name": "Solid Waste Management", "language": "ta"}
+{"text": "ಕಸದ ಗಾಡಿ ಬರುವ ಸಮಯ ಬದಲಾಯಿಸಿ.", "dept_id": "D05", "dept_name": "Solid Waste Management", "language": "kn"}
+{"text": "ನಮ್ಮ ಬೀದಿಯಲ್ಲಿ ಸೊಳ್ಳೆಗಳು ಹೆಚ್ಚಾಗಿವೆ.", "dept_id": "D05", "dept_name": "Solid Waste Management", "language": "kn"}
+{"text": "ವಾರ್ಡ್ ನಂಬರ್ 4ರಲ್ಲಿ ನೀರು ಸರಿಯಾಗಿ ಬರ್ತಿಲ್ಲ. ಏನ್ ಮಾಡ್ತಿದಿರೋ ಗೊತ್ತಿಲ್ಲ.", "dept_id": "D03", "dept_name": "Water Supply", "language": "kn"}
+{"text": "బస్టాండ్ దగ్గర రోడ్డు మీద రాళ్లు ఉన్నాయి, బైక్ స్లిప్ అయిపోయింది.", "dept_id": "D01", "dept_name": "Roads & Bridges", "language": "te"}
+{"text": "ಕೆಂಗೇರಿಯಲ್ಲಿ ವಾರದಿಂದ ನೀರು ಬಂದಿಲ್ಲ. ಕಂಪ್ಲೇಂಟ್ ಮಾಡಿದ್ರು ಪ್ರಯೋಜನ ಇಲ್ಲ.", "dept_id": "D03", "dept_name": "Water Supply", "language": "kn"}
+{"text": "డ్రైనేజీ సమస్య గురించి ఎవరికి చెప్పినా పట్టించుకోవడం లేదు. గాంధీ సెంటర్, 1వ వీధి.", "dept_id": "D04", "dept_name": "Sewage & Drainage", "language": "te"}
+{"text": "School mein teachers nahi hain, kya padhai hogi?", "dept_id": "D13", "dept_name": "Education", "language": "en"}
+{"text": "फुरसुंगी येथे गटारांची सफाई करा! खूप दुर्गंधी येत आहे!", "dept_id": "D04", "dept_name": "Sewage & Drainage", "language": "mr"}
+{"text": "ಯಶವಂತಪುರದಲ್ಲಿ ಕುಡಿಯುವ ನೀರಿನ ಸಮಸ್ಯೆ ಇದೆ! ಕೂಡಲೇ ಪರಿಹರಿಸಿ!", "dept_id": "D08", "dept_name": "Health & Sanitation", "language": "kn"}
+{"text": "Traffic signal near Gachibowli is broken for a week! When will you fix this?!", "dept_id": "D10", "dept_name": "Traffic & Transport", "language": "en"}
+{"text": "मला असे निदर्शनास आणायचे आहे की, विश्रांतवाडीतील शाळेत विद्यार्थ्यांना पुस्तके वेळेवर मिळत नाहीत.", "dept_id": "D13", "dept_name": "Education", "language": "mr"}
+{"text": "আমার অভিযোগ, আমাদের এলাকায় জলের অপচয় রোধ করার জন্য সচেতনতা শিবির আয়োজন করা হোক। ঠিকানা: বেলঘরিয়া, কলকাতা।", "dept_id": "D03", "dept_name": "Water Supply", "language": "bn"}
+{"text": "Mera neighbor careless hai, uske wajah se aag lagne ka dar hai.", "dept_id": "D09", "dept_name": "Fire & Emergency", "language": "hi-en"}
+{"text": "வில்லிவாக்கம் ஏரியில் விஷம் கலந்து மீன்கள் சாகின்றன! யாராவது கவனிங்க!", "dept_id": "D07", "dept_name": "Parks & Greenery", "language": "ta"}
+{"text": "The building is being constructed without proper safety measures near my house in Chembur! It's dangerous!", "dept_id": "D02", "dept_name": "Buildings & Planning", "language": "en"}
+{"text": "Koi sunwai nahi hai kya? Sangam Vihar mein street light band hai!", "dept_id": "D06", "dept_name": "Street Lighting", "language": "hi-en"}
+{"text": "Sir, the garbage bins in my area, Lajpat Nagar 4, are overflowing. It's a health hazard. Please increase the frequency of collection.", "dept_id": "D08", "dept_name": "Health & Sanitation", "language": "hi-en"}
+{"text": "लक्ष्मी चौक मधले सगळे खड्डे भरून काढा.", "dept_id": "D01", "dept_name": "Roads & Bridges", "language": "mr"}
+{"text": "గుంటూరు, హిందూ కాలేజీ దగ్గర పారిశుద్ధ్యం సరిగా లేదు, కావున త్వరగా చర్యలు తీసుకోగలరు.", "dept_id": "D08", "dept_name": "Health & Sanitation", "language": "te"}
+{"text": "মহাশয়, আমাদের এলাকায় নর্দমার কারণে জলাবদ্ধতার সৃষ্টি হচ্ছে। বিষয়টি দেখার জন্য অনুরোধ করছি। ঠিকানা: বালিগঞ্জ, কলকাতা।", "dept_id": "D04", "dept_name": "Sewage & Drainage", "language": "bn"}
+{"text": "ಶಿವಾಜಿನಗರದ ಉದ್ಯಾನದಲ್ಲಿ ಕುಡಿಯುವ ನೀರಿನ ವ್ಯವಸ್ಥೆ ಇಲ್ಲ! ಬೇಗ ವ್ಯವಸ್ಥೆ ಮಾಡಿ!", "dept_id": "D07", "dept_name": "Parks & Greenery", "language": "kn"}
+{"text": "राम मंदिराजवळ पाण्याची टाकी साफ करा! खूप दिवस झाले कोणी लक्ष देत नाही!", "dept_id": "D03", "dept_name": "Water Supply", "language": "mr"}
+{"text": "मैं चाहता हूँ कि आप राजेंद्र नगर में स्ट्रीट लाइटों को ठीक करवाएं।", "dept_id": "D06", "dept_name": "Street Lighting", "language": "hi"}
+{"text": "पादचारी मार्ग तुटला आहे, दुरुस्त करा. फर्ग्युसन कॉलेज रोड.", "dept_id": "D10", "dept_name": "Traffic & Transport", "language": "mr"}
+{"text": "ನಮ್ ಏರಿಯಾದಲ್ಲಿ ಅಂಗವಿಕಲರಿಗೆ ಏನ್ ಸೌಲಭ್ಯ ಇದೆ?", "dept_id": "D12", "dept_name": "Social Welfare", "language": "kn"}
+{"text": "पंचवटी मधील रस्त्यावर खूप धूळ आहे. पाणी टाका.", "dept_id": "D01", "dept_name": "Roads & Bridges", "language": "mr"}
+{"text": "Exams postponed ho rahe hain bar bar. Fix this!", "dept_id": "D13", "dept_name": "Education", "language": "en"}
+{"text": "I wish to file a complaint regarding the lack of transparency in property tax valuation methods in the area of Jayanagar, 4th Block.", "dept_id": "D11", "dept_name": "Revenue & Property", "language": "en"}
+{"text": "ನಮ್ಮ ಏರಿಯಾದಲ್ಲಿ ಹಾವು ಜಾಸ್ತಿ ಇದೆ. ಭಯ ಆಗ್ತಿದೆ. ಚಾಮರಾಜಪೇಟೆಯಲ್ಲಿರುವ ಮನೆ.", "dept_id": "D14", "dept_name": "Disaster Management", "language": "kn"}
+{"text": "ದೀಪದ ಕಂಬ ನೆಟ್ಟಗೆ ಇಲ್ಲ.", "dept_id": "D06", "dept_name": "Street Lighting", "language": "kn"}
+{"text": "அய்யா, ராஜா அண்ணாமலைபுரத்தில் உள்ள அடுக்குமாடி குடியிருப்பில் தீ பாதுகாப்பு பயிற்சி நடத்த வேண்டும். ஏற்பாடு செய்யுமாறு கேட்டுக்கொள்கிறேன்.", "dept_id": "D09", "dept_name": "Fire & Emergency", "language": "ta"}
+{"text": "ಬಸವನಗುಡಿಯ ಉದ್ಯಾನದಲ್ಲಿ ಬೆಂಚ್ ಗಳು ಮುರಿದಿವೆ! ಕೂಡಲೇ ಬದಲಾಯಿಸಿ!", "dept_id": "D07", "dept_name": "Parks & Greenery", "language": "kn"}
+{"text": "Kab uthaoge yeh kachra Govindpuri se?! Bachche बीमार pad rahe hain!", "dept_id": "D05", "dept_name": "Solid Waste Management", "language": "hi-en"}
+{"text": "ரேஷன் கார்டுல அட்ரஸ் மாத்தணும்", "dept_id": "D12", "dept_name": "Social Welfare", "language": "ta"}
+{"text": "பசங்களுக்கு சரியா விளையாட்டு சொல்லி கொடுக்கிறது இல்ல. உடம்பு சரியில்லாம இருக்கு.", "dept_id": "D13", "dept_name": "Education", "language": "ta"}
+{"text": "ಸರ್, ನಮ್ ಮನೆ ನಂಬರ್ ಚೇಂಜ್ ಆಗ್ಬೇಕು, ಎಲ್ಲಿಗೆ ಹೋಗ್ಬೇಕು?", "dept_id": "D11", "dept_name": "Revenue & Property", "language": "kn"}
+{"text": "ಬನಶಂಕರಿಯಲ್ಲಿ ಉದ್ಯಾನವನವೇ ಇಲ್ಲ! ಯಾವಾಗ ನಿರ್ಮಾಣ ಮಾಡುತ್ತೀರಿ?!", "dept_id": "D07", "dept_name": "Parks & Greenery", "language": "kn"}
+{"text": "ಅಕ್ಕಾ, ನಮ್ ಮನೆಗೆ ಊಟಕ್ಕೆ ಏನಾದ್ರೂ ಸಹಾಯ ಸಿಗುತ್ತಾ?", "dept_id": "D12", "dept_name": "Social Welfare", "language": "kn"}
+{"text": "ದೇವನಹಳ್ಳಿಯಲ್ಲಿ ಚರಂಡಿ ಕಟ್ಟಿಕೊಂಡಿದೆ. ಸರಿ ಮಾಡ್ತಾರೋ ಇಲ್ವೋ?", "dept_id": "D04", "dept_name": "Sewage & Drainage", "language": "kn"}
+{"text": "ಶಿವಾಜಿನಗರದಲ್ಲಿ ಪಾರ್ಕಿಂಗ್ ಸಮಸ್ಯೆ ಹೆಚ್ಚಾಗಿದೆ. ದಯವಿಟ್ಟು ಕ್ರಮ ಕೈಗೊಳ್ಳಿ.", "dept_id": "D10", "dept_name": "Traffic & Transport", "language": "kn"}
+{"text": "శేరిలింగంపల్లిలోని పాఠశాలలో ఆట స్థలం సరిగా లేదు! పిల్లలు ఎలా ఆడుకోవాలి?! ఇది దారుణం!", "dept_id": "D13", "dept_name": "Education", "language": "te"}
+{"text": "ஐயா, சேத்துப்பட்டில் உள்ள பள்ளியில் தீ பாதுகாப்பு ஒத்திகை நடத்த வேண்டும். ஏற்பாடு செய்யுமாறு கேட்டுக்கொள்கிறேன்.", "dept_id": "D09", "dept_name": "Fire & Emergency", "language": "ta"}
+{"text": "Yeh kya ho raha hai? Vasant Vihar mein street lights kharab hain!", "dept_id": "D06", "dept_name": "Street Lighting", "language": "hi-en"}
+{"text": "ನಮ್ಮ ಏರಿಯಾದಲ್ಲಿ ಸ್ಕೂಲ್ ಇಲ್ಲ. ದೂರ ಹೋಗೋಕೆ ಕಷ್ಟ ಆಗುತ್ತೆ. ಚಿಕ್ಕಬಳ್ಳಾಪುರದಲ್ಲಿ ವಾಸ.", "dept_id": "D13", "dept_name": "Education", "language": "kn"}
+{"text": "रावेतमध्ये ड्रेनेज लाईन फुटली आहे! कधी सुधारणा होणार?", "dept_id": "D04", "dept_name": "Sewage & Drainage", "language": "mr"}
+{"text": "ಬಿ.ಟಿ.ಎಂ ಲೇಔಟ್‌ನಲ್ಲಿ ರಸ್ತೆ ದಾಟಲು ಝೀಬ್ರಾ ಕ್ರಾಸಿಂಗ್ ಗುರುತು ಹಾಕಿ.", "dept_id": "D10", "dept_name": "Traffic & Transport", "language": "kn"}
+{"text": "Riot ho gaya hai! Police control nahi kar rahi! Log mar rahe hain! Jama Masjid area mein curfew lagao!", "dept_id": "D14", "dept_name": "Disaster Management", "language": "hi-en"}
+{"text": "வணக்கம். மதுரவாயலில் உள்ள மேம்பாலத்தில் அடிக்கடி விபத்துகள் நடக்கின்றன. பாதுகாப்பு அதிகரிக்க வேண்டுகிறேன்.", "dept_id": "D10", "dept_name": "Traffic & Transport", "language": "ta"}
+{"text": "मेन रोडवर स्पीड ब्रेकर तुटला आहे. अपघात होण्याची शक्यता आहे.", "dept_id": "D01", "dept_name": "Roads & Bridges", "language": "mr"}
+{"text": "ஸ்கூல்ல ஃபர்னிச்சர் சரியா இல்ல. உக்காந்து படிக்க முடியல. பெரியார் நகர்.", "dept_id": "D13", "dept_name": "Education", "language": "ta"}
+{"text": "नवीन वस्तीमध्ये आग लागली आहे, मदत पाठवा.", "dept_id": "D09", "dept_name": "Fire & Emergency", "language": "mr"}
+{"text": "I wish to report a blocked drainage system near the corner of Tilak Nagar Market, Ward 3. The sewage is overflowing onto the street.", "dept_id": "D04", "dept_name": "Sewage & Drainage", "language": "en"}
+{"text": "রাস্তায় আবর্জনা পড়ে আছে, কেউ দেখছে না, ইস্টার্ন পার্ক।", "dept_id": "D08", "dept_name": "Health & Sanitation", "language": "bn"}
+{"text": "I would like to complain about the low water pressure in Block C, Janakpuri. It is difficult to carry out daily chores.", "dept_id": "D03", "dept_name": "Water Supply", "language": "en"}
+{"text": "Paani bahut kam aa raha hai. Anand parbat mein.", "dept_id": "D03", "dept_name": "Water Supply", "language": "hi-en"}
+{"text": "इंदिरानगर मध्ये नवीन रोपटी लावा, हिरवळ दिसेल.", "dept_id": "D07", "dept_name": "Parks & Greenery", "language": "mr"}
+{"text": "रस्त्यावर खूप खड्डे आहेत, गाडी चालवणे कठीण झाले आहे. कर्वे रोड.", "dept_id": "D10", "dept_name": "Traffic & Transport", "language": "mr"}
+{"text": "বিনয়ের সাথে জানাচ্ছি, আমার বাড়ীর নলকূপ দিয়ে গত কয়েকদিন যাবৎ খুব অল্প জল পড়ছে। স্থান: শান্তি নগর, কলকাতা। দ্রুত ব্যবস্থা নিলে উপকৃত হব।", "dept_id": "D03", "dept_name": "Water Supply", "language": "bn"}
+{"text": "అమీర్పేటలో ఎక్కడ చూసినా చెత్తే! ఏం చేస్తున్నారు అసలు అక్కడ?", "dept_id": "D05", "dept_name": "Solid Waste Management", "language": "te"}
+{"text": "ये बदबू सहन नहीं होती! सीवर लाइन से गैस निकल रही है! इंदिरापुरम में क्या हो रहा है?", "dept_id": "D04", "dept_name": "Sewage & Drainage", "language": "hi"}
+{"text": "रस्त्यावर लाईट नाही, अंधार आहे. औंध परिसर.", "dept_id": "D10", "dept_name": "Traffic & Transport", "language": "mr"}
+{"text": "Bus stop galat jagah banaya hai, dikkat ho rahi hai.", "dept_id": "D10", "dept_name": "Traffic & Transport", "language": "hi-en"}
+{"text": "धानोरी येथे पाण्याची समस्या आहे! काय चाललं आहे हे?", "dept_id": "D03", "dept_name": "Water Supply", "language": "mr"}
+{"text": "मेरा निवेदन है कि सेक्टर 15, वडोदरा में रासायनिक आपदा से निपटने के लिए प्रशिक्षण कार्यक्रम आयोजित किया जाए।", "dept_id": "D14", "dept_name": "Disaster Management", "language": "hi"}
+{"text": "अरे बाबा, वॉर्ड नंबर 8 मधल्या उद्यानात फुलं तोडतात लोकं, काहीतरी करा.", "dept_id": "D07", "dept_name": "Parks & Greenery", "language": "mr"}
+{"text": "லைட் எரியாம ரொம்ப நாளா அப்படியே இருக்கு. சுபாஷ் சந்திர போஸ் தெரு.", "dept_id": "D06", "dept_name": "Street Lighting", "language": "ta"}
+{"text": "हाउस टैक्स के लिए ऑनलाइन भुगतान विफल हो गया, पैसे कट गए, लेकिन भुगतान नहीं हुआ! ये क्या मजाक है? प्रीत विहार में सब परेशान हैं!", "dept_id": "D11", "dept_name": "Revenue & Property", "language": "hi"}
+{"text": "सड़क पर बहुत गन्दा पानी है, दुर्गा मंदिर के सामने।", "dept_id": "D01", "dept_name": "Roads & Bridges", "language": "hi"}
+{"text": "విజయనగరం, మూడు రోడ్ల కూడలి వద్ద ఉన్న పార్కులో పారిశుద్ధ్యం సరిగా లేదు, శుభ్రం చేయించండి.", "dept_id": "D07", "dept_name": "Parks & Greenery", "language": "te"}
+{"text": "श्रीमान, मेरा आपसे आग्रह है कि साकेत के स्कूल में शिक्षकों के लिए समय पर वेतन का भुगतान नहीं होता है। कृपया समय पर वेतन का भुगतान कराएं।", "dept_id": "D13", "dept_name": "Education", "language": "hi"}
+{"text": "अरे यार, नेहरू पार्क में तो कोई देखने वाला ही नहीं है।", "dept_id": "D07", "dept_name": "Parks & Greenery", "language": "hi"}
+{"text": "కొత్త బ్రిడ్జి కడుతున్నారు కానీ ఇంకా పూర్తి కాలేదు, ఎప్పుడు పూర్తి చేస్తారు?", "dept_id": "D01", "dept_name": "Roads & Bridges", "language": "te"}
+{"text": "Mutation ke liye apply kiya tha, abhi tak koi update nahi. Karol Bagh.", "dept_id": "D11", "dept_name": "Revenue & Property", "language": "hi-en"}
+{"text": "अरे यार, वो जो नया पार्क बना है, उसका उद्घाटन कब होगा?", "dept_id": "D07", "dept_name": "Parks & Greenery", "language": "hi"}
+{"text": "सड़क पर मिट्टी पड़ी है, फिसलने का डर है। इंदिरा कॉलोनी, अस्पताल के सामने।", "dept_id": "D01", "dept_name": "Roads & Bridges", "language": "hi"}
+{"text": "Kachra uthane wale bhaiya aaj kal late ho rahe hain. Kalkaji.", "dept_id": "D05", "dept_name": "Solid Waste Management", "language": "en"}
+{"text": "আরে, গড়িয়াতে তো সব স্ট্রিট লাইট বন্ধ। রাতে খুব অসুবিধা হচ্ছে!", "dept_id": "D06", "dept_name": "Street Lighting", "language": "bn"}
+{"text": "అనంతపురం, సప్తగిరి సర్కిల్ దగ్గర పార్కులో ఆట వస్తువులు విరిగిపోయాయి, బాగు చేయించండి.", "dept_id": "D07", "dept_name": "Parks & Greenery", "language": "te"}
+{"text": "Building inspection kab hoga sector 21 mein?", "dept_id": "D02", "dept_name": "Buildings & Planning", "language": "hi-en"}
+{"text": "Sector 15 mein illegal shops ban rahe hai. Koi puchne wala nahi hai", "dept_id": "D02", "dept_name": "Buildings & Planning", "language": "hi-en"}
+{"text": "ಬ್ಯಾಟರಾಯನಪುರದಲ್ಲಿ ಡ್ರೈನೇಜ್ ಕ್ಲೀನ್ ಮಾಡಿಲ್ಲ. ಬೇಗ ಮಾಡಿ.", "dept_id": "D04", "dept_name": "Sewage & Drainage", "language": "kn"}
+{"text": "माझी विनंती आहे की, शहरात आपत्कालीन व्यवस्थापनाचे कार्यालय असावे.", "dept_id": "D14", "dept_name": "Disaster Management", "language": "mr"}
+{"text": "Senior citizens ke liye kya kya yojna hai sarkar ki? Rohini Sector 22.", "dept_id": "D12", "dept_name": "Social Welfare", "language": "hi-en"}
+{"text": "కూకట్పల్లి హౌసింగ్ బోర్డు కాలనీలో చాలా లైట్లు పని చేయడం లేదు! ఎప్పుడు చేస్తారు?", "dept_id": "D06", "dept_name": "Street Lighting", "language": "te"}
+{"text": "কালীঘাটের মন্দির চত্বরে অবৈধ নির্মাণ! আপনারা কি চোখ বুজে আছেন?", "dept_id": "D02", "dept_name": "Buildings & Planning", "language": "bn"}
+{"text": "రామంతపూర్ లో చెత్త కుప్పలు నిండిపోయాయి! ఇది ఎంతవరకు సమంజసం?", "dept_id": "D05", "dept_name": "Solid Waste Management", "language": "te"}
+{"text": "మా ప్రాంతంలో డ్రైనేజీ సమస్య తీవ్రంగా ఉంది. శాశ్వత పరిష్కారం చూపండి. అశోక్ నగర్, 6వ లైన్.", "dept_id": "D04", "dept_name": "Sewage & Drainage", "language": "te"}
+{"text": "Meri beti ka scholarship kab tak milega? Usse admission fees jama karni hai. Laxmi Nagar.", "dept_id": "D12", "dept_name": "Social Welfare", "language": "hi-en"}
+{"text": "कोंढव्यात पाण्याची समस्या आहे! कधी सुधारणार?", "dept_id": "D03", "dept_name": "Water Supply", "language": "mr"}
+{"text": "విజయ్ నగర్ కాలనీలో చెత్తా చెదారం పేరుకుపోయింది! అసలు పట్టించుకుంటారా?", "dept_id": "D05", "dept_name": "Solid Waste Management", "language": "te"}
+{"text": "हनुमान टेकडी परिसरात पाणी कधी येणार? वेळेवर पाणी द्या!", "dept_id": "D03", "dept_name": "Water Supply", "language": "mr"}
+{"text": "బోరబండలో కరెంటు తీగలు తెగి పడ్డాయి! ఎప్పుడు బాగు చేస్తారు?! ప్రమాదం జరిగేలా ఉంది!", "dept_id": "D14", "dept_name": "Disaster Management", "language": "te"}
+{"text": "Tum log kya kar rahe ho?! Dwarka Sector 6 mein kachra phaila hua hai!", "dept_id": "D05", "dept_name": "Solid Waste Management", "language": "hi-en"}
+{"text": "Land record mein naam change karwana hai. Process kya hai, batao. Tilak Marg.", "dept_id": "D11", "dept_name": "Revenue & Property", "language": "hi-en"}
+{"text": "கனிவுடன், லட்சுமி நகரில் சாலைகளில் குண்டும் குழியுமாக உள்ளது. சரி செய்ய வேண்டுகிறேன்.", "dept_id": "D01", "dept_name": "Roads & Bridges", "language": "ta"}
+{"text": "अरे यार, वो जो छोटी वाली गली है, उसमें तो चूहे घूम रहे हैं।", "dept_id": "D08", "dept_name": "Health & Sanitation", "language": "hi"}
+{"text": "দাদা, নিউটাউনে তো নোংরা জমে আছে। একটু সাফাই অভিযান চালাও!", "dept_id": "D05", "dept_name": "Solid Waste Management", "language": "bn"}
+{"text": "ये गड्ढे कब भरोगे तुम लोग?! The road near Borivali station is a nightmare!", "dept_id": "D01", "dept_name": "Roads & Bridges", "language": "en"}
+{"text": "எங்க ஏரியால தண்ணி இல்ல. குடிக்க தண்ணி வேணும். காமராஜ் நகர்.", "dept_id": "D14", "dept_name": "Disaster Management", "language": "ta"}
+{"text": "రామంతపూర్ చెరువు దగ్గర లైట్లు వెలగడం లేదు! ఇది ఎంతవరకు సమంజసం?", "dept_id": "D06", "dept_name": "Street Lighting", "language": "te"}
+{"text": "मैं आपका ध्यान आकर्षित करना चाहता/चाहती हूँ कि लाजपत नगर कॉलोनी के स्कूल में शिक्षकों के लिए कंप्यूटर का ज्ञान अनिवार्य किया जाए।", "dept_id": "D13", "dept_name": "Education", "language": "hi"}
+{"text": "যাদবপুর পার্কে সাপ দেখা গেছে, একটু নজর রাখবেন।", "dept_id": "D07", "dept_name": "Parks & Greenery", "language": "bn"}
+{"text": "கனிவுடன், பெரியார் தெருவில் உள்ள வேகத்தடை உடைந்துள்ளது. அதை சரி செய்யும்படி கேட்டுக்கொள்கிறேன்.", "dept_id": "D01", "dept_name": "Roads & Bridges", "language": "ta"}
+{"text": "येरवडा येथे ड्रेनेज लाईन फुटली आहे! सगळीकडे घाण पाणी साचले आहे! हे सहन करण्यासारखे नाही!", "dept_id": "D04", "dept_name": "Sewage & Drainage", "language": "mr"}
+{"text": "দমদম এর কাছে একটা বাড়িতে শর্ট সার্কিট থেকে আগুন লেগেছে! কখন আসবেন?", "dept_id": "D09", "dept_name": "Fire & Emergency", "language": "bn"}
+{"text": "কসবার পার্কে ঝোপঝাড় পরিষ্কার করা দরকার।", "dept_id": "D07", "dept_name": "Parks & Greenery", "language": "bn"}
+{"text": "ಅಣ್ಣಾ, ನಮ್ ಮನೆಗೆ ಯಾರಾದ್ರೂ ಬಂದು ವಿಸಿಟ್ ಮಾಡ್ತಾರಾ?", "dept_id": "D12", "dept_name": "Social Welfare", "language": "kn"}
+{"text": "டீச்சர் சரியா பாடம் சொல்லித்தரமாட்றாங்கன்னு பசங்க சொல்றாங்க. என்ன பண்ணலாம்?", "dept_id": "D13", "dept_name": "Education", "language": "ta"}
+{"text": "Park full of weeds. Please clean up, Rajouri Garden.", "dept_id": "D07", "dept_name": "Parks & Greenery", "language": "en"}
+{"text": "ಹೊಸ ಬಸ್ ಸ್ಟ್ಯಾಂಡ್ ಹತ್ತಿರ ಬಹಳಷ್ಟು ಕಸ ಇದೆ.", "dept_id": "D05", "dept_name": "Solid Waste Management", "language": "kn"}
+{"text": "ಯಶವಂತಪುರದಲ್ಲಿ ಡ್ರೈನೇಜ್ ಪೈಪ್ ಒಡೆದಿದೆ. ಬೇಗ ಸರಿಪಡಿಸಿ.", "dept_id": "D04", "dept_name": "Sewage & Drainage", "language": "kn"}
+{"text": "வணக்கம். காமராஜர் தெருவில் அனுமதியின்றி கடைகள் கட்டப்படுகின்றன. தடுக்க வேண்டுகிறேன்.", "dept_id": "D02", "dept_name": "Buildings & Planning", "language": "ta"}
+{"text": "గచ్చిబౌలిలో వర్షం వస్తే రోడ్లన్నీ చెరువుల్లా మారుతున్నాయి! దీనికి పరిష్కారం లేదా?! ఏం చేస్తున్నారు మీరు అక్కడ?!", "dept_id": "D14", "dept_name": "Disaster Management", "language": "te"}
+{"text": "మా ప్రాంతంలో డ్రైనేజీ వ్యవస్థ సరిగా లేదు. కొత్తగా నిర్మించాలి. నెహ్రూ బొమ్మ సెంటర్ దగ్గర.", "dept_id": "D04", "dept_name": "Sewage & Drainage", "language": "te"}
+{"text": "নালার জল রাস্তায় উঠে এসেছে, দুর্গন্ধে টেকা দায়, বাঘাযতীন।", "dept_id": "D08", "dept_name": "Health & Sanitation", "language": "bn"}
+{"text": "আমার অভিযোগ, আমাদের এলাকায় নর্দমার ঢাকনাগুলি ভেঙে গেছে, যা বিপজ্জনক। ঠিকানা: পার্ক সার্কাস, কলকাতা।", "dept_id": "D04", "dept_name": "Sewage & Drainage", "language": "bn"}
+{"text": "ভাই, আমার বাড়ির পাশে একটা পুরনো বাড়ি ভেঙে পরার মতো। একটা কিছু করেন!", "dept_id": "D14", "dept_name": "Disaster Management", "language": "bn"}
+{"text": "আমার অভিযোগ, দক্ষিণেশ্বর অঞ্চলের দরিদ্র মানুষদের জন্য স্বাস্থ্য বীমা প্রকল্পের সুবিধা পাওয়া যাচ্ছে না।", "dept_id": "D12", "dept_name": "Social Welfare", "language": "bn"}
+{"text": "There is a lot of garbage piling up near the entrance of the park in Greater Kailash 1. Please clean it up.", "dept_id": "D07", "dept_name": "Parks & Greenery", "language": "hi-en"}
+{"text": "More buses are needed on the route to Hinjewadi! It's impossible to commute!", "dept_id": "D10", "dept_name": "Traffic & Transport", "language": "en"}
+{"text": "ಮಾಗಡಿ ರೋಡಲ್ಲಿ ಚರಂಡಿ ನೀರು ಉಕ್ಕಿ ಬರ್ತಿದೆ. ನೋಡೋರಿಲ್ಲ.", "dept_id": "D04", "dept_name": "Sewage & Drainage", "language": "kn"}
+{"text": "Seriously?! No fire safety awareness programs in the slums of Dharavi? Unbelievable!", "dept_id": "D09", "dept_name": "Fire & Emergency", "language": "en"}
+{"text": "School functions mein sirf ameer bachchon ko chance milta hai! Gareebon ka kya? Punjabi Bagh mein discrimination hai!", "dept_id": "D13", "dept_name": "Education", "language": "hi-en"}
+{"text": "வணக்கம். காயிதே மில்லத் தெருவில் கட்டட அனுமதிக்கு அதிக கட்டணம் வசூலிக்கிறார்கள். கவனிக்கவும்.", "dept_id": "D02", "dept_name": "Buildings & Planning", "language": "ta"}
+{"text": "ஐயா, தியாகராஜர் காலனியில் உள்ள மருத்துவமனையில் தீ பாதுகாப்பு உபகரணங்கள் சரியாக செயல்படவில்லை. சரி செய்ய வேண்டுகிறேன்.", "dept_id": "D09", "dept_name": "Fire & Emergency", "language": "ta"}
+{"text": "রাজারহাটে বাসের ভাড়া খুব বেশি! কেউ দেখার নেই? নাকি সবাই দুর্নীতিতে জড়িত?", "dept_id": "D10", "dept_name": "Traffic & Transport", "language": "bn"}
+{"text": "ನಮ್ಮ ಏರಿಯಾದಲ್ಲಿ ಶಾಲೆ ಇಲ್ಲ, ತುಂಬಾ ದೂರ ಹೋಗಬೇಕು. ದಯವಿಟ್ಟು ಒಂದು ಶಾಲೆ ಕೊಡಿ. ಕೃಷ್ಣಾಪುರದಲ್ಲಿ ವಾಸ.", "dept_id": "D13", "dept_name": "Education", "language": "kn"}
+{"text": "This is to inform you that there is a significant water leakage from a public tap near the bus stop at Mahatma Gandhi Road, Kalyan West. It is causing a considerable waste of water.", "dept_id": "D03", "dept_name": "Water Supply", "language": "en"}
+{"text": "என்கிட்ட பழைய டாக்ஸ் ரிசிப்ட் இருக்கு அது போதுமா?", "dept_id": "D11", "dept_name": "Revenue & Property", "language": "ta"}
+{"text": "शिवाजी चौक मधला रस्ता खूप खराब आहे. लवकर दुरुस्त करा.", "dept_id": "D01", "dept_name": "Roads & Bridges", "language": "mr"}
+{"text": "Paani bahut ganda aa raha hai, Ward 5 mein. Filter bhi kaam nahi kar raha.", "dept_id": "D03", "dept_name": "Water Supply", "language": "hi-en"}
+{"text": "There's no ambulance service in Ward 4! Someone please do something, it's a matter of life and death!", "dept_id": "D09", "dept_name": "Fire & Emergency", "language": "en"}
+{"text": "আমার অভিযোগ, আমার প্রতিবন্ধী ভাইয়ের জন্য সরকারি সাহায্য পাওয়ার আবেদনটি এখনও পর্যন্ত মঞ্জুর হয়নি। কাঁকিনাড়া অঞ্চল।", "dept_id": "D12", "dept_name": "Social Welfare", "language": "bn"}
+{"text": "அய்யா, வடக்கு மாம்பலம் பகுதியில் உள்ள கட்டிடத்தில் தீ பாதுகாப்பு விதிமுறைகளை மீறி உள்ளனர். உடனடியாக ஆய்வு செய்யும்படி கேட்டுக்கொள்கிறேன்.", "dept_id": "D09", "dept_name": "Fire & Emergency", "language": "ta"}
+{"text": "మా ఇంటి దగ్గర నీటి కుళాయి లేదు. దయచేసి ఏర్పాటు చేయండి. ఇందిరా కాలనీలో ఉంటాము.", "dept_id": "D03", "dept_name": "Water Supply", "language": "te"}
+{"text": "ఖైరతాబాద్‌లోని పాఠశాలలో ఉపాధ్యాయులు సరిగ్గా బోధించడం లేదు! పిల్లల భవిష్యత్తు నాశనం అవుతోంది! ఏం చేస్తున్నారు మీరు?!", "dept_id": "D13", "dept_name": "Education", "language": "te"}
+{"text": "Gali mein kachra faila hua hai, koi dekhne wala nahi hai. Chandni Chowk.", "dept_id": "D05", "dept_name": "Solid Waste Management", "language": "en"}
+{"text": "सिग्नल बंद आहे, अपघात होण्याची शक्यता आहे. शिवाजीनगर स्टेशनजवळ.", "dept_id": "D10", "dept_name": "Traffic & Transport", "language": "mr"}
+{"text": "माझी नम्र विनंती आहे की, शहरातील लोकांना आपत्ती व्यवस्थापनाची माहिती मिळावी.", "dept_id": "D14", "dept_name": "Disaster Management", "language": "mr"}
+{"text": "ये कैसी व्यवस्था है? बारिश में सब डूब जाता है! पटेल नगर में सुधार करो!", "dept_id": "D04", "dept_name": "Sewage & Drainage", "language": "hi"}
+{"text": "ಬ್ರೋ, ನಮ್ ಮನೆ ಟ್ಯಾಕ್ಸ್ ಕಟ್ಟೋಕೆ ಕೊನೆ ದಿನಾಂಕ ಯಾವುದು?", "dept_id": "D11", "dept_name": "Revenue & Property", "language": "kn"}
+{"text": "प्रेम नगर में तो मच्छर मारने वाली दवाई भी नहीं छिड़कते।", "dept_id": "D08", "dept_name": "Health & Sanitation", "language": "hi"}
+{"text": "হাওড়া ব্রিজে সবসময় জ্যাম লেগে থাকে! কোনো প্ল্যানিং নেই আপনাদের? কবে সুরাহা হবে?", "dept_id": "D10", "dept_name": "Traffic & Transport", "language": "bn"}
+{"text": "Kindly note that the water cooler in the park at Defence Colony is not working. People are facing a lot of problem in this heat.", "dept_id": "D07", "dept_name": "Parks & Greenery", "language": "hi-en"}
+{"text": "गणपती मंदिराच्या जवळ मोठा खड्डा पडला आहे. लवकर ठीक करा.", "dept_id": "D01", "dept_name": "Roads & Bridges", "language": "mr"}
+{"text": "ರೀ, ನನ್ನ ಜಾಗದ ಡಾಕ್ಯುಮೆಂಟ್ಸ್ ಕಳ್ಕೊಂಡಿದೀನಿ. ಏನ್ ಮಾಡೋದು?", "dept_id": "D11", "dept_name": "Revenue & Property", "language": "kn"}
+{"text": "Street sweeper not coming to our lane in Model Town.", "dept_id": "D08", "dept_name": "Health & Sanitation", "language": "en"}
+{"text": "మా ఏరియాలో అక్రమ కట్టడాలు ఎక్కువ అవుతున్నాయి, చర్య తీసుకోండి.", "dept_id": "D02", "dept_name": "Buildings & Planning", "language": "te"}
+{"text": "சாக்கடைல இருந்து பாம்பு வந்துச்சு. பயமா இருக்கு", "dept_id": "D04", "dept_name": "Sewage & Drainage", "language": "ta"}
+{"text": "अशोक विहारमध्ये नवीन बांधकाम सुरू आहे, धूळ खूप उडत आहे.", "dept_id": "D02", "dept_name": "Buildings & Planning", "language": "mr"}
+{"text": "మా ఇంటికి పర్మిషన్ కోసం అప్లై చేశాను. ఇంకా రాలేదు.", "dept_id": "D02", "dept_name": "Buildings & Planning", "language": "te"}
+{"text": "I am writing to complain about the overflowing sewage drain near the bus stop in Janakpuri, Block C. Please investigate.", "dept_id": "D04", "dept_name": "Sewage & Drainage", "language": "en"}
+{"text": "मैं आपका ध्यान दिलाना चाहता हूँ कि सेक्टर 4, द्वारका में कई दिनों से कचरा जमा है।", "dept_id": "D05", "dept_name": "Solid Waste Management", "language": "hi"}
+{"text": "Electrical fire due to faulty wiring in my building, Tilak Nagar! Someone needs to be held accountable!", "dept_id": "D09", "dept_name": "Fire & Emergency", "language": "en"}
+{"text": "కడప, చర్చి రోడ్డు వద్ద ఉన్న గ్రీనరీలో చెత్త ఎక్కువగా ఉంది, శుభ్రం చేయవలసిందిగా కోరుతున్నాను.", "dept_id": "D07", "dept_name": "Parks & Greenery", "language": "te"}
+{"text": "मेरा ध्यान आकर्षित करना चाहता हूँ कि डिफेंस कॉलोनी में स्ट्रीट लाइटें जल नहीं रही हैं।", "dept_id": "D06", "dept_name": "Street Lighting", "language": "hi"}
+{"text": "రాజేంద్రనగర్‌లో ఇండ్లు కూలిపోయాయి, జనాలు ఎక్కడ ఉండాలి?! వెంటనే పునరావాసం కల్పించండి!", "dept_id": "D14", "dept_name": "Disaster Management", "language": "te"}
+{"text": "मेरी संपत्ति का नक्शा गलत है, इसे कब ठीक करोगे? ग्रेटर कैलाश में हम कहाँ जाएं!", "dept_id": "D11", "dept_name": "Revenue & Property", "language": "hi"}
+{"text": "மயிலாப்பூர் பூங்காவில் தண்ணீர் வசதி இல்லை! செடிகள் காய்ந்து போகின்றன! என்னதான் செய்கிறீர்கள் நீங்கள்?", "dept_id": "D07", "dept_name": "Parks & Greenery", "language": "ta"}
+{"text": "कृपा करके ध्यान दें, करोल बाग में कचरा बहुत फैला हुआ है।", "dept_id": "D05", "dept_name": "Solid Waste Management", "language": "hi"}
+{"text": "Sewage ka paani overflow ho raha hai, bahut gandagi hai. Sector 22 mein.", "dept_id": "D04", "dept_name": "Sewage & Drainage", "language": "hi-en"}
+{"text": "सड़क बहुत खराब है, प्रेम विहार में।", "dept_id": "D10", "dept_name": "Traffic & Transport", "language": "hi"}
+{"text": "मी आपल्याला कळवू इच्छितो की, लोहगाव भागातील शाळेत स्वच्छतागृहांची दुरुस्ती करावी.", "dept_id": "D13", "dept_name": "Education", "language": "mr"}
+{"text": "அண்ணா நகர் பூங்காவில் குப்பை தொட்டிகள் நிரம்பி வழிகின்றன! என்ன செய்து கொண்டிருக்கிறீர்கள் நீங்கள்? உடனடியாக சுத்தம் செய்யுங்கள்!", "dept_id": "D07", "dept_name": "Parks & Greenery", "language": "ta"}

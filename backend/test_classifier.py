@@ -4,7 +4,7 @@ import sys
 
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
-from app.services.ai.classifier_agent import _zeroshot_classify, _keyword_fallback
+from app.services.ai.classifier_agent import classify_complaint
 
 # (lang, input_text, expected_dept_name)
 TEST_CASES = [
@@ -44,14 +44,14 @@ def format_result(res) -> str:
     src = res.classifier_source.upper()
     return f"[{src}] {res.dept_name} (Conf: {res.confidence:.2f})"
 
-def main():
+async def async_main():
     header = f"{'LANG':<6} {'INPUT':<55} {'RESULT':<45} {'EXPECTED':<30} OK?"
     print(header)
     print("─" * len(header))
 
     correct = 0
     for lang, text, expected in TEST_CASES:
-        res     = _zeroshot_classify(text)
+        res     = await classify_complaint(text)
         result  = format_result(res)
         hit     = "✅" if expected in res.dept_name else "❌"
         if expected in res.dept_name:
@@ -63,4 +63,4 @@ def main():
     print(f"Score: {correct}/{total} ({100*correct//total}%)")
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(async_main())

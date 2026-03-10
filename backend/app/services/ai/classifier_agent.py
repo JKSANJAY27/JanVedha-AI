@@ -3,8 +3,7 @@ ClassifierAgent
 
 Classifies a civic complaint into a department.
 
-Layer 1 (Primary):  mDeBERTa-v3-base-mnli-xnli (local, ~552 MB cached)
-                    — fast zero-shot model, works great on native Indian scripts
+Layer 1 (Primary):  IndicBERTv2-MLM-Sam-TLM (fine-tuned) OR mDeBERTa-v3-base-mnli-xnli (zero-shot)
 Layer 2 (Fallback): Sarvam-M via NVIDIA NIM API (free key, OpenAI-compatible)
                     — best for Hinglish / romanised Indian text (low confidence cases)
 Layer 3 (Last):     Keyword matching — always works, zero dependencies
@@ -94,8 +93,7 @@ class ClassificationResult:
     classifier_source: str = "zeroshot"   # "finetuned" | "zeroshot" | "sarvam_nim" | "keyword"
 
 
-# ─────────────────────────────────────────────────────────────────
-# Layer 1a: Fine-tuned mDeBERTa (best — loads after training)
+# Layer 1a: Fine-tuned IndicBERTv2 (best — loads after training)
 # ─────────────────────────────────────────────────────────────────
 
 _DEPT_IDS = [
@@ -126,7 +124,7 @@ def _get_finetuned_pipeline():
 
 
 def _finetuned_classify(text: str) -> ClassificationResult:
-    """Fast 14-class classification using fine-tuned mDeBERTa."""
+    """Fast 14-class classification using fine-tuned IndicBERTv2."""
     clf = _get_finetuned_pipeline()
     if clf is None:
         return _zeroshot_classify(text)  # fall through

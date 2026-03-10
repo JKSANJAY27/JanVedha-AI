@@ -1,7 +1,7 @@
 """
 Fine-tuning script for JanVedha civic complaint classifier.
 
-Takes synthetic (or real) JSONL training data and fine-tunes mDeBERTa-v3-base
+Takes synthetic (or real) JSONL training data and fine-tunes IndicBERTv2
 as a 14-class sequence classifier — replacing the zero-shot NLI approach.
 
 Expected accuracy improvement: ~62% → ~88-92%
@@ -35,7 +35,7 @@ LABEL2ID = {d: i for i, d in enumerate(DEPT_IDS)}
 ID2LABEL = {i: d for i, d in enumerate(DEPT_IDS)}
 NUM_LABELS = len(DEPT_IDS)
 
-BASE_MODEL   = "MoritzLaurer/mDeBERTa-v3-base-mnli-xnli"  # already cached locally
+BASE_MODEL   = "ai4bharat/IndicBERTv2-MLM-Sam-TLM"
 OUTPUT_DIR   = Path("training/models/janvedha-classifier")
 TRAIN_FILE   = Path("training/data/synthetic_train.jsonl")
 VAL_FILE     = Path("training/data/synthetic_train_val.jsonl")
@@ -136,7 +136,8 @@ def main(
         output_dir=str(out_path / "checkpoints"),
         num_train_epochs=epochs,
         per_device_train_batch_size=batch_size,
-        per_device_eval_batch_size=batch_size * 2,
+        per_device_eval_batch_size=batch_size,
+        gradient_accumulation_steps=16 // batch_size if batch_size < 16 else 1,
         learning_rate=lr,
         warmup_steps=50,
         weight_decay=0.01,
@@ -147,7 +148,7 @@ def main(
         metric_for_best_model="accuracy",
         save_total_limit=2,
         fp16=False,
-        dataloader_num_workers=2,
+        dataloader_num_workers=0,  # CRITICAL: 0 workers prevents multiprocessing RAM spikes
         report_to="none",
     )
 
@@ -163,7 +164,17 @@ def main(
     # ── Train ──────────────────────────────────────────────────────────────
     logger.info("🚀  Starting fine-tuning …")
     logger.info("    Epochs: %d | Batch: %d | LR: %g", epochs, batch_size, lr)
-    trainer.train()
+    
+    # Auto-resume logic:
+    checkpoint_dir = out_path / "checkpoints"
+    resume_from_checkpoint = False
+    if checkpoint_dir.exists():
+        checkpoints = sorted(checkpoint_dir.glob("checkpoint-*"))
+        if checkpoints:
+            resume_from_checkpoint = str(checkpoints[-1])
+            logger.info("⏳  Found existing checkpoint: %s. Resuming training...", resume_from_checkpoint)
+
+    trainer.train(resume_from_checkpoint=resume_from_checkpoint)
 
     # ── Evaluate ───────────────────────────────────────────────────────────
     if eval_dataset:
@@ -186,12 +197,12 @@ def main(
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Fine-tune mDeBERTa on JanVedha civic complaints")
+    parser = argparse.ArgumentParser(description="Fine-tune IndicBERTv2 on JanVedha civic complaints")
     parser.add_argument("--train",   default=str(TRAIN_FILE), help="Path to train JSONL")
     parser.add_argument("--val",     default=str(VAL_FILE),   help="Path to validation JSONL")
     parser.add_argument("--output",  default=str(OUTPUT_DIR), help="Directory to save fine-tuned model")
     parser.add_argument("--epochs",  type=int,   default=5,   help="Number of training epochs (default: 5)")
-    parser.add_argument("--batch",   type=int,   default=16,  help="Per-device batch size (default: 16)")
+    parser.add_argument("--batch",   type=int,   default=4,  help="Per-device batch size (default: 4)")
     parser.add_argument("--lr",      type=float, default=2e-5, help="Learning rate (default: 2e-5)")
     args = parser.parse_args()
     main(args.train, args.val, args.output, args.epochs, args.batch, args.lr)
