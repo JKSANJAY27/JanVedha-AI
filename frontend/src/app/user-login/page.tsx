@@ -111,6 +111,15 @@ function LoginContent() {
         return () => clearInterval(interval);
     }, [topIssues.length]);
 
+    const ROLE_REDIRECTS: Record<string, string> = {
+        COUNCILLOR: "/councillor/dashboard",
+        SUPERVISOR: "/officer/dashboard",
+        JUNIOR_ENGINEER: "/officer/dashboard",
+        FIELD_STAFF: "/officer/dashboard",
+        SUPER_ADMIN: "/",
+        PUBLIC_USER: "/",
+    };
+
     const onLoginSubmit = async (data: LoginFormData) => {
         setLoading(true);
         try {
@@ -118,7 +127,8 @@ function LoginContent() {
             const { access_token, user } = res.data;
             login(access_token, user);
             toast.success(`Welcome back, ${user.name}!`);
-            router.push("/");
+            const redirect = ROLE_REDIRECTS[user.role] ?? "/";
+            router.push(redirect);
         } catch (err: any) {
             toast.error(getErrorMessage(err, "Login failed. Check your credentials."));
         } finally {

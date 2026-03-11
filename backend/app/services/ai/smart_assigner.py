@@ -25,20 +25,24 @@ def get_workdays(start_date: date, count: int) -> List[date]:
         current += timedelta(days=1)
     return days
 
-async def generate_smart_schedule(ticket_id: str) -> Optional[Dict[str, Any]]:
+async def generate_smart_schedule(ticket_id: str, ward_id_fallback: Optional[int] = None) -> Optional[Dict[str, Any]]:
     """
     Finds the optimal date and technician for a ticket.
     Capacity: 1 ticket per day per technician.
     CRITICAL issues can preempt LOW/MEDIUM issues if no tech is available.
     """
     target_ticket = await TicketMongo.get(PydanticObjectId(ticket_id))
-    if not target_ticket or not target_ticket.dept_id or target_ticket.ward_id is None:
+    if not target_ticket or not target_ticket.dept_id:
+        return None
+        
+    ward_id_to_use = target_ticket.ward_id if target_ticket.ward_id is not None else ward_id_fallback
+    if ward_id_to_use is None:
         return None
 
     technicians = await UserMongo.find(
         UserMongo.role == UserRole.FIELD_STAFF,
         UserMongo.dept_id == target_ticket.dept_id,
-        UserMongo.ward_id == target_ticket.ward_id
+        UserMongo.ward_id == ward_id_to_use
     ).to_list()
 
     if not technicians:

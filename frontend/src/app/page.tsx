@@ -13,6 +13,7 @@ import LoadingOverlay from "@/components/LoadingOverlay";
 import Link from "next/link";
 import { DEPT_NAMES } from "@/lib/constants";
 import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
 
 const schema = z.object({
   description: z.string().min(20, "Describe the issue in at least 20 characters"),
@@ -48,7 +49,15 @@ const AI_STEPS = [
 // ─── Main Submit Page ─────────────────────────────────────────────────────────
 
 export default function SubmitComplaintPage() {
-  const { user } = useAuth();
+  const { user, isOfficer } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (user && isOfficer && user.role !== "SUPER_ADMIN") {
+      router.push("/officer/dashboard");
+    }
+  }, [user, isOfficer, router]);
+
   const isPublicUser = !!user && user.role === "PUBLIC_USER";
 
   const {

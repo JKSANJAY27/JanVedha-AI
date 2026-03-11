@@ -1,13 +1,28 @@
 import { format, formatDistanceToNow, isAfter } from "date-fns";
 
+/**
+ * The backend stores datetimes as naive UTC (no 'Z' / '+00:00' suffix).
+ * JavaScript Date parses strings without a timezone indicator as LOCAL time,
+ * which makes timestamps appear ~5.5h old in IST.
+ * This helper appends 'Z' when the string has no timezone info.
+ */
+export function parseUtc(ts: string | Date): Date {
+    if (ts instanceof Date) return ts;
+    // If no timezone indicator, treat as UTC by appending Z
+    if (!ts.endsWith("Z") && !ts.includes("+") && !/[Tt]\d{2}:\d{2}:\d{2}\.?\d*[\-\+]/.test(ts)) {
+        return new Date(ts + "Z");
+    }
+    return new Date(ts);
+}
+
 export function formatDate(ts: string | Date | null | undefined): string {
     if (!ts) return "—";
-    return format(new Date(ts), "dd MMM yyyy, hh:mm a");
+    return format(parseUtc(ts), "dd MMM yyyy, hh:mm a");
 }
 
 export function formatRelative(ts: string | Date | null | undefined): string {
     if (!ts) return "—";
-    return formatDistanceToNow(new Date(ts), { addSuffix: true });
+    return formatDistanceToNow(parseUtc(ts), { addSuffix: true });
 }
 
 export function formatPriority(
@@ -70,7 +85,7 @@ export function slaStatus(deadline: string | null | undefined): {
 } {
     if (!deadline) return { label: "No SLA", color: "bg-gray-300", pct: 0 };
     const now = new Date();
-    const end = new Date(deadline);
+    const end = parseUtc(deadline);
     const isBr = isAfter(now, end);
     if (isBr) return { label: "SLA Breached", color: "bg-red-500", pct: 100 };
     // Assume 14-day SLA window

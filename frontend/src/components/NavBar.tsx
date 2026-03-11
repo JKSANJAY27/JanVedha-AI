@@ -51,7 +51,7 @@ export default function NavBar() {
                                 </>
                             )}
                             {navLink("/map", "Issue Heatmap")}
-                            {!isPublicUser && navLink("/ward-performance", "Leaderboard")}
+                            {!isPublicUser && user.role !== "JUNIOR_ENGINEER" && navLink("/ward-performance", "Leaderboard")}
 
                             {/* Public user: My Tickets */}
                             {isPublicUser && navLink("/my-tickets", "My Tickets")}
@@ -60,6 +60,7 @@ export default function NavBar() {
                             {isOfficer && user.role !== "SUPER_ADMIN" && (
                                 <>
                                     {navLink("/officer/dashboard", "Dashboard")}
+                                    {user.role === "JUNIOR_ENGINEER" && navLink("/officer/calendar", "Calendar")}
                                     {navLink("/officer/reports", "Reports")}
                                 </>
                             )}

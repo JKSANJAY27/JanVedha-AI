@@ -40,27 +40,27 @@ logger = logging.getLogger(__name__)
 
 SEVERITY_MAP: Dict[str, int] = {
     # Streetlight
-    "street_light_out": 15, "multiple_lights_out": 22,
+    "street_light_out": 20, "multiple_lights_out": 30,
     # Electrical
-    "electrical_spark_hazard": 30, "electrical_hazard": 30,
+    "electrical_spark_hazard": 60, "electrical_hazard": 60,
     # Roads
-    "small_pothole": 12, "large_pothole": 20, "pothole": 16,
-    "road_collapse": 28, "bridge_crack": 30,
+    "small_pothole": 15, "large_pothole": 40, "pothole": 25,
+    "road_collapse": 70, "bridge_crack": 75,
     # Water
-    "low_pressure": 14, "no_water_supply": 22, "water": 16,
-    "dirty_water": 25, "burst_pipe_flooding": 30,
+    "low_pressure": 20, "no_water_supply": 45, "water": 25,
+    "dirty_water": 45, "burst_pipe_flooding": 65,
     # Sewage
-    "drain_blocked": 18, "sewage_overflow": 26, "open_manhole": 30, "sewage": 20,
+    "drain_blocked": 30, "sewage_overflow": 50, "open_manhole": 75, "sewage": 30,
     # Garbage
-    "missed_collection_once": 10, "overflowing_bin": 16, "garbage": 14,
-    "dead_animal_carcass": 22, "illegal_dumping_large": 20,
+    "missed_collection_once": 15, "overflowing_bin": 25, "garbage": 20,
+    "dead_animal_carcass": 40, "illegal_dumping_large": 35,
     # Health
-    "mosquito_breeding": 18, "stray_dog_bite": 28, "stray": 18,
-    "disease_outbreak_concern": 30,
+    "mosquito_breeding": 35, "stray_dog_bite": 65, "stray": 25,
+    "disease_outbreak_concern": 80,
     # Emergencies
-    "flood": 28, "flooding": 28, "fire": 30, "accident": 28, "collapse": 28,
+    "flood": 80, "flooding": 80, "fire": 85, "accident": 75, "collapse": 80,
     # Default
-    "default": 15,
+    "default": 25,
 }
 
 SAFETY_KEYWORDS = [
@@ -91,19 +91,19 @@ def _rule_score(
     Pure rule-based scorer (0–100).
 
     Breakdown of maximum sub-scores:
-      severity  : 30 pts  (issue type + safety keyword bonus)
+      severity  : 90 pts  (issue type + safety keyword bonus)
       impact    : 25 pts  (report count up to 15 + location risk up to 10)
       time      : 20 pts  (age of issue)
       sla       : 15 pts  (SLA proximity)
       social    : 10 pts  (social media mentions)
-    Total max  : 100 pts
+    Total max  : 160 pts (clamped to 100)
     """
-    # ── Severity (max 30) ────────────────────────────────────────────
+    # ── Severity (max 90) ────────────────────────────────────────────
     base = SEVERITY_MAP.get(issue_category, SEVERITY_MAP["default"])
-    safety_bonus = 5 if any(
+    safety_bonus = 30 if any(
         kw.lower() in description.lower() for kw in SAFETY_KEYWORDS
     ) else 0
-    severity = min(30, base + safety_bonus)
+    severity = min(90, base + safety_bonus)
 
     # ── Impact (max 25) ──────────────────────────────────────────────
     report_contribution = min(15, report_count * 3)
@@ -743,10 +743,10 @@ def explain_priority(
         "rule_score": round(rule_score, 2),
         "rule_label": _score_to_label(rule_score),
         "breakdown": {
-            "severity":  {"score": min(30, severity_base + (5 if safety_flag else 0)),
-                          "max": 30,
+            "severity":  {"score": min(90, severity_base + (30 if safety_flag else 0)),
+                          "max": 90,
                           "note": f"Issue type '{issue_category}' base={severity_base}"
-                                  + (" + safety keyword detected!" if safety_flag else "")},
+                                  + (" + safety keyword (+30)!" if safety_flag else "")},
             "impact":    {"score": report_contribution + location_contribution,
                           "max": 25,
                           "note": f"{report_count} report(s) (+{report_contribution}) "

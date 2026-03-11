@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
 import { officerApi } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
-import { formatRelative } from "@/lib/formatters";
+import { formatRelative, parseUtc } from "@/lib/formatters";
 import PriorityBadge from "@/components/PriorityBadge";
 import StatusBadge from "@/components/StatusBadge";
 import StatCard from "@/components/StatCard";
@@ -302,11 +302,9 @@ function JuniorEngineerDashboard({ user }: { user: { name: string; dept_id?: str
     const [selectedTechId, setSelectedTechId] = useState("");
     const [assigningTech, setAssigningTech] = useState(false);
 
-    // AI Smart Schedule fallback
+    // AI Smart Schedule — fills the date picker inline
     const [smartSchedule, setSmartSchedule] = useState<any>(null);
     const [gettingSmartSchedule, setGettingSmartSchedule] = useState(false);
-    const [useAiMode, setUseAiMode] = useState(false);
-    const [applyingAi, setApplyingAi] = useState(false);
 
     const refreshTickets = useCallback(() => {
         officerApi.getTickets(100).then(res => {
@@ -332,7 +330,6 @@ function JuniorEngineerDashboard({ user }: { user: { name: string; dept_id?: str
     const handleOpenAssign = (ticket: Ticket) => {
         setAssignModalTicket(ticket);
         setSmartSchedule(null);
-        setUseAiMode(false);
         setCompletionDate("");
         setSelectedTechId("");
         // If already SCHEDULED (deadline was set), jump to step 2 directly
@@ -347,6 +344,7 @@ function JuniorEngineerDashboard({ user }: { user: { name: string; dept_id?: str
     const closeModal = () => {
         setAssignModalTicket(null);
         setSmartSchedule(null);
+        setCompletionDate("");
         setModalStep(1);
     };
 
@@ -398,37 +396,22 @@ function JuniorEngineerDashboard({ user }: { user: { name: string; dept_id?: str
         }
     };
 
-    // AI Smart Schedule alternative
+    // AI Smart Schedule — fetches a suggestion and fills the date picker inline
     const handleGetSmartSchedule = async () => {
         if (!assignModalTicket) return;
         setGettingSmartSchedule(true);
         try {
             const res = await officerApi.getSmartSchedule(assignModalTicket.id);
             setSmartSchedule(res.data);
-            toast.success("AI generated a schedule suggestion.");
+            // Auto-fill the date picker with the AI-suggested date (safely parsing UTC)
+            const utcDate = parseUtc(res.data.suggested_date);
+            const suggestedDateStr = utcDate.toISOString().split("T")[0];
+            setCompletionDate(suggestedDateStr);
+            toast.success("AI suggested a date — you can edit it if needed.");
         } catch (error: any) {
             toast.error(error.response?.data?.detail || "Failed to get smart schedule");
         } finally {
             setGettingSmartSchedule(false);
-        }
-    };
-
-    const handleApplySmartSchedule = async () => {
-        if (!assignModalTicket || !smartSchedule) return;
-        setApplyingAi(true);
-        try {
-            await officerApi.applySmartSchedule(assignModalTicket.id, {
-                suggested_date: smartSchedule.suggested_date,
-                suggested_technician_id: smartSchedule.suggested_technician_id,
-                postponed_tickets: smartSchedule.postponed_tickets,
-            });
-            toast.success("AI assignment applied — ticket is now IN PROGRESS");
-            closeModal();
-            refreshTickets();
-        } catch {
-            toast.error("Failed to apply AI schedule");
-        } finally {
-            setApplyingAi(false);
         }
     };
 
@@ -446,13 +429,6 @@ function JuniorEngineerDashboard({ user }: { user: { name: string; dept_id?: str
 
     return (
         <div className="space-y-8">
-            {/* Map Section */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden h-[450px]">
-                <IssueMap
-                    issues={tickets as any}
-                    onIssueClick={(issue) => router.push(`/officer/tickets/${issue.id}`)}
-                />
-            </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <StatCard label="My Tickets" value={stats.total} icon="📋" color="blue" />
@@ -493,24 +469,68 @@ function JuniorEngineerDashboard({ user }: { user: { name: string; dept_id?: str
                             </div>
 
                             <div className="p-5">
-                                {/* ── Step 1: Set Completion Date ── */}
-                                {modalStep === 1 && !useAiMode && (
+                                {/* ── Step 1: Set Completion Date (unified view) ── */}
+                                {modalStep === 1 && (
                                     <div className="space-y-4">
                                         <div>
                                             <p className="text-sm font-semibold text-gray-800 mb-1">Set Completion Deadline</p>
-                                            <p className="text-xs text-gray-500 mb-4">This date will be set as the work completion target. The ticket will automatically move to <strong>SCHEDULED</strong>.</p>
+                                            <p className="text-xs text-gray-500 mb-3">Pick a date manually or let AI suggest one. The ticket will move to <strong>SCHEDULED</strong>.</p>
+
+                                            {/* Date input + AI button side by side */}
                                             <label className="block text-xs font-medium text-gray-600 mb-1.5">Completion Date *</label>
-                                            <input
-                                                type="date"
-                                                min={todayStr}
-                                                value={completionDate}
-                                                onChange={e => setCompletionDate(e.target.value)}
-                                                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
-                                            />
+                                            <div className="flex gap-2">
+                                                <input
+                                                    type="date"
+                                                    min={todayStr}
+                                                    value={completionDate}
+                                                    onChange={e => { setCompletionDate(e.target.value); setSmartSchedule(null); }}
+                                                    className={`flex-1 border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 transition-colors ${
+                                                        smartSchedule ? "border-purple-300 bg-purple-50" : "border-gray-200"
+                                                    }`}
+                                                />
+                                                <button
+                                                    onClick={handleGetSmartSchedule}
+                                                    disabled={gettingSmartSchedule}
+                                                    title="Let AI suggest the best date"
+                                                    className="shrink-0 px-3 py-2 bg-gradient-to-br from-purple-600 to-indigo-700 text-white rounded-xl text-sm font-semibold hover:opacity-90 disabled:opacity-60 transition-all flex items-center gap-1.5"
+                                                >
+                                                    {gettingSmartSchedule
+                                                        ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                                        : <span>✨</span>}
+                                                    <span className="hidden sm:inline">{gettingSmartSchedule ? "Analyzing…" : "AI Suggest"}</span>
+                                                </button>
+                                            </div>
+
+                                            {/* SLA warning */}
                                             {assignModalTicket.sla_deadline && (
-                                                <p className="text-xs text-amber-600 mt-1.5">⚠️ SLA deadline: {new Date(assignModalTicket.sla_deadline).toLocaleDateString("en-IN", { dateStyle: "medium" })}</p>
+                                                <p className="text-xs text-amber-600 mt-1.5">⚠️ SLA deadline: {parseUtc(assignModalTicket.sla_deadline).toLocaleDateString("en-IN", { dateStyle: "medium" })}</p>
                                             )}
                                         </div>
+
+                                        {/* AI suggestion banner — shown inline when AI fills the date */}
+                                        {smartSchedule && (
+                                            <div className="bg-purple-50 border border-purple-200 rounded-xl p-3 space-y-1.5">
+                                                <p className="text-xs font-bold text-purple-700 uppercase tracking-wide flex items-center gap-1.5">✨ AI Recommendation</p>
+                                                <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
+                                                    <span className="text-gray-600">Technician: <span className="font-semibold text-gray-800">{smartSchedule.technician_name}</span></span>
+                                                    <span className="text-gray-600">Date: <span className="font-semibold text-purple-800">{parseUtc(smartSchedule.suggested_date).toLocaleDateString("en-IN", { dateStyle: "long" })}</span></span>
+                                                </div>
+                                                <p className="text-[10px] text-purple-500">Date auto-filled above — edit freely or confirm as-is.</p>
+                                                {smartSchedule.postponed_tickets?.length > 0 && (
+                                                    <div className="bg-orange-50 border border-orange-200 rounded-lg p-2 mt-1">
+                                                        <p className="text-xs font-bold text-orange-700 mb-1">⚠️ AI will also reschedule:</p>
+                                                        <div className="space-y-0.5">
+                                                            {smartSchedule.postponed_tickets.map((pt: any) => (
+                                                                <p key={pt.ticket_id} className="text-xs text-orange-700 font-mono">
+                                                                    {pt.ticket_code} → {parseUtc(pt.new_date).toLocaleDateString("en-IN")}
+                                                                </p>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+
                                         <button
                                             onClick={handleSetDeadline}
                                             disabled={!completionDate || settingDeadline}
@@ -518,57 +538,6 @@ function JuniorEngineerDashboard({ user }: { user: { name: string; dept_id?: str
                                         >
                                             {settingDeadline ? <><span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Setting…</> : "Confirm Date → Next Step"}
                                         </button>
-                                        <div className="border-t border-gray-100 pt-3">
-                                            <button onClick={() => setUseAiMode(true)} className="w-full bg-purple-50 border border-purple-200 text-purple-700 rounded-xl py-2.5 text-sm font-semibold hover:bg-purple-100 transition-colors">
-                                                ✨ Use AI Smart Schedule instead
-                                            </button>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* ── Step 1: AI Mode ── */}
-                                {modalStep === 1 && useAiMode && (
-                                    <div className="space-y-4">
-                                        <button onClick={() => setUseAiMode(false)} className="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1">← Back to manual</button>
-                                        {!smartSchedule ? (
-                                            <div className="text-center py-6">
-                                                <button
-                                                    onClick={handleGetSmartSchedule}
-                                                    disabled={gettingSmartSchedule}
-                                                    className="w-full bg-gradient-to-r from-purple-600 to-indigo-700 text-white rounded-xl py-3 font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
-                                                >
-                                                    ✨ {gettingSmartSchedule ? "Analyzing Staff & SLAs…" : "Generate AI Smart Schedule"}
-                                                </button>
-                                                <p className="text-xs text-gray-500 mt-3">AI picks the best date + technician based on availability and SLA priority.</p>
-                                            </div>
-                                        ) : (
-                                            <div className="space-y-4">
-                                                <p className="text-sm font-semibold text-purple-800 uppercase tracking-wide">AI Recommendation</p>
-                                                <div className="space-y-2 bg-purple-50 rounded-xl p-4">
-                                                    <p className="text-sm text-gray-800"><span className="text-gray-500 w-24 inline-block">Technician:</span> <span className="font-bold">{smartSchedule.technician_name}</span></p>
-                                                    <p className="text-sm text-gray-800"><span className="text-gray-500 w-24 inline-block">Date:</span> <span className="font-bold">{new Date(smartSchedule.suggested_date).toLocaleDateString("en-IN", { dateStyle: "long" })}</span></p>
-                                                </div>
-                                                {smartSchedule.postponed_tickets?.length > 0 && (
-                                                    <div className="bg-orange-50 p-4 rounded-xl border border-orange-200">
-                                                        <p className="text-sm font-bold text-orange-800 mb-2">⚠️ Preemption Warning</p>
-                                                        <p className="text-xs text-orange-700 mb-2">To accommodate this ticket, the AI will postpone:</p>
-                                                        <div className="space-y-1.5 max-h-28 overflow-y-auto">
-                                                            {smartSchedule.postponed_tickets.map((pt: any) => (
-                                                                <div key={pt.ticket_id} className="bg-white/80 p-2 rounded border border-orange-100 text-xs">
-                                                                    <span className="font-mono font-bold text-gray-700">{pt.ticket_code}</span> → <span className="font-semibold text-orange-800">{new Date(pt.new_date).toLocaleDateString("en-IN")}</span>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-                                                )}
-                                                <div className="flex gap-3">
-                                                    <button onClick={() => setSmartSchedule(null)} className="flex-1 bg-gray-100 text-gray-700 py-3 rounded-xl font-semibold">Go Back</button>
-                                                    <button onClick={handleApplySmartSchedule} disabled={applyingAi} className="flex-1 bg-purple-600 text-white py-3 rounded-xl font-semibold flex items-center justify-center gap-2">
-                                                        {applyingAi ? "Applying…" : "Confirm & Apply"}
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        )}
                                     </div>
                                 )}
 
@@ -676,13 +645,6 @@ export default function OfficerDashboard({ userOverride, forcedRole }: OfficerDa
 
     const navLinks = () => (
         <div className="flex gap-3 flex-wrap">
-            {/* Calendar is ONLY for Junior Engineers */}
-            {isJuniorEngineer && (
-                <Link href="/officer/calendar"
-                    className="text-sm bg-white/10 border border-white/20 text-white px-4 py-2 rounded-lg hover:bg-white/20 transition-colors">
-                    📅 Calendar
-                </Link>
-            )}
             {isCouncillor && (
                 <Link href="/councillor"
                     className="text-sm bg-white/10 border border-white/20 text-white px-4 py-2 rounded-lg hover:bg-white/20 transition-colors">

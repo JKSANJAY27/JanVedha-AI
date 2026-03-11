@@ -5,7 +5,8 @@ Fully rewritten to use MongoDB (Beanie) + the full AI pipeline.
 """
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from typing import Optional
+from datetime import datetime
+from typing import Optional, List
 
 from app.core.dependencies import get_current_user
 from app.mongodb.models.user import UserMongo
@@ -20,24 +21,33 @@ router = APIRouter()
 
 def get_public_status(ticket: TicketMongo) -> str:
     """Helper to dynamically determine public ticket status based on logic."""
+    # 1. Terminal / Force-closed states
     if ticket.status == "REJECTED":
         return "REJECTED"
     if ticket.status == "CLOSED" or ticket.after_photo_url is not None:
         return "CLOSED"
     
-    if ticket.scheduled_date:
-        now = datetime.utcnow()
-        if ticket.scheduled_date <= now:
-            return "IN_PROGRESS"
-        else:
-            return "SCHEDULED"
-            
-    if ticket.technician_id or ticket.assigned_officer_id:
+    # 2. If the JE explicitly set it to IN_PROGRESS, show that.
+    if ticket.status == "IN_PROGRESS":
+        return "IN_PROGRESS"
+
+    # 3. If SCHEDULED, check for auto-transition to "On-site" (IN_PROGRESS) for user.
+    if ticket.status == "SCHEDULED":
+        if ticket.scheduled_date:
+            now = datetime.utcnow()
+            if ticket.scheduled_date <= now:
+                return "IN_PROGRESS"
+        return "SCHEDULED"
+
+    # 4. If ASSIGNED, just show assigned
+    if ticket.status == "ASSIGNED":
         return "ASSIGNED"
         
-    return "OPEN"
+    # 5. Fallback to actual status (handles OPEN/REOPENED etc.)
+    return ticket.status
 
 @router.get("/my-tickets")
+@router.get("/my_tickets")
 async def get_my_tickets(
     current_user: UserMongo = Depends(get_current_user),
     limit: int = 100,
@@ -124,7 +134,6 @@ async def track_ticket(ticket_code: str):
     ticket = await TicketMongo.find_one(TicketMongo.ticket_code == ticket_code)
     if not ticket:
         raise HTTPException(status_code=404, detail="Ticket not found")
-
     return {
         "ticket_code": ticket.ticket_code,
         "status": get_public_status(ticket),
@@ -137,6 +146,15 @@ async def track_ticket(ticket_code: str):
         "sla_deadline": ticket.sla_deadline,
         "suggestions": ticket.ai_suggestions,
         "seasonal_alert": ticket.seasonal_alert,
+        "timeline": [
+            {
+                "event": entry.get("status", "UPDATED"),
+                "timestamp": entry.get("timestamp"),
+                "actor": entry.get("actor_role", "Official"),
+                "reason": entry.get("note")
+            }
+            for entry in (ticket.status_timeline or [])
+        ]
     }
 
 

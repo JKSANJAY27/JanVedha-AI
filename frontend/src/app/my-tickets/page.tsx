@@ -36,15 +36,22 @@ interface TicketDetail {
     sla_deadline?: string;
     location_text?: string;
     seasonal_alert?: string;
+    timeline?: Array<{
+        event: string;
+        timestamp: string;
+        actor?: string;
+        reason?: string;
+    }>;
 }
 
-const STATUS_STEPS = ["OPEN", "IN_REVIEW", "IN_PROGRESS", "RESOLVED", "CLOSED"];
+const STATUS_STEPS = ["OPEN", "ASSIGNED", "SCHEDULED", "IN_PROGRESS", "CLOSED"];
 const STATUS_LABELS: Record<string, string> = {
     OPEN: "Submitted",
-    IN_REVIEW: "Under Review",
-    IN_PROGRESS: "Work Started",
-    RESOLVED: "Resolved",
-    CLOSED: "Closed",
+    ASSIGNED: "Officer Assigned",
+    SCHEDULED: "Work Scheduled",
+    IN_PROGRESS: "On-site Work",
+    CLOSED: "Completed",
+    REJECTED: "Rejected",
 };
 
 function ProgressTracker({ status }: { status: string }) {
@@ -171,11 +178,11 @@ function DetailPanel({ code, onClose }: { code: string; onClose: () => void }) {
                         </div>
                     )}
 
-                    {/* Timeline (simple) */}
+                    {/* Timeline */}
                     <div>
                         <p className="text-xs font-semibold text-gray-500 mb-3">📅 Activity Log</p>
-                        <Timeline events={[{ event: "CREATED", timestamp: detail.created_at, actor: "System (AI Pipeline)" }]} />
-                        <p className="text-xs text-gray-400 mt-2 text-center">Full timeline visible to your ward officer</p>
+                        <Timeline events={detail.timeline || [{ event: "CREATED", timestamp: detail.created_at, actor: "System (AI Pipeline)" }]} />
+                        <p className="text-xs text-gray-400 mt-2 text-center italic">Only significant status changes are logged here</p>
                     </div>
 
                     {/* Closed: download report */}

@@ -280,10 +280,11 @@ async def get_field_staff(
     current_user: UserMongo = Depends(require_ward_officer),
 ):
     """Fetch Field Staff for the current ward."""
-    staff = await UserMongo.find(
-        UserMongo.role == UserRole.FIELD_STAFF,
-        UserMongo.ward_id == current_user.ward_id
-    ).to_list()
+    query = [UserMongo.role == UserRole.FIELD_STAFF, UserMongo.ward_id == current_user.ward_id]
+    if current_user.dept_id:
+        query.append(UserMongo.dept_id == current_user.dept_id)
+        
+    staff = await UserMongo.find(*query).to_list()
     
     return [
         {"id": str(s.id), "name": s.name, "email": s.email}
@@ -334,7 +335,7 @@ async def get_smart_schedule(
     current_user: UserMongo = Depends(require_ward_officer),
 ):
     from app.services.ai.smart_assigner import generate_smart_schedule
-    result = await generate_smart_schedule(ticket_id)
+    result = await generate_smart_schedule(ticket_id, ward_id_fallback=current_user.ward_id)
     if not result:
         raise HTTPException(status_code=400, detail="Cannot generate schedule. Ensure technicians exist in this ward/dept and the ticket is valid.")
     return result
