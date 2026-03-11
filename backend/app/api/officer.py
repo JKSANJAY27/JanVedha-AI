@@ -11,7 +11,7 @@ from app.core.dependencies import get_current_user, require_ward_officer
 from app.mongodb.models.user import UserMongo
 from app.mongodb.models.ticket import TicketMongo
 from app.services.ticket_service import TicketService
-from app.enums import UserRole, PriorityLabel
+from app.enums import UserRole, PriorityLabel, TicketStatus
 
 router = APIRouter()
 
@@ -49,12 +49,9 @@ async def get_tickets(
             ).limit(limit).to_list()
 
     elif current_user.role == UserRole.JUNIOR_ENGINEER:
-        # JE sees tickets for their dept (ward filter is optional)
-        query_filters = [TicketMongo.dept_id == current_user.dept_id]
-        if current_user.ward_id is not None:
-            query_filters.append(TicketMongo.ward_id == current_user.ward_id)
+        # JE sees tickets for their dept regardless of ward for now
         tickets = await TicketMongo.find(
-            *query_filters
+            TicketMongo.dept_id == current_user.dept_id
         ).sort(-TicketMongo.priority_score).limit(limit).to_list()
 
     elif current_user.role == UserRole.FIELD_STAFF:
@@ -109,10 +106,10 @@ async def get_dashboard_summary(
         else:
             all_tickets = await TicketMongo.find_all().to_list()
     elif current_user.role == UserRole.JUNIOR_ENGINEER:
-        query_filters = [TicketMongo.dept_id == current_user.dept_id]
-        if current_user.ward_id is not None:
-            query_filters.append(TicketMongo.ward_id == current_user.ward_id)
-        all_tickets = await TicketMongo.find(*query_filters).to_list()
+        # JE sees tickets for their dept regardless of ward for now
+        all_tickets = await TicketMongo.find(
+            TicketMongo.dept_id == current_user.dept_id
+        ).to_list()
     else:
         all_tickets = await TicketMongo.find_all().to_list()
 
@@ -986,3 +983,5 @@ def _ticket_list_item(t: TicketMongo) -> dict:
         "lat": lat,
         "lng": lng,
     }
+
+# Trigger auto-reload

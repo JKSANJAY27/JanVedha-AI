@@ -1,14 +1,18 @@
 export const DEPT_NAMES: Record<string, string> = {
-    D01: "Water Supply",
-    D02: "Roads & Bridges",
-    D03: "Sewerage & Drainage",
-    D04: "Solid Waste Management",
-    D05: "Street Lighting",
-    D06: "Parks & Recreation",
-    D07: "Building & Construction",
+    D01: "Roads & Bridges",
+    D02: "Buildings & Planning",
+    D03: "Water Supply",
+    D04: "Sewage & Drainage",
+    D05: "Solid Waste Management",
+    D06: "Street Lighting",
+    D07: "Parks & Greenery",
     D08: "Health & Sanitation",
-    D09: "Traffic & Transport",
-    D10: "Fire & Emergency",
+    D09: "Fire & Emergency",
+    D10: "Traffic & Transport",
+    D11: "Revenue & Property",
+    D12: "Social Welfare",
+    D13: "Education",
+    D14: "Disaster Management",
 };
 
 export const PRIORITY_COLORS: Record<string, string> = {
