@@ -389,8 +389,8 @@ function JuniorEngineerDashboard({ user }: { user: { name: string; dept_id?: str
             handleStatusUpdate(assignModalTicket.id, "IN_PROGRESS");
             closeModal();
             refreshTickets();
-        } catch {
-            toast.error("Failed to assign technician");
+        } catch (error: any) {
+            toast.error(error.response?.data?.detail || "Failed to assign technician");
         } finally {
             setAssigningTech(false);
         }

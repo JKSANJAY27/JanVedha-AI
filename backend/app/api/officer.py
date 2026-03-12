@@ -309,6 +309,21 @@ async def assign_field_staff(
     if not ticket:
         raise HTTPException(status_code=404, detail="Ticket not found")
 
+    # Check if technician is already booked on this date
+    start_of_day = data.scheduled_date.replace(hour=0, minute=0, second=0, microsecond=0)
+    end_of_day = data.scheduled_date.replace(hour=23, minute=59, second=59, microsecond=999999)
+    
+    existing_assignment = await TicketMongo.find_one(
+        TicketMongo.technician_id == data.technician_id,
+        TicketMongo.id != PydanticObjectId(ticket_id),
+        TicketMongo.scheduled_date >= start_of_day,
+        TicketMongo.scheduled_date <= end_of_day,
+        TicketMongo.status != TicketStatus.CLOSED,
+        TicketMongo.status != TicketStatus.REJECTED
+    )
+    if existing_assignment:
+        raise HTTPException(status_code=400, detail=f"Technician is already assigned to ticket {existing_assignment.ticket_code} on this date.")
+
     ticket.technician_id = data.technician_id
     ticket.scheduled_date = data.scheduled_date
     # Once a technician is assigned, work begins → IN_PROGRESS
@@ -604,7 +619,7 @@ async def set_completion_deadline(
     now_utc = datetime.utcnow()
 
     # ── SLA Guard ─────────────────────────────────────────────────────────────
-    if ticket.sla_deadline and requested_deadline > ticket.sla_deadline:
+    if ticket.sla_deadline and requested_deadline.date() > ticket.sla_deadline.date():
         raise HTTPException(
             status_code=400,
             detail={
@@ -614,7 +629,7 @@ async def set_completion_deadline(
             },
         )
 
-    if requested_deadline < now_utc:
+    if requested_deadline.date() < now_utc.date():
         raise HTTPException(
             status_code=400, detail="Completion deadline cannot be in the past"
         )
@@ -986,3 +1001,7 @@ def _ticket_list_item(t: TicketMongo) -> dict:
     }
 
 # Trigger auto-reload
+
+# Trigger auto-reload for date timezone comparison fix
+
+# Trigger auto-reload for technician assignment validation
