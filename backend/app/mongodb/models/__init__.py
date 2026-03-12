@@ -9,6 +9,7 @@ from .ward_prediction import WardPredictionMongo
 from .issue_memory import IssueMemoryMongo
 from .priority_model import PriorityModelMongo
 from .scheduled_event import ScheduledEventMongo
+from .social_post import SocialPostMongo
 
 __all__ = [
     "UserMongo",
@@ -21,4 +22,5 @@ __all__ = [
     "IssueMemoryMongo",
     "PriorityModelMongo",
     "ScheduledEventMongo",
+    "SocialPostMongo",
 ]

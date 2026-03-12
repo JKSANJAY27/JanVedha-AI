@@ -157,3 +157,17 @@ export const commissionerApi = {
   getBudgetBurnRate: (weeks: number = 12) => api.get("/api/commissioner/budget-burn-rate", { params: { weeks } }),
   getCriticalOpenTickets: (limit: number = 20) => api.get("/api/commissioner/critical-open-tickets", { params: { limit } }),
 };
+
+export const socialIntelApi = {
+  getSentimentOverview: (wardId?: number) =>
+    api.get("/api/social-intel/sentiment-overview", { params: wardId ? { ward_id: wardId } : {} }),
+  getEmergingIssues: (wardId?: number, hours = 24, limit = 8) =>
+    api.get("/api/social-intel/emerging-issues", { params: { ward_id: wardId, hours, limit } }),
+  getSocialPosts: (wardId?: number, platform?: string, page = 1, pageSize = 20) =>
+    api.get("/api/social-intel/social-posts", { params: { ward_id: wardId, platform, page, page_size: pageSize } }),
+  getPlatformStats: (wardId?: number) =>
+    api.get("/api/social-intel/platform-stats", { params: wardId ? { ward_id: wardId } : {} }),
+  triggerScrape: (wardId?: number, keywords?: string) =>
+    api.post("/api/social-intel/trigger-scrape", null, { params: { ward_id: wardId, keywords } }),
+};
+

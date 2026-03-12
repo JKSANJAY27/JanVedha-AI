@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
 import { useAuth } from "@/context/AuthContext";
-import { commissionerApi } from "@/lib/api";
+import { commissionerApi, socialIntelApi } from "@/lib/api";
 import { DEPT_NAMES } from "@/lib/constants";
 
 interface CitySummary {
@@ -45,6 +45,40 @@ interface CriticalTicket {
     days_overdue: number;
     estimated_cost: number | null;
 }
+
+interface SentimentOverview {
+    total: number;
+    positive: number;
+    neutral: number;
+    negative: number;
+    score: number;
+}
+
+interface EmergingIssue {
+    category: string;
+    count: number;
+    negative_count: number;
+    max_urgency: string;
+    platforms: string[];
+    sample_summary: string | null;
+}
+
+interface PlatformStat {
+    platform: string;
+    count: number;
+}
+
+const PLATFORM_ICONS: Record<string, string> = {
+    news: "📰", reddit: "🟠", twitter: "🐦", youtube: "▶️",
+    google_maps: "🗺️", civic: "🏛️", instagram: "📸", facebook: "📘",
+};
+
+const URGENCY_COLORS: Record<string, string> = {
+    critical: "bg-red-100 text-red-700 border-red-200",
+    high: "bg-orange-100 text-orange-700 border-orange-200",
+    medium: "bg-yellow-100 text-yellow-700 border-yellow-200",
+    low: "bg-green-100 text-green-600 border-green-200",
+};
 
 const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumSignificantDigits: 3 }).format(amount);
@@ -135,6 +169,34 @@ function BudgetBurnChart({ data }: { data: WeekData[] }) {
     );
 }
 
+// Extract SentimentBar as a small component
+function SentimentBar({ data }: { data: SentimentOverview }) {
+    if (!data || data.total === 0) return <p className="text-gray-400 text-sm mt-2">No city-wide social signals reported.</p>;
+    
+    const pct = (val: number) => Math.round((val / data.total) * 100) || 0;
+    const neg = pct(data.negative);
+    const neu = pct(data.neutral);
+    const pos = 100 - neg - neu;
+    
+    return (
+        <div className="mt-4">
+            <div className="flex justify-between items-end mb-1">
+                <span className="text-3xl font-bold tracking-tight text-slate-800">{data.total.toLocaleString()}</span>
+                <span className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Posts (7d)</span>
+            </div>
+            <div className="flex h-3 rounded-full overflow-hidden w-full bg-gray-100 mb-2">
+                {neg > 0 && <div className="bg-rose-500 transition-all" style={{ width: `${neg}%` }} title={`Negative: ${neg}%`} />}
+                {neu > 0 && <div className="bg-slate-300 transition-all" style={{ width: `${neu}%` }} title={`Neutral: ${neu}%`} />}
+                {pos > 0 && <div className="bg-emerald-500 transition-all" style={{ width: `${pos}%` }} title={`Positive: ${pos}%`} />}
+            </div>
+            <div className="flex justify-between text-xs font-semibold">
+                <span className="text-rose-600">{neg}% Neg</span>
+                <span className="text-emerald-600">{pos}% Pos</span>
+            </div>
+        </div>
+    );
+}
+
 export default function CommissionerDashboard() {
     const { user, isCommissioner } = useAuth();
     const router = useRouter();
@@ -143,6 +205,12 @@ export default function CommissionerDashboard() {
     const [wardPerf, setWardPerf] = useState<WardPerf[]>([]);
     const [burnRate, setBurnRate] = useState<WeekData[]>([]);
     const [criticalTickets, setCriticalTickets] = useState<CriticalTicket[]>([]);
+    
+    const [sentiment, setSentiment] = useState<SentimentOverview | null>(null);
+    const [emerging, setEmerging] = useState<EmergingIssue[]>([]);
+    const [platforms, setPlatforms] = useState<PlatformStat[]>([]);
+    const [scraping, setScraping] = useState(false);
+    
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -154,14 +222,33 @@ export default function CommissionerDashboard() {
             commissionerApi.getWardPerformance(),
             commissionerApi.getBudgetBurnRate(10),
             commissionerApi.getCriticalOpenTickets(20),
-        ]).then(([s, wp, br, ct]) => {
+            socialIntelApi.getSentimentOverview().catch(() => ({ data: { total: 0, positive: 0, neutral: 0, negative: 0, score: 0 }})),
+            socialIntelApi.getEmergingIssues(undefined, 24, 5).catch(() => ({ data: [] })),
+            socialIntelApi.getPlatformStats().catch(() => ({ data: [] })),
+        ]).then(([s, wp, br, ct, sent, emerg, plats]) => {
             setSummary(s.data);
             setWardPerf(wp.data);
             setBurnRate(br.data);
             setCriticalTickets(ct.data);
+            setSentiment(sent.data);
+            setEmerging(emerg.data);
+            setPlatforms(plats.data);
         }).catch(() => toast.error("Failed to load city data"))
             .finally(() => setLoading(false));
     }, [user, isCommissioner, router]);
+
+    const handleTriggerScrape = async () => {
+        setScraping(true);
+        const loadingToast = toast.loading("Triggering city-wide active scrape...", { duration: 5000 });
+        try {
+            const res = await socialIntelApi.triggerScrape();
+            toast.success(res.data.message || "Scrape triggered successfully", { id: loadingToast });
+        } catch (err: any) {
+            toast.error(err.response?.data?.detail || "Failed to trigger scrape", { id: loadingToast });
+        } finally {
+            setTimeout(() => setScraping(false), 2000);
+        }
+    };
 
     if (loading) {
         return (
@@ -175,13 +262,24 @@ export default function CommissionerDashboard() {
     }
 
     return (
-        <div className="min-h-screen bg-slate-50">
+        <div className="min-h-screen bg-slate-50 border-t-4 border-slate-900">
             {/* Header */}
-            <div className="bg-slate-900 text-white px-6 py-6">
-                <div className="max-w-7xl mx-auto">
-                    <p className="text-slate-400 text-sm uppercase tracking-wider font-semibold">HQ Command Center</p>
-                    <h1 className="text-3xl font-bold mt-1 tracking-tight">Commissioner Dashboard 🏙️</h1>
-                    <p className="text-slate-300 text-sm mt-1">City-wide systems health, budget oversight, and critical alerts</p>
+            <div className="bg-slate-900 text-white px-6 py-8">
+                <div className="max-w-7xl mx-auto flex items-end justify-between">
+                    <div>
+                        <p className="text-slate-400 text-sm uppercase tracking-wider font-semibold">HQ Command Center</p>
+                        <h1 className="text-3xl font-bold mt-1 tracking-tight">Commissioner Dashboard 🏙️</h1>
+                        <p className="text-slate-300 text-sm mt-1">City-wide systems health, budget oversight, and critical alerts</p>
+                    </div>
+                    <div className="hidden sm:block">
+                        <div className="bg-white/10 rounded-lg backdrop-blur-sm px-4 py-2 border border-white/10 text-right">
+                            <p className="text-xs text-slate-400 uppercase tracking-widest font-bold">Network Status</p>
+                            <p className="text-emerald-400 text-sm font-semibold flex items-center gap-2 mt-0.5">
+                                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                                APIs Online
+                            </p>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -210,6 +308,125 @@ export default function CommissionerDashboard() {
                         </div>
                     </div>
                 )}
+
+                {/* ══ Social Intelligence Command ══════════════════════════════════ */}
+                <div className="bg-slate-900 rounded-2xl shadow-lg border border-slate-800 overflow-hidden text-white relative">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-600 rounded-full blur-[100px] opacity-20 -mr-20 -mt-20 pointer-events-none"></div>
+                    
+                    <div className="px-6 py-5 border-b border-slate-700/50 flex flex-wrap items-center justify-between gap-4 relative z-10">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-indigo-500/20 text-indigo-400 rounded-lg">
+                                <span className="text-xl leading-none block">📡</span>
+                            </div>
+                            <div>
+                                <h2 className="font-bold text-lg tracking-tight">Social Intelligence Command</h2>
+                                <p className="text-xs text-slate-400">City-wide unstructured data mining</p>
+                            </div>
+                        </div>
+                        <button 
+                            onClick={handleTriggerScrape}
+                            disabled={scraping}
+                            className={`px-4 py-2 rounded-lg text-sm font-bold shadow-lg transition-all flex items-center gap-2 ${
+                                scraping 
+                                ? "bg-slate-700 text-slate-400 cursor-not-allowed" 
+                                : "bg-indigo-600 hover:bg-indigo-500 text-white border border-indigo-500"
+                            }`}
+                        >
+                            {scraping ? (
+                                <>
+                                    <span className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></span>
+                                    Sourcing Data...
+                                </>
+                            ) : (
+                                <>
+                                    <span>⚡</span> Run Active Scrape
+                                </>
+                            )}
+                        </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-slate-700/50 relative z-10">
+                        
+                        {/* Overall Sentiment */}
+                        <div className="p-6">
+                            <h3 className="text-slate-400 text-xs font-bold uppercase tracking-wider">City-wide Sentiment</h3>
+                            {sentiment ? <SentimentBar data={sentiment} /> : <p className="text-sm text-slate-500 mt-4">Loading...</p>}
+                            
+                            <div className="mt-8">
+                                <h3 className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-3">Platform Volumes</h3>
+                                <div className="space-y-2">
+                                    {platforms.length === 0 ? (
+                                        <p className="text-slate-500 text-xs flex items-center gap-2">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-slate-500 animate-pulse"></span>
+                                            Awaiting data intake...
+                                        </p>
+                                    ) : (
+                                        platforms.map(p => (
+                                            <div key={p.platform} className="flex items-center justify-between text-sm">
+                                                <span className="flex items-center gap-2 text-slate-300">
+                                                    <span>{PLATFORM_ICONS[p.platform] || "📄"}</span>
+                                                    <span className="capitalize">{p.platform}</span>
+                                                </span>
+                                                <span className="font-mono text-slate-400">{p.count}</span>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Emerging Issues Map */}
+                        <div className="p-6 md:col-span-2">
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-slate-400 text-xs font-bold uppercase tracking-wider">Top Spiking Issues (Last 24h)</h3>
+                                <span className="text-[10px] bg-red-500/20 text-red-400 px-2 py-0.5 rounded font-bold uppercase tracking-widest border border-red-500/20">Active Priorities</span>
+                            </div>
+                            
+                            {emerging.length === 0 ? (
+                                <div className="h-32 flex flex-col items-center justify-center text-slate-500">
+                                    <span className="text-2xl mb-2 opacity-50">🔍</span>
+                                    <p className="text-sm">No critical spikes detected globally</p>
+                                    <p className="text-[10px] mt-1 opacity-50">Start an active scrape to monitor current events</p>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    {emerging.map(issue => (
+                                        <div key={issue.category} className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 hover:border-slate-500 transition-colors">
+                                            <div className="flex items-start justify-between mb-2">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="font-bold text-indigo-300">{issue.category}</span>
+                                                </div>
+                                                <span className="font-mono text-xl font-bold text-white">{issue.count}</span>
+                                            </div>
+                                            
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase ${
+                                                    URGENCY_COLORS[issue.max_urgency]?.replace('bg-', 'bg-opacity-20 bg-').replace('border-', 'border-opacity-30 border-') 
+                                                    || "bg-slate-700 text-slate-300"
+                                                }`}>
+                                                    {issue.max_urgency} Impact
+                                                </span>
+                                                {issue.negative_count > 0 && (
+                                                    <span className="text-[10px] text-rose-400 font-semibold">{issue.negative_count} negative flags</span>
+                                                )}
+                                            </div>
+                                            
+                                            {issue.sample_summary && (
+                                                <p className="text-xs text-slate-400 line-clamp-2 mt-2 leading-relaxed">&quot;{issue.sample_summary}&quot;</p>
+                                            )}
+                                            
+                                            <div className="flex gap-1 mt-3">
+                                                {issue.platforms.map(p => (
+                                                    <span key={p} className="text-xs opacity-70" title={p}>{PLATFORM_ICONS[p] || "📄"}</span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
 
                 {/* Middle row: Burn Rate + Critical Issues */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

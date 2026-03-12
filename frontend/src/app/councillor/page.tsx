@@ -5,23 +5,21 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
 import { useAuth } from "@/context/AuthContext";
-import { councillorApi } from "@/lib/api";
+import { councillorApi, socialIntelApi } from "@/lib/api";
 import { DEPT_NAMES } from "@/lib/constants";
 
 interface WardSummary {
-    ward_id: number;
     total: number;
     open: number;
     closed: number;
     overdue: number;
     resolution_rate: number;
-    avg_resolution_days: number;
     avg_satisfaction: number | null;
+    avg_resolution_days: number;
 }
 
 interface DeptPerf {
     dept_id: string;
-    total: number;
     open: number;
     closed: number;
     overdue: number;
@@ -42,14 +40,99 @@ interface TopIssue {
 interface OverdueTicket {
     id: string;
     ticket_code: string;
-    dept_id: string;
     issue_category: string;
+    dept_id: string;
     priority_label: string;
     days_overdue: number;
-    status: string;
 }
 
-const KPI_COLORS = ["blue", "green", "red", "orange", "purple"];
+interface SentimentOverview {
+    total: number;
+    positive: number;
+    neutral: number;
+    negative: number;
+    score: number;
+}
+
+interface EmergingIssue {
+    category: string;
+    count: number;
+    negative_count: number;
+    max_urgency: string;
+    platforms: string[];
+    sample_summary: string | null;
+}
+
+interface SocialPost {
+    id: string;
+    platform: string;
+    author: string | null;
+    content: string;
+    category: string | null;
+    urgency: string | null;
+    sentiment: string | null;
+    summary: string | null;
+    scraped_at: string | null;
+    source_url: string;
+}
+
+const PLATFORM_ICONS: Record<string, string> = {
+    news: "📰", reddit: "🟠", twitter: "🐦", youtube: "▶️",
+    google_maps: "🗺️", civic: "🏛️", instagram: "📸", facebook: "📘",
+};
+
+const URGENCY_COLORS: Record<string, string> = {
+    critical: "bg-red-100 text-red-700 border-red-200",
+    high: "bg-orange-100 text-orange-700 border-orange-200",
+    medium: "bg-yellow-100 text-yellow-700 border-yellow-200",
+    low: "bg-green-100 text-green-600 border-green-200",
+};
+
+const SENTIMENT_COLORS: Record<string, string> = {
+    negative: "text-red-600",
+    positive: "text-emerald-600",
+    neutral: "text-slate-500",
+};
+
+function SentimentGauge({ data }: { data: SentimentOverview }) {
+    const total = data.total || 1;
+    const negPct = Math.round((data.negative / total) * 100);
+    const neuPct = Math.round((data.neutral / total) * 100);
+    const posPct = 100 - negPct - neuPct;
+    const score = data.score;
+    const scoreColor = score > 0.2 ? "text-emerald-600" : score < -0.2 ? "text-red-600" : "text-yellow-600";
+
+    if (data.total === 0) {
+        return (
+            <div className="flex flex-col items-center justify-center py-8 text-center text-gray-400">
+                <span className="text-3xl mb-2">📡</span>
+                <p className="text-sm">No social signals yet</p>
+                <p className="text-xs mt-1">Trigger a scrape from the Commissioner dashboard to start collecting data</p>
+            </div>
+        );
+    }
+
+    return (
+        <div>
+            <div className="flex items-center justify-between mb-2">
+                <span className={`text-2xl font-bold ${scoreColor}`}>
+                    {score > 0 ? "+" : ""}{score.toFixed(2)}
+                </span>
+                <span className="text-xs text-gray-400">{data.total} posts · last 7 days</span>
+            </div>
+            <div className="flex rounded-full overflow-hidden h-4 w-full mb-3">
+                {negPct > 0 && <div className="bg-red-400 transition-all" style={{ width: `${negPct}%` }} title={`Negative: ${negPct}%`} />}
+                {neuPct > 0 && <div className="bg-gray-300 transition-all" style={{ width: `${neuPct}%` }} title={`Neutral: ${neuPct}%`} />}
+                {posPct > 0 && <div className="bg-emerald-400 transition-all" style={{ width: `${posPct}%` }} title={`Positive: ${posPct}%`} />}
+            </div>
+            <div className="flex gap-4 text-xs">
+                <span className="text-red-600 font-medium">🔴 {negPct}% Negative</span>
+                <span className="text-gray-500">⚪ {neuPct}% Neutral</span>
+                <span className="text-emerald-600 font-medium">🟢 {posPct}% Positive</span>
+            </div>
+        </div>
+    );
+}
 
 function KpiCard({ label, value, sub, icon, color }: { label: string; value: string | number; sub?: string; icon: string; color: string }) {
     const colorMap: Record<string, string> = {
@@ -58,12 +141,13 @@ function KpiCard({ label, value, sub, icon, color }: { label: string; value: str
         red: "from-red-500 to-rose-600",
         orange: "from-orange-400 to-amber-500",
         purple: "from-purple-500 to-violet-600",
+        slate: "from-slate-700 to-slate-900",
     };
     return (
         <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className={`bg-gradient-to-br ${colorMap[color]} text-white rounded-2xl p-5 shadow-sm`}
+            className={`bg-gradient-to-br ${colorMap[color] || colorMap.blue} text-white rounded-2xl p-5 shadow-sm`}
         >
             <div className="flex items-center justify-between">
                 <p className="text-sm font-medium opacity-90">{label}</p>
@@ -75,32 +159,34 @@ function KpiCard({ label, value, sub, icon, color }: { label: string; value: str
     );
 }
 
-// Simple inline SVG satisfaction trend chart
 function SatisfactionChart({ data }: { data: WeekData[] }) {
-    const validData = data.filter(d => d.avg_satisfaction !== null);
-    if (validData.length < 2) {
-        return (
-            <div className="h-32 flex items-center justify-center text-gray-400 text-sm italic">
-                Not enough data yet
-            </div>
-        );
+    if (data.length === 0) {
+        return <div className="h-32 flex items-center justify-center text-gray-400 text-sm italic">No trend data</div>;
     }
-    const max = 5, min = 1;
-    const W = 500, H = 100, pad = 20;
-    const xStep = (W - pad * 2) / (validData.length - 1);
-    const yScale = (v: number) => H - pad - ((v - min) / (max - min)) * (H - pad * 2);
-    const points = validData.map((d, i) => `${pad + i * xStep},${yScale(d.avg_satisfaction!)}`)
-        .join(" ");
+    const maxVal = 5;
+    const W = 500, H = 150, pad = 20;
+    const xStep = (W - pad * 2) / Math.max(1, data.length - 1);
+    const yScale = (v: number) => H - pad - ((v / maxVal) * (H - pad * 2));
+
+    const points = data.map((d, i) => {
+        const x = pad + (i * xStep);
+        const y = yScale(d.avg_satisfaction || 0);
+        return `${x},${y}`;
+    }).join(" ");
 
     return (
-        <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-28" preserveAspectRatio="none">
-            <polyline points={points} fill="none" stroke="#6366f1" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-            {validData.map((d, i) => (
-                <g key={i}>
-                    <circle cx={pad + i * xStep} cy={yScale(d.avg_satisfaction!)} r="4" fill="#6366f1" />
-                    <text x={pad + i * xStep} y={H - 2} textAnchor="middle" fontSize="8" fill="#9ca3af">{d.week_label}</text>
-                </g>
+        <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-40" preserveAspectRatio="none">
+            {[0, 2.5, 5].map(v => (
+                <line key={v} x1={pad} y1={yScale(v)} x2={W - pad} y2={yScale(v)} stroke="#e5e7eb" strokeWidth="1" strokeDasharray="4 4" />
             ))}
+            <polyline points={points} fill="none" stroke="#4f46e5" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+            {data.map((d, i) => {
+                const x = pad + (i * xStep);
+                const y = yScale(d.avg_satisfaction || 0);
+                return (
+                    <circle key={i} cx={x} cy={y} r="4" fill="#ffffff" stroke="#4f46e5" strokeWidth="2" />
+                );
+            })}
         </svg>
     );
 }
@@ -114,6 +200,9 @@ export default function CouncillorDashboard() {
     const [trend, setTrend] = useState<WeekData[]>([]);
     const [topIssues, setTopIssues] = useState<TopIssue[]>([]);
     const [overdue, setOverdue] = useState<OverdueTicket[]>([]);
+    const [sentiment, setSentiment] = useState<SentimentOverview | null>(null);
+    const [emerging, setEmerging] = useState<EmergingIssue[]>([]);
+    const [socialPosts, setSocialPosts] = useState<SocialPost[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -128,12 +217,18 @@ export default function CouncillorDashboard() {
             councillorApi.getSatisfactionTrend(ward, 8),
             councillorApi.getTopIssues(ward, 8),
             councillorApi.getOverdueTickets(ward),
-        ]).then(([s, d, t, issues, ov]) => {
+            socialIntelApi.getSentimentOverview(ward).catch(() => ({ data: { total: 0, positive: 0, neutral: 0, negative: 0, score: 0 } })),
+            socialIntelApi.getEmergingIssues(ward, 24, 6).catch(() => ({ data: [] })),
+            socialIntelApi.getSocialPosts(ward, undefined, 1, 10).catch(() => ({ data: { results: [] } })),
+        ]).then(([s, d, t, issues, ov, sent, emerg, posts]) => {
             setSummary(s.data);
             setDeptPerf(d.data);
             setTrend(t.data);
             setTopIssues(issues.data);
             setOverdue(ov.data);
+            setSentiment(sent.data);
+            setEmerging(emerg.data);
+            setSocialPosts(posts.data?.results ?? []);
         }).catch(() => toast.error("Failed to load ward data"))
             .finally(() => setLoading(false));
     }, [user]);
@@ -163,7 +258,7 @@ export default function CouncillorDashboard() {
                 <div className="max-w-7xl mx-auto">
                     <p className="text-emerald-300 text-sm">Councillor · Ward {user?.ward_id}</p>
                     <h1 className="text-2xl font-bold mt-0.5">Ward {user?.ward_id} — Insights Dashboard 🏛️</h1>
-                    <p className="text-emerald-200 text-xs mt-1">Read-only visibility into your ward's civic performance</p>
+                    <p className="text-emerald-200 text-xs mt-1">Ward-level civic intelligence — tickets + social signals</p>
                 </div>
             </div>
 
@@ -326,7 +421,125 @@ export default function CouncillorDashboard() {
                         </div>
                     </div>
                 </div>
+
+                {/* ══ Social Intelligence Section ══════════════════════════════════ */}
+                <div>
+                    <div className="flex items-center gap-2 mb-4">
+                        <span className="text-xl">📡</span>
+                        <h2 className="text-base font-bold text-gray-800">Social Intelligence</h2>
+                        <span className="text-xs bg-indigo-100 text-indigo-700 font-semibold px-2 py-0.5 rounded-full">Live · News & Social</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        {/* Sentiment Gauge */}
+                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+                            <div className="flex items-center gap-2 mb-4">
+                                <span className="text-lg">💬</span>
+                                <h3 className="font-bold text-gray-700 text-sm">Ward Sentiment (7 days)</h3>
+                            </div>
+                            {sentiment ? (
+                                <SentimentGauge data={sentiment} />
+                            ) : (
+                                <div className="text-center py-6 text-gray-400 text-sm">Loading…</div>
+                            )}
+                        </div>
+
+                        {/* Emerging Issues */}
+                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+                            <div className="flex items-center gap-2 mb-4">
+                                <span className="text-lg">🚨</span>
+                                <h3 className="font-bold text-gray-700 text-sm">Emerging Issues (24h)</h3>
+                            </div>
+                            {emerging.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center py-6 text-gray-400 text-sm">
+                                    <span className="text-2xl mb-2">🔍</span>
+                                    <p>No emerging signals yet</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-2.5">
+                                    {emerging.map((issue, i) => (
+                                        <motion.div
+                                            key={issue.category}
+                                            initial={{ opacity: 0, x: -8 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            transition={{ delay: i * 0.05 }}
+                                            className="flex items-start justify-between gap-2"
+                                        >
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center gap-1.5 flex-wrap">
+                                                    <span className="text-xs font-bold text-gray-800">{issue.category}</span>
+                                                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${URGENCY_COLORS[issue.max_urgency] ?? "bg-gray-100 text-gray-500 border-gray-200"}`}>
+                                                        {issue.max_urgency}
+                                                    </span>
+                                                </div>
+                                                {issue.sample_summary && (
+                                                    <p className="text-[10px] text-gray-500 mt-0.5 line-clamp-1">{issue.sample_summary}</p>
+                                                )}
+                                                <div className="flex gap-1 mt-1">
+                                                    {issue.platforms.slice(0, 3).map(p => (
+                                                        <span key={p} className="text-[10px] bg-slate-100 text-slate-600 px-1.5 rounded">
+                                                            {PLATFORM_ICONS[p] ?? "📄"} {p}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                            <span className="text-xs font-bold text-indigo-700 shrink-0">{issue.count}</span>
+                                        </motion.div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Social Post Stream */}
+                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
+                            <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
+                                <span className="text-lg">🌐</span>
+                                <h3 className="font-bold text-gray-700 text-sm">Latest Social Posts</h3>
+                                <span className="ml-auto text-xs text-gray-400">{socialPosts.length} shown</span>
+                            </div>
+                            <div className="divide-y divide-gray-50 max-h-72 overflow-y-auto flex-1">
+                                {socialPosts.length === 0 ? (
+                                    <div className="flex flex-col items-center justify-center py-8 text-gray-400 text-center px-4">
+                                        <span className="text-3xl mb-2">📭</span>
+                                        <p className="text-sm">No posts collected yet</p>
+                                        <p className="text-xs mt-1 text-gray-300">Commissioner can trigger a scrape to start</p>
+                                    </div>
+                                ) : (
+                                    socialPosts.map(post => (
+                                        <div key={post.id} className="px-4 py-3">
+                                            <div className="flex items-center gap-1.5 mb-1">
+                                                <span className="text-sm">{PLATFORM_ICONS[post.platform] ?? "📄"}</span>
+                                                <span className="text-xs font-semibold text-gray-600 capitalize">{post.platform}</span>
+                                                {post.urgency && (
+                                                    <span className={`text-[9px] font-bold px-1 py-0.5 rounded border ml-auto ${URGENCY_COLORS[post.urgency] ?? "bg-gray-100 text-gray-500 border-gray-200"}`}>
+                                                        {post.urgency}
+                                                    </span>
+                                                )}
+                                                {post.sentiment && (
+                                                    <span className={`text-[9px] font-semibold ${SENTIMENT_COLORS[post.sentiment] ?? "text-gray-400"}`}>
+                                                        {post.sentiment === "negative" ? "😞" : post.sentiment === "positive" ? "😊" : "😐"}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            {post.summary ? (
+                                                <p className="text-xs text-gray-700 line-clamp-2">{post.summary}</p>
+                                            ) : (
+                                                <p className="text-xs text-gray-600 line-clamp-2">{post.content}</p>
+                                            )}
+                                            {post.category && (
+                                                <span className="inline-block mt-1 text-[9px] bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded">{post.category}</span>
+                                            )}
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {/* ═══════════════════════════════════════════════════════════════ */}
+
             </div>
         </div>
     );
 }
+

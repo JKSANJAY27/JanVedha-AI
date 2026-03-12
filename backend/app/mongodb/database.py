@@ -50,6 +50,7 @@ async def init_mongodb() -> None:
         IssueMemoryMongo,
         PriorityModelMongo,
         ScheduledEventMongo,
+        SocialPostMongo,
     )
 
     uri = settings.MONGODB_URI
@@ -74,6 +75,7 @@ async def init_mongodb() -> None:
             IssueMemoryMongo,
             PriorityModelMongo,
             ScheduledEventMongo,
+            SocialPostMongo,
         ],
     )
 

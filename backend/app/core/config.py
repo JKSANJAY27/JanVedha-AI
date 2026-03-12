@@ -49,6 +49,24 @@ class Settings(BaseSettings):
     MONGODB_URI: str = "mongodb://localhost:27017/civicai"
     REDIS_URL: str = "redis://localhost:6379"
 
+    # ── Social Media Scraping (Scrapify integration) ──────────────────────────
+    # Apify — cloud-based social media scraping
+    APIFY_API_TOKEN: str = ""
+    # Reddit (PRAW) — https://www.reddit.com/prefs/apps
+    REDDIT_CLIENT_ID: str = ""
+    REDDIT_CLIENT_SECRET: str = ""
+    REDDIT_USER_AGENT: str = "JanVedhaAI/1.0"
+    # YouTube Data API v3
+    YOUTUBE_API_KEY: str = ""
+    # News APIs
+    GNEWS_API_KEY: str = "34f5754bd852334a1bc6b1a6e1970f44"
+    CURRENTS_API_KEY: str = "yHyeCtUokXL6t6-Evcw4zuJ_bXGfJ4xt6dQcmgzOqqhLou39"
+    NEWSDATA_API_KEY: str = "pub_ea435c80fd684848b16cb1ad2fc1c469"
+    # City scope for scrapers
+    DEMO_CITY: str = "Chennai"
+    # Scrape interval (minutes)
+    SCRAPE_INTERVAL_MINUTES: int = 60
+
     # Maps
     GOOGLE_MAPS_API_KEY: str = ""
 
