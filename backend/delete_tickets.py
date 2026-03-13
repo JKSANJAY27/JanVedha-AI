@@ -14,7 +14,7 @@ from app.mongodb.models.ticket import TicketMongo
 async def delete_all_tickets():
     print(f"Connecting to MongoDB at {settings.MONGODB_URI}")
     client = AsyncIOMotorClient(settings.MONGODB_URI)
-    db_name = settings.MONGODB_URI.split("/")[-1]
+    db_name = settings.MONGODB_URI.rsplit("/", 1)[-1].split("?")[0]
     db = client.get_database(db_name)
     
     await init_beanie(database=db, document_models=[TicketMongo])
