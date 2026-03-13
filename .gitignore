@@ -10,3 +10,10 @@ venv/
 backend/.venv
 # Training model checkpoints (large binary files)
 backend/training/models/
+
+# Log files and dev output
+backend/logs.txt
+backend/logs_utf8.txt
+backend/seed_out.txt
+backend/server_out.txt
+*.log
