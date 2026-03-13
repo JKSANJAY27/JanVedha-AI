@@ -7,6 +7,8 @@ import toast from "react-hot-toast";
 import { useAuth } from "@/context/AuthContext";
 import { councillorApi, socialIntelApi } from "@/lib/api";
 import { DEPT_NAMES } from "@/lib/constants";
+import ScenarioPlanner from "@/components/ScenarioPlanner";
+import WardBenchmarkPanel from "@/components/WardBenchmarkPanel";
 
 interface WardSummary {
     total: number;
@@ -536,6 +538,20 @@ export default function CouncillorDashboard() {
                                 ))
                             )}
                         </div>
+                    </div>
+                </div>
+
+                {/* ══ Decision Intelligence Section ══════════════════════════════════ */}
+                <div>
+                    <div className="flex items-center gap-2 mb-4">
+                        <span className="text-xl">🧠</span>
+                        <h2 className="text-lg font-extrabold text-slate-800 tracking-tight">Decision Intelligence</h2>
+                        <span className="text-xs bg-indigo-100 text-indigo-700 font-bold px-2.5 py-1 rounded-full border border-indigo-200 shadow-sm ml-2">AI-Powered</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-6 border-b border-gray-100 mb-6">
+                        <ScenarioPlanner wardId={user?.ward_id} />
+                        <WardBenchmarkPanel wardId={user?.ward_id} />
                     </div>
                 </div>
 

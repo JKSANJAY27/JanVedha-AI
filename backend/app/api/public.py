@@ -115,6 +115,7 @@ async def create_complaint(data: ComplaintCreateEvent):
         "ticket_code": ticket.ticket_code,
         "status": get_public_status(ticket),
         "dept_id": ticket.dept_id,
+        "ward_id": ticket.ward_id,
         "priority_label": ticket.priority_label,
         "priority_score": ticket.priority_score,
         "priority_source": ticket.priority_source,

@@ -10,6 +10,7 @@ from .issue_memory import IssueMemoryMongo
 from .priority_model import PriorityModelMongo
 from .scheduled_event import ScheduledEventMongo
 from .social_post import SocialPostMongo
+from .ward_benchmark import WardBenchmarkMongo
 
 __all__ = [
     "UserMongo",
@@ -23,4 +24,5 @@ __all__ = [
     "PriorityModelMongo",
     "ScheduledEventMongo",
     "SocialPostMongo",
+    "WardBenchmarkMongo",
 ]

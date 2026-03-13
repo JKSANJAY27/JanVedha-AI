@@ -177,3 +177,19 @@ export const socialIntelApi = {
     api.post("/api/social-intel/trigger-scrape", null, { params: { ward_id: wardId, keywords } }),
 };
 
+export const analyticsApi = {
+  getResourceHealth: (wardId?: number) =>
+    api.get("/api/analytics/resource-health", { params: wardId ? { ward_id: wardId } : {} }),
+  analyzeScenario: (params: {
+    scenario_type: string;
+    dept_to?: string;
+    dept_from?: string;
+    n_technicians: number;
+    duration_weeks: number;
+    ward_id?: number;
+  }) => api.post("/api/analytics/scenario/analyze", params),
+  getBenchmarks: (wardId?: number) =>
+    api.get("/api/analytics/benchmarks", { params: wardId ? { ward_id: wardId } : {} }),
+};
+
+

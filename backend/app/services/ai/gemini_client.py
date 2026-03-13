@@ -11,13 +11,13 @@ from app.core.config import settings
 def get_llm(model: str = "gemini-2.0-flash") -> ChatGoogleGenerativeAI:
     """
     Returns a cached LangChain Gemini LLM instance.
-    Cached with lru_cache so only one client is created per model name per process.
+    Defaults to the latest Gemini 2.0 Flash model.
     """
     return ChatGoogleGenerativeAI(
         model=model,
         google_api_key=settings.GEMINI_API_KEY,
         temperature=0.2,
-        max_retries=3,
+        max_retries=5, # Increased retries for better robustness
     )
 
 
