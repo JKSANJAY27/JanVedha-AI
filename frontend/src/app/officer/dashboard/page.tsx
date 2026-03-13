@@ -12,6 +12,7 @@ import StatusBadge from "@/components/StatusBadge";
 import StatCard from "@/components/StatCard";
 import Link from "next/link";
 import { DEPT_NAMES } from "@/lib/constants";
+import ResourceHealthCard from "@/components/ResourceHealthCard";
 // dynamic + IssueMap removed — supervisor view uses gauge-based design
 
 interface Ticket {
@@ -716,6 +717,11 @@ function SupervisorDashboard({ user }: { user: { name: string; ward_id?: number;
                     <p className="text-sm text-slate-400">Each gauge reveals detailed breakdowns and lets you view the relevant tickets in context.</p>
                 </div>
             )}
+
+            {/* ── Resource Health & Optimizer ── */}
+            <div className="pt-2">
+                <ResourceHealthCard wardId={user.ward_id} />
+            </div>
         </div>
     );
 }

@@ -49,10 +49,16 @@ async def get_tickets(
             ).limit(limit).to_list()
 
     elif current_user.role == UserRole.JUNIOR_ENGINEER:
-        # JE sees tickets for their dept regardless of ward for now
-        tickets = await TicketMongo.find(
-            TicketMongo.dept_id == current_user.dept_id
-        ).sort(-TicketMongo.priority_score).limit(limit).to_list()
+        # JE sees tickets for their dept AND their specific ward
+        if current_user.ward_id is not None:
+            tickets = await TicketMongo.find(
+                TicketMongo.dept_id == current_user.dept_id,
+                TicketMongo.ward_id == current_user.ward_id
+            ).sort(-TicketMongo.priority_score).limit(limit).to_list()
+        else:
+            tickets = await TicketMongo.find(
+                TicketMongo.dept_id == current_user.dept_id
+            ).sort(-TicketMongo.priority_score).limit(limit).to_list()
 
     elif current_user.role == UserRole.FIELD_STAFF:
         tickets = await TicketMongo.find(
@@ -106,10 +112,16 @@ async def get_dashboard_summary(
         else:
             all_tickets = await TicketMongo.find_all().to_list()
     elif current_user.role == UserRole.JUNIOR_ENGINEER:
-        # JE sees tickets for their dept regardless of ward for now
-        all_tickets = await TicketMongo.find(
-            TicketMongo.dept_id == current_user.dept_id
-        ).to_list()
+        # JE sees tickets for their dept AND their specific ward
+        if current_user.ward_id is not None:
+            all_tickets = await TicketMongo.find(
+                TicketMongo.dept_id == current_user.dept_id,
+                TicketMongo.ward_id == current_user.ward_id
+            ).to_list()
+        else:
+            all_tickets = await TicketMongo.find(
+                TicketMongo.dept_id == current_user.dept_id
+            ).to_list()
     else:
         all_tickets = await TicketMongo.find_all().to_list()
 

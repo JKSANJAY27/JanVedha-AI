@@ -18,6 +18,7 @@ import { useRouter } from "next/navigation";
 const schema = z.object({
   description: z.string().min(20, "Describe the issue in at least 20 characters"),
   location_text: z.string().min(5, "Please enter location"),
+  ward_id: z.string().min(1, "Please select a ward"),
   reporter_phone: z.string().regex(/^[6-9]\d{9}$/, "Enter valid 10-digit Indian mobile number"),
   reporter_name: z.string().optional(),
   consent_given: z.boolean().refine((v) => v === true, "You must consent to share info"),
@@ -168,6 +169,7 @@ export default function SubmitComplaintPage() {
       description: data.description,
       location_text: data.location_text,
       reporter_phone: data.reporter_phone,
+      ward_id: parseInt(data.ward_id, 10),
       consent_given: true,
       reporter_name: data.reporter_name || null,
       photo_url: null,
@@ -342,9 +344,20 @@ export default function SubmitComplaintPage() {
                 {/* Location */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                    Location <span className="text-red-500">*</span>
+                    Location & Ward <span className="text-red-500">*</span>
                   </label>
                   <div className="flex gap-2">
+                    <select
+                      {...register("ward_id")}
+                      className="border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                    >
+                      <option value="">Select Ward</option>
+                      {Array.from({ length: 200 }, (_, i) => i + 1).map((w) => (
+                        <option key={w} value={w}>
+                          Ward {w}
+                        </option>
+                      ))}
+                    </select>
                     <input
                       {...locationRegister}
                       ref={combineRef}
@@ -361,6 +374,7 @@ export default function SubmitComplaintPage() {
                       {locationLoading ? <span className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" /> : "📍 GPS"}
                     </button>
                   </div>
+                  {errors.ward_id && <p className="text-red-500 text-xs mt-1">{errors.ward_id.message}</p>}
                   {errors.location_text && <p className="text-red-500 text-xs mt-1">{errors.location_text.message}</p>}
                 </div>
 

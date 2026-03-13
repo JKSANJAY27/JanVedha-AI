@@ -81,10 +81,25 @@ class Settings(BaseSettings):
     JWT_EXPIRE_MINUTES: int = 480
 
     # App
+    APP_NAME: str = "JanVedhaAI"
+    APP_ENV: str = "development"
+    APP_PORT: int = 8000
+    APP_LOG_LEVEL: str = "INFO"
     ENVIRONMENT: str = "development"
     CITY_NAME: str = "Chennai"
 
+    # Social Media extras
+    TWITTER_ACCOUNTS: str = ""
+    TWITTER_AUTH_TOKEN: str = ""
+    TWITTER_CT0: str = ""
+    INSTAGRAM_USERNAME: str = ""
+    INSTAGRAM_PASSWORD: str = ""
+    INSTAGRAM_SESSION_ID: str = ""
+    WEBHOOK_URL: str = ""
+    WEBHOOK_SECRET: str = ""
+
     class Config:
         env_file = ".env"
+        extra = "ignore"
 
 settings = Settings()
