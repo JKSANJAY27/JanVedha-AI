@@ -12,9 +12,7 @@ import StatusBadge from "@/components/StatusBadge";
 import StatCard from "@/components/StatCard";
 import Link from "next/link";
 import { DEPT_NAMES } from "@/lib/constants";
-import dynamic from "next/dynamic";
-
-const IssueMap = dynamic(() => import("@/features/map/IssueMap"), { ssr: false });
+// dynamic + IssueMap removed — supervisor view uses gauge-based design
 
 interface Ticket {
     id: string;
@@ -189,13 +187,386 @@ function TicketList({ tickets, showAssign, onStatusUpdate, onOpenAssignModal }: 
     );
 }
 
+// ─── Speedometer Gauge Component ─────────────────────────────────────────────
+
+function SpeedometerGauge({
+    value, label, icon, sublabel, status, onClick, active
+}: {
+    value: number; label: string; icon: string; sublabel: string;
+    status: "good" | "warn" | "critical"; onClick: () => void; active: boolean;
+}) {
+    const R = 54;
+    const cx = 70;
+    const cy = 72;
+    // Arc spans 210° total, from 210° to -30° (clockwise via left side)
+    const startAngle = 210;
+    const endAngle = -30;
+    const totalDeg = 240;
+    const clampedVal = Math.max(0, Math.min(100, value));
+
+    function polarToCartesian(angle: number) {
+        const rad = (angle * Math.PI) / 180;
+        return {
+            x: cx + R * Math.cos(rad),
+            y: cy - R * Math.sin(rad),
+        };
+    }
+
+    function buildArcPath(fromDeg: number, toDeg: number) {
+        const s = polarToCartesian(fromDeg);
+        const e = polarToCartesian(toDeg);
+        const large = fromDeg - toDeg > 180 ? 1 : 0;
+        return `M ${s.x} ${s.y} A ${R} ${R} 0 ${large} 1 ${e.x} ${e.y}`;
+    }
+
+    // Track arc (full 240°)
+    const trackPath = buildArcPath(startAngle, endAngle);
+
+    // Value arc: map value [0,100] to angle
+    const valueDeg = startAngle - (clampedVal / 100) * totalDeg;
+    const valuePath = clampedVal > 0 ? buildArcPath(startAngle, valueDeg) : "";
+
+    // Needle
+    const needleRad = (valueDeg * Math.PI) / 180;
+    const needleTip = { x: cx + (R - 8) * Math.cos(needleRad), y: cy - (R - 8) * Math.sin(needleRad) };
+    const needleBase = { x: cx + 8 * Math.cos(needleRad + Math.PI), y: cy - 8 * Math.sin(needleRad + Math.PI) };
+
+    const colorMap = { good: "#22c55e", warn: "#f59e0b", critical: "#ef4444" };
+    const glowMap = { good: "rgba(34,197,94,0.3)", warn: "rgba(245,158,11,0.3)", critical: "rgba(239,68,68,0.3)" };
+    const bgMap = { good: "from-emerald-950 to-emerald-900", warn: "from-amber-950 to-amber-900", critical: "from-red-950 to-red-900" };
+    const arcColor = colorMap[status];
+
+    return (
+        <button
+            onClick={onClick}
+            className={`relative group flex flex-col items-center p-5 rounded-3xl border-2 transition-all duration-300 w-full text-left
+                bg-gradient-to-br ${bgMap[status]}
+                ${active ? "border-white/40 shadow-2xl scale-[1.03]" : "border-white/10 hover:border-white/30 hover:scale-[1.02]"}
+            `}
+            style={active ? { boxShadow: `0 0 40px ${glowMap[status]}` } : {}}
+        >
+            {/* Active indicator */}
+            {active && <div className="absolute top-3 right-3 w-2 h-2 rounded-full animate-pulse" style={{ background: arcColor }} />}
+
+            {/* Gauge SVG */}
+            <svg width="140" height="90" viewBox="0 0 140 90" className="overflow-visible">
+                {/* Track */}
+                <path d={trackPath} fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="8" strokeLinecap="round" />
+
+                {/* Zone ticks */}
+                {[0, 40, 70, 100].map(v => {
+                    const deg = startAngle - (v / 100) * totalDeg;
+                    const inner = { x: cx + (R - 14) * Math.cos((deg * Math.PI) / 180), y: cy - (R - 14) * Math.sin((deg * Math.PI) / 180) };
+                    const outer = { x: cx + (R - 8) * Math.cos((deg * Math.PI) / 180), y: cy - (R - 8) * Math.sin((deg * Math.PI) / 180) };
+                    return <line key={v} x1={inner.x} y1={inner.y} x2={outer.x} y2={outer.y} stroke="rgba(255,255,255,0.25)" strokeWidth="1.5" />;
+                })}
+
+                {/* Value arc */}
+                {valuePath && (
+                    <path d={valuePath} fill="none" stroke={arcColor} strokeWidth="8" strokeLinecap="round"
+                        style={{ filter: `drop-shadow(0 0 6px ${arcColor})` }} />
+                )}
+
+                {/* Needle */}
+                <line x1={needleBase.x} y1={needleBase.y} x2={needleTip.x} y2={needleTip.y}
+                    stroke="white" strokeWidth="2" strokeLinecap="round"
+                    style={{ filter: "drop-shadow(0 0 4px rgba(255,255,255,0.8))" }} />
+                <circle cx={cx} cy={cy} r="5" fill="white" style={{ filter: "drop-shadow(0 0 4px rgba(255,255,255,0.6))" }} />
+
+                {/* Value text */}
+                <text x={cx} y={cy - 18} textAnchor="middle" fill="white" fontSize="18" fontWeight="bold" fontFamily="monospace">
+                    {clampedVal === 0 && value === 0 ? "N/A" : `${Math.round(clampedVal)}%`}
+                </text>
+            </svg>
+
+            {/* Label */}
+            <div className="text-center mt-1">
+                <p className="text-sm font-bold text-white flex items-center gap-1.5 justify-center">
+                    <span>{icon}</span> {label}
+                </p>
+                <p className="text-[11px] mt-0.5 font-medium" style={{ color: arcColor }}>{sublabel}</p>
+            </div>
+
+            {/* Click hint */}
+            <p className="text-[10px] text-white/30 mt-2 group-hover:text-white/60 transition-colors">
+                {active ? "Click to close" : "Click to inspect"}
+            </p>
+        </button>
+    );
+}
+
+// ─── Metric Detail Panel ──────────────────────────────────────────────────────
+
+function MetricDetailPanel({
+    metricId, summary, tickets, onClose
+}: {
+    metricId: string;
+    summary: DashboardSummary;
+    tickets: Ticket[];
+    onClose: () => void;
+}) {
+    const router = useRouter();
+    const [showTickets, setShowTickets] = useState(false);
+    const [statusFilter, setStatusFilter] = useState("ALL");
+
+    const now = new Date();
+    const overdue = tickets.filter(t => t.sla_deadline && new Date(t.sla_deadline) < now && !["CLOSED", "REJECTED"].includes(t.status));
+    const criticalTickets = tickets.filter(t => t.priority_label === "CRITICAL" && !["CLOSED", "RESOLVED"].includes(t.status));
+    const openTickets = tickets.filter(t => t.status === "OPEN");
+    const assignedTickets = tickets.filter(t => t.assigned_officer_id || t.technician_id);
+    const closedTickets = tickets.filter(t => ["CLOSED", "RESOLVED"].includes(t.status));
+
+    const METRIC_CONFIG: Record<string, {
+        title: string; icon: string; color: string;
+        rows: { label: string; value: string | number; highlight?: "good" | "warn" | "bad" }[];
+        ticketFilter: Ticket[];
+        insight: string;
+    }> = {
+        completion: {
+            title: "Completion Rate", icon: "✅", color: "emerald",
+            rows: [
+                { label: "Total Tickets", value: summary.total },
+                { label: "Resolved / Closed", value: summary.closed, highlight: summary.closed > 0 ? "good" : "warn" },
+                { label: "Still Open", value: summary.open, highlight: summary.open > summary.closed ? "warn" : "good" },
+                { label: "Completion Rate", value: `${summary.total > 0 ? Math.round((summary.closed / summary.total) * 100) : 0}%`, highlight: summary.total > 0 && summary.closed / summary.total >= 0.7 ? "good" : "bad" },
+            ],
+            ticketFilter: closedTickets,
+            insight: summary.total > 0 && summary.closed / summary.total < 0.5
+                ? "More than half the tickets are unresolved. Prioritise closing older open tickets."
+                : "Completion rate is healthy. Keep monitoring the backlog.",
+        },
+        sla: {
+            title: "SLA Compliance", icon: "⏱️", color: "blue",
+            rows: [
+                { label: "Total Active Tickets", value: summary.open },
+                { label: "SLA Breached", value: overdue.length, highlight: overdue.length > 0 ? "bad" : "good" },
+                { label: "Within SLA", value: summary.open - overdue.length, highlight: "good" },
+                { label: "Compliance Rate", value: `${summary.open > 0 ? Math.round(((summary.open - overdue.length) / summary.open) * 100) : 100}%`, highlight: overdue.length === 0 ? "good" : overdue.length > 3 ? "bad" : "warn" },
+            ],
+            ticketFilter: overdue,
+            insight: overdue.length === 0
+                ? "All active tickets are within their SLA window."
+                : `${overdue.length} ticket(s) have breached SLA. Immediate escalation required.`,
+        },
+        critical: {
+            title: "Critical Load", icon: "🚨", color: "red",
+            rows: [
+                { label: "Total Tickets", value: summary.total },
+                { label: "Critical Priority", value: summary.critical, highlight: summary.critical > 0 ? "bad" : "good" },
+                { label: "High Priority", value: tickets.filter(t => t.priority_label === "HIGH").length, highlight: "warn" },
+                { label: "Critical Ratio", value: `${summary.total > 0 ? Math.round((summary.critical / summary.total) * 100) : 0}%`, highlight: summary.critical === 0 ? "good" : summary.critical > 5 ? "bad" : "warn" },
+            ],
+            ticketFilter: criticalTickets,
+            insight: summary.critical === 0
+                ? "No critical issues — maintain regular patrolling to keep it this way."
+                : `${summary.critical} critical issue(s) need urgent attention. Do not let these age.`,
+        },
+        assignment: {
+            title: "Assignment Rate", icon: "👷", color: "violet",
+            rows: [
+                { label: "Open Tickets", value: summary.open },
+                { label: "Assigned (JE / Technician)", value: assignedTickets.filter(t => !["CLOSED", "RESOLVED"].includes(t.status)).length, highlight: "good" },
+                { label: "Unassigned / Waiting", value: openTickets.length, highlight: openTickets.length > 0 ? "warn" : "good" },
+                { label: "Assignment Rate", value: `${summary.open > 0 ? Math.round((assignedTickets.filter(t => !["CLOSED", "RESOLVED"].includes(t.status)).length / summary.open) * 100) : 100}%`, highlight: openTickets.length === 0 ? "good" : "warn" },
+            ],
+            ticketFilter: openTickets,
+            insight: openTickets.length === 0
+                ? "All open tickets have been assigned to engineers or technicians."
+                : `${openTickets.length} ticket(s) are still unassigned. Forward them to the appropriate junior engineer.`,
+        },
+        satisfaction: {
+            title: "Citizen Satisfaction", icon: "⭐", color: "amber",
+            rows: [
+                { label: "Average Score", value: summary.avg_satisfaction !== null ? `${summary.avg_satisfaction} / 5` : "No ratings yet", highlight: summary.avg_satisfaction !== null ? (summary.avg_satisfaction >= 4 ? "good" : summary.avg_satisfaction >= 3 ? "warn" : "bad") : undefined },
+                { label: "Closed Tickets", value: summary.closed },
+                { label: "Rated Tickets", value: closedTickets.filter(t => t.after_photo_url).length },  // proxy
+                { label: "Score Band", value: summary.avg_satisfaction !== null ? (summary.avg_satisfaction >= 4 ? "Excellent" : summary.avg_satisfaction >= 3 ? "Acceptable" : "Needs Improvement") : "No data" },
+            ],
+            ticketFilter: closedTickets,
+            insight: summary.avg_satisfaction === null
+                ? "No citizen ratings collected yet. Ensure resolved tickets prompt for feedback."
+                : summary.avg_satisfaction < 3
+                ? "Satisfaction is low. Review how resolved tickets were handled and follow up with disgruntled citizens."
+                : "Citizen satisfaction is at an acceptable level.",
+        },
+    };
+
+    const cfg = METRIC_CONFIG[metricId];
+    if (!cfg) return null;
+
+    const colorClasses: Record<string, { bg: string; border: string; badge: string; text: string; btn: string }> = {
+        emerald: { bg: "bg-emerald-50", border: "border-emerald-200", badge: "bg-emerald-100 text-emerald-800", text: "text-emerald-700", btn: "bg-emerald-600 hover:bg-emerald-700" },
+        blue: { bg: "bg-blue-50", border: "border-blue-200", badge: "bg-blue-100 text-blue-800", text: "text-blue-700", btn: "bg-blue-600 hover:bg-blue-700" },
+        red: { bg: "bg-red-50", border: "border-red-200", badge: "bg-red-100 text-red-800", text: "text-red-700", btn: "bg-red-600 hover:bg-red-700" },
+        violet: { bg: "bg-violet-50", border: "border-violet-200", badge: "bg-violet-100 text-violet-800", text: "text-violet-700", btn: "bg-violet-600 hover:bg-violet-700" },
+        amber: { bg: "bg-amber-50", border: "border-amber-200", badge: "bg-amber-100 text-amber-800", text: "text-amber-700", btn: "bg-amber-600 hover:bg-amber-700" },
+    };
+    const c = colorClasses[cfg.color];
+
+    const highlightCls = { good: "text-emerald-600 font-bold", warn: "text-amber-600 font-bold", bad: "text-red-600 font-bold" };
+
+    const filteredTickets = showTickets
+        ? (statusFilter === "ALL" ? cfg.ticketFilter : cfg.ticketFilter.filter(t => t.status === statusFilter))
+        : [];
+
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            className={`${c.bg} ${c.border} border-2 rounded-3xl p-6 shadow-xl`}
+        >
+            {/* Header */}
+            <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-2xl ${c.badge} flex items-center justify-center text-xl`}>
+                        {cfg.icon}
+                    </div>
+                    <div>
+                        <h3 className={`font-extrabold text-lg ${c.text}`}>{cfg.title}</h3>
+                        <p className="text-xs text-gray-500">Metric deep-dive</p>
+                    </div>
+                </div>
+                <button onClick={onClose} className="w-8 h-8 rounded-full bg-white/80 border border-gray-200 flex items-center justify-center text-gray-400 hover:text-gray-700 transition-colors">
+                    ✕
+                </button>
+            </div>
+
+            {/* Metrics grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+                {cfg.rows.map(row => (
+                    <div key={row.label} className="bg-white rounded-2xl p-4 border border-white/60 shadow-sm">
+                        <p className="text-xs text-gray-400 mb-1">{row.label}</p>
+                        <p className={`text-xl font-extrabold ${row.highlight ? highlightCls[row.highlight] : "text-gray-800"}`}>{row.value}</p>
+                    </div>
+                ))}
+            </div>
+
+            {/* Insight callout */}
+            <div className={`flex items-start gap-3 ${c.bg} border ${c.border} rounded-2xl p-4 mb-5`}>
+                <span className="text-2xl mt-0.5">💡</span>
+                <p className={`text-sm font-medium ${c.text}`}>{cfg.insight}</p>
+            </div>
+
+            {/* Dept breakdown for this metric */}
+            {summary.by_department.length > 0 && (
+                <div className="mb-5">
+                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">Department Breakdown</p>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+                        {summary.by_department.map(d => {
+                            const dTotal = d.open + d.closed;
+                            const pct = dTotal > 0 ? Math.round((d.closed / dTotal) * 100) : 0;
+                            const isProblematic = metricId === "sla" ? d.overdue > 0 : metricId === "critical" ? d.critical > 0 : metricId === "completion" ? pct < 50 : false;
+                            return (
+                                <div key={d.dept_id} className={`bg-white rounded-xl p-3 border text-xs ${isProblematic ? "border-red-200 bg-red-50" : "border-gray-100"}`}>
+                                    <p className="font-bold text-gray-700 mb-1.5 truncate">{DEPT_NAMES[d.dept_id] ?? d.dept_id}</p>
+                                    <div className="flex justify-between text-gray-500">
+                                        <span>Open <span className="font-bold text-orange-600">{d.open}</span></span>
+                                        <span>SLA <span className={`font-bold ${d.overdue > 0 ? "text-red-600" : "text-green-600"}`}>{d.overdue > 0 ? `${d.overdue} ⚠️` : "✓"}</span></span>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
+
+            {/* Ticket viewer toggle */}
+            <div className="flex items-center gap-3">
+                <button
+                    onClick={() => setShowTickets(v => !v)}
+                    className={`${c.btn} text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors flex items-center gap-2`}
+                >
+                    {showTickets ? "▲ Hide Tickets" : `🎫 View Relevant Tickets (${cfg.ticketFilter.length})`}
+                </button>
+                {showTickets && cfg.ticketFilter.length > 0 && (
+                    <div className="flex gap-2 flex-wrap">
+                        {["ALL", "OPEN", "ASSIGNED", "IN_PROGRESS", "CLOSED"].map(s => (
+                            <button key={s} onClick={() => setStatusFilter(s)}
+                                className={`text-xs px-3 py-1.5 rounded-full font-medium transition-all
+                                    ${statusFilter === s ? "bg-gray-800 text-white" : "bg-white border border-gray-200 text-gray-600 hover:border-gray-400"}`}>
+                                {s.replace(/_/g, " ")}
+                            </button>
+                        ))}
+                    </div>
+                )}
+            </div>
+
+            {/* Ticket table */}
+            <AnimatePresence>
+                {showTickets && (
+                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="mt-4 overflow-hidden">
+                        {filteredTickets.length === 0 ? (
+                            <p className="text-sm text-gray-400 italic text-center py-6 bg-white rounded-2xl border border-gray-100">
+                                No tickets matching this filter.
+                            </p>
+                        ) : (
+                            <div className="bg-white rounded-2xl border border-gray-100 overflow-x-auto shadow-sm">
+                                <table className="min-w-full divide-y divide-gray-100 text-sm">
+                                    <thead className="bg-gray-50 text-gray-500 text-xs font-semibold uppercase tracking-wide">
+                                        <tr>
+                                            <th className="px-4 py-3 text-left">Ticket</th>
+                                            <th className="px-4 py-3 text-left">Category</th>
+                                            <th className="px-4 py-3 text-left">Ward</th>
+                                            <th className="px-4 py-3 text-left">Priority</th>
+                                            <th className="px-4 py-3 text-left">Status</th>
+                                            <th className="px-4 py-3 text-left">SLA</th>
+                                            <th className="px-4 py-3 text-right"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-50">
+                                        {filteredTickets.slice(0, 20).map(t => {
+                                            const isOverdue = t.sla_deadline && new Date(t.sla_deadline) < new Date() && !["CLOSED", "RESOLVED"].includes(t.status);
+                                            return (
+                                                <tr key={t.id} className="hover:bg-gray-50 transition-colors">
+                                                    <td className="px-4 py-3 font-mono font-bold text-blue-600 whitespace-nowrap">{t.ticket_code}</td>
+                                                    <td className="px-4 py-3 text-gray-700 font-medium max-w-[140px] truncate">{t.issue_category || "General"}</td>
+                                                    <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{t.ward_id ? `Ward ${t.ward_id}` : "—"}</td>
+                                                    <td className="px-4 py-3">
+                                                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                                                            t.priority_label === "CRITICAL" ? "bg-red-100 text-red-700" :
+                                                            t.priority_label === "HIGH" ? "bg-orange-100 text-orange-700" :
+                                                            t.priority_label === "MEDIUM" ? "bg-yellow-100 text-yellow-700" :
+                                                            "bg-green-100 text-green-700"
+                                                        }`}>{t.priority_label}</span>
+                                                    </td>
+                                                    <td className="px-4 py-3"><StatusBadge status={t.status} size="sm" /></td>
+                                                    <td className={`px-4 py-3 text-xs font-semibold ${isOverdue ? "text-red-600" : "text-gray-400"}`}>
+                                                        {isOverdue ? "⚠️ Overdue" : t.sla_deadline ? "Within SLA" : "—"}
+                                                    </td>
+                                                    <td className="px-4 py-3 text-right">
+                                                        <Link href={`/officer/tickets/${t.id}`}
+                                                            className="text-xs font-semibold text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors">
+                                                            View →
+                                                        </Link>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                                {filteredTickets.length > 20 && (
+                                    <p className="text-xs text-gray-400 text-center py-3 border-t border-gray-100">
+                                        Showing 20 of {filteredTickets.length} tickets.
+                                        <Link href="/officer/tickets" className="text-blue-500 hover:underline ml-1">View all →</Link>
+                                    </p>
+                                )}
+                            </div>
+                        )}
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </motion.div>
+    );
+}
+
 // ─── Supervisor Operational View ─────────────────────────────────────────────────────
 
 function SupervisorDashboard({ user }: { user: { name: string; ward_id?: number; role: string } }) {
-    const router = useRouter();
     const [summary, setSummary] = useState<DashboardSummary | null>(null);
     const [tickets, setTickets] = useState<Ticket[]>([]);
     const [loading, setLoading] = useState(true);
+    const [activeMetric, setActiveMetric] = useState<string | null>(null);
 
     useEffect(() => {
         Promise.all([officerApi.getDashboardSummary(), officerApi.getTickets(200)])
@@ -204,81 +575,147 @@ function SupervisorDashboard({ user }: { user: { name: string; ward_id?: number;
             .finally(() => setLoading(false));
     }, []);
 
-    const overdue = tickets.filter(t =>
-        t.sla_deadline && new Date(t.sla_deadline) < new Date() &&
-        !["CLOSED", "REJECTED"].includes(t.status)
+    if (loading) return (
+        <div className="flex justify-center py-20">
+            <div className="flex flex-col items-center gap-4">
+                <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin" />
+                <p className="text-sm text-blue-300 font-medium">Loading operations dashboard…</p>
+            </div>
+        </div>
     );
 
-    if (loading) return <div className="flex justify-center py-20"><div className="w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin" /></div>;
+    if (!summary) return null;
+
+    const now = new Date();
+    const overdueCount = tickets.filter(t => t.sla_deadline && new Date(t.sla_deadline) < now && !["CLOSED", "REJECTED"].includes(t.status)).length;
+    const assignedActive = tickets.filter(t => (t.assigned_officer_id || t.technician_id) && !["CLOSED", "RESOLVED"].includes(t.status)).length;
+
+    // Compute metric scores [0-100]
+    const completionScore = summary.total > 0 ? Math.round((summary.closed / summary.total) * 100) : 0;
+    const slaScore = summary.open > 0 ? Math.round(((summary.open - overdueCount) / summary.open) * 100) : 100;
+    const criticalScore = summary.total > 0 ? Math.round((1 - summary.critical / summary.total) * 100) : 100;
+    const assignmentScore = summary.open > 0 ? Math.round((assignedActive / summary.open) * 100) : 100;
+    const satisfactionScore = summary.avg_satisfaction !== null ? Math.round((summary.avg_satisfaction / 5) * 100) : 0;
+
+    const getStatus = (score: number): "good" | "warn" | "critical" =>
+        score >= 70 ? "good" : score >= 40 ? "warn" : "critical";
+
+    const metrics = [
+        {
+            id: "completion", label: "Completion Rate", icon: "✅", value: completionScore,
+            status: getStatus(completionScore),
+            sublabel: `${summary.closed} of ${summary.total} closed`,
+        },
+        {
+            id: "sla", label: "SLA Compliance", icon: "⏱️", value: slaScore,
+            status: getStatus(slaScore),
+            sublabel: overdueCount === 0 ? "All within SLA" : `${overdueCount} breached`,
+        },
+        {
+            id: "critical", label: "Critical Load", icon: "🚨", value: criticalScore,
+            status: getStatus(criticalScore),
+            sublabel: summary.critical === 0 ? "No critical issues" : `${summary.critical} critical`,
+        },
+        {
+            id: "assignment", label: "Assignment Rate", icon: "👷", value: assignmentScore,
+            status: getStatus(assignmentScore),
+            sublabel: `${assignedActive} of ${summary.open} assigned`,
+        },
+        {
+            id: "satisfaction", label: "Satisfaction", icon: "⭐",
+            value: satisfactionScore,
+            status: summary.avg_satisfaction === null ? "warn" as const : getStatus(satisfactionScore),
+            sublabel: summary.avg_satisfaction !== null ? `${summary.avg_satisfaction}/5 avg` : "No data yet",
+        },
+    ];
+
+    const unsatisfied = metrics.filter(m => m.status !== "good");
 
     return (
         <div className="space-y-8">
-            {/* Map Section */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden h-[450px]">
-                <IssueMap
-                    issues={tickets as any}
-                    onIssueClick={(issue) => router.push(`/officer/tickets/${issue.id}`)}
-                />
+            {/* Header banner */}
+            <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-3xl p-7 border border-white/10 shadow-xl relative overflow-hidden">
+                <div className="absolute inset-0 opacity-5" style={{ backgroundImage: "radial-gradient(circle at 20% 50%, #6366f1 0%, transparent 50%), radial-gradient(circle at 80% 50%, #06b6d4 0%, transparent 50%)" }} />
+                <div className="relative z-10">
+                    <div className="flex items-center justify-between flex-wrap gap-4 mb-6">
+                        <div>
+                            <p className="text-xs text-slate-400 font-semibold uppercase tracking-widest mb-1">Operations Control Center</p>
+                            <h2 className="text-2xl font-extrabold text-white">Performance Overview</h2>
+                            <p className="text-slate-400 text-sm mt-1">
+                                Ward {user.ward_id ?? "—"} · Click any gauge to drill down
+                            </p>
+                        </div>
+                        {unsatisfied.length > 0 ? (
+                            <div className="bg-red-500/10 border border-red-400/30 rounded-2xl px-5 py-3">
+                                <p className="text-red-300 text-xs font-semibold mb-0.5">⚠️ Attention Required</p>
+                                <p className="text-white font-bold text-sm">{unsatisfied.length} metric{unsatisfied.length > 1 ? "s" : ""} below threshold</p>
+                                <p className="text-slate-400 text-xs mt-0.5">{unsatisfied.map(m => m.label).join(" · ")}</p>
+                            </div>
+                        ) : (
+                            <div className="bg-emerald-500/10 border border-emerald-400/30 rounded-2xl px-5 py-3">
+                                <p className="text-emerald-300 text-xs font-semibold mb-0.5">✓ All Systems Nominal</p>
+                                <p className="text-white font-bold text-sm">All metrics in good standing</p>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Gauge row */}
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+                        {metrics.map(m => (
+                            <SpeedometerGauge
+                                key={m.id}
+                                value={m.value}
+                                label={m.label}
+                                icon={m.icon}
+                                sublabel={m.sublabel}
+                                status={m.status}
+                                active={activeMetric === m.id}
+                                onClick={() => setActiveMetric(prev => prev === m.id ? null : m.id)}
+                            />
+                        ))}
+                    </div>
+                </div>
             </div>
 
-            {/* Stats Row */}
-            {summary && (
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-                    <StatCard label="Total" value={summary.total} icon="📋" color="blue" />
-                    <StatCard label="Open" value={summary.open} icon="⚡" color="orange" />
-                    <StatCard label="Closed" value={summary.closed} icon="✅" color="green" />
-                    <StatCard label="Overdue" value={summary.overdue} icon="⚠️" color="red" />
-                    <StatCard label="Critical" value={summary.critical} icon="🚨" color="red" />
-                    <StatCard label="Satisfaction" value={summary.avg_satisfaction !== null ? `${summary.avg_satisfaction}/5` : "N/A"} icon="⭐" color="purple" />
+            {/* Detail panel — shown when a metric is clicked */}
+            <AnimatePresence mode="wait">
+                {activeMetric && (
+                    <MetricDetailPanel
+                        key={activeMetric}
+                        metricId={activeMetric}
+                        summary={summary}
+                        tickets={tickets}
+                        onClose={() => setActiveMetric(null)}
+                    />
+                )}
+            </AnimatePresence>
+
+            {/* Quick count strip */}
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+                {[
+                    { label: "Total", value: summary.total, icon: "📋", cls: "text-slate-700" },
+                    { label: "Open", value: summary.open, icon: "⚡", cls: "text-orange-600" },
+                    { label: "Closed", value: summary.closed, icon: "✅", cls: "text-emerald-600" },
+                    { label: "Overdue", value: overdueCount, icon: "⚠️", cls: overdueCount > 0 ? "text-red-600" : "text-gray-400" },
+                    { label: "Critical", value: summary.critical, icon: "🚨", cls: summary.critical > 0 ? "text-red-700" : "text-gray-400" },
+                    { label: "Satisfaction", value: summary.avg_satisfaction !== null ? `${summary.avg_satisfaction}/5` : "N/A", icon: "⭐", cls: "text-amber-600" },
+                ].map(s => (
+                    <div key={s.label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-center">
+                        <p className="text-xl mb-1">{s.icon}</p>
+                        <p className={`text-2xl font-extrabold ${s.cls}`}>{s.value}</p>
+                        <p className="text-xs text-gray-400 font-medium mt-0.5">{s.label}</p>
+                    </div>
+                ))}
+            </div>
+
+            {/* No active metric: show a hint */}
+            {!activeMetric && (
+                <div className="bg-slate-50 border border-slate-200 rounded-3xl p-8 text-center">
+                    <p className="text-4xl mb-3">☝️</p>
+                    <h3 className="text-base font-bold text-slate-700 mb-1">Select a metric gauge above to inspect it</h3>
+                    <p className="text-sm text-slate-400">Each gauge reveals detailed breakdowns and lets you view the relevant tickets in context.</p>
                 </div>
             )}
-
-            {/* Dept breakdown */}
-            {summary && summary.by_department.length > 0 && (
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div className="px-5 py-4 border-b border-gray-100">
-                        <h2 className="font-bold text-gray-800 text-sm flex items-center gap-2">🏢 Department Overview</h2>
-                    </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 p-4">
-                        {summary.by_department.map(d => (
-                            <div key={d.dept_id} className={`rounded-xl border p-3 text-xs ${d.overdue > 0 ? "border-red-200 bg-red-50" : "border-gray-100 bg-gray-50"}`}>
-                                <p className="font-bold text-gray-700 mb-2">{DEPT_NAMES[d.dept_id] ?? d.dept_id}</p>
-                                <div className="grid grid-cols-2 gap-1">
-                                    <div><p className="text-gray-400">Open</p><p className="font-bold text-orange-600">{d.open}</p></div>
-                                    <div><p className="text-gray-400">Closed</p><p className="font-bold text-green-600">{d.closed}</p></div>
-                                    <div><p className="text-gray-400">Overdue</p><p className={`font-bold ${d.overdue > 0 ? "text-red-600" : "text-gray-400"}`}>{d.overdue}</p></div>
-                                    <div><p className="text-gray-400">Critical</p><p className={`font-bold ${d.critical > 0 ? "text-red-700" : "text-gray-400"}`}>{d.critical}</p></div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
-
-            {/* Overdue alert */}
-            {overdue.length > 0 && (
-                <div className="bg-red-50 border border-red-200 rounded-2xl p-4">
-                    <h3 className="font-bold text-red-800 text-sm mb-3 flex items-center gap-2">
-                        ⚠️ SLA Breached — {overdue.length} tickets require immediate attention
-                    </h3>
-                    <div className="space-y-2">
-                        {overdue.slice(0, 5).map(t => (
-                            <div key={t.id} className="flex items-center justify-between bg-white rounded-lg px-3 py-2 text-xs shadow-sm">
-                                <div>
-                                    <span className="font-mono font-bold text-red-700">{t.ticket_code}</span>
-                                    <span className="ml-2 text-gray-500">{t.issue_category ?? "Issue"}</span>
-                                    <span className="ml-2 text-gray-400">{DEPT_NAMES[t.dept_id] ?? t.dept_id}</span>
-                                </div>
-                                <Link href={`/officer/tickets/${t.id}`} className="text-red-600 hover:text-red-800 font-semibold">Review →</Link>
-                            </div>
-                        ))}
-                        {overdue.length > 5 && <p className="text-xs text-red-500 pl-1">+{overdue.length - 5} more overdue</p>}
-                    </div>
-                </div>
-            )}
-
-            {/* Full ticket list — no assign actions for supervisor */}
-            <TicketList tickets={tickets} />
         </div>
     );
 }
