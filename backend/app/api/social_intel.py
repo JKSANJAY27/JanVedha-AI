@@ -114,7 +114,7 @@ async def trigger_scrape(
     current_user: UserMongo = Depends(_require_commissioner),
 ):
     """
-    Manually trigger a social media scrape. Commissioner-only.
+    Manually trigger a city-wide social media scrape. Commissioner-only.
     Runs in the background and returns immediately.
     """
     from app.services.social_intel_service import run_social_scrape
@@ -127,5 +127,35 @@ async def trigger_scrape(
         "status": "triggered",
         "message": "Social media scrape started in background. Check back in 30-60 seconds.",
         "ward_id": ward_id,
+        "keywords": kw_list,
+    }
+
+
+@router.post("/trigger-ward-scrape")
+async def trigger_ward_scrape(
+    background_tasks: BackgroundTasks,
+    ward_id: Optional[int] = Query(None),
+    keywords: Optional[str] = Query(None, description="Comma-separated keywords to scrape"),
+    current_user: UserMongo = Depends(_require_leader),
+):
+    """
+    Manually trigger a ward-level social media scrape.
+    Councillors can only scrape their own ward; Commissioners can specify any ward.
+    """
+    from app.services.social_intel_service import run_social_scrape
+
+    # Councillors are restricted to their own ward
+    effective_ward = ward_id
+    if current_user.role == UserRole.COUNCILLOR:
+        effective_ward = current_user.ward_id
+
+    kw_list = [k.strip() for k in keywords.split(",")] if keywords else None
+
+    background_tasks.add_task(run_social_scrape, kw_list, 15, effective_ward)
+
+    return {
+        "status": "triggered",
+        "message": "Ward scrape started in background. Refresh data in 30-60 seconds.",
+        "ward_id": effective_ward,
         "keywords": kw_list,
     }

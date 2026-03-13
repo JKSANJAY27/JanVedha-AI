@@ -175,6 +175,8 @@ export const socialIntelApi = {
     api.get("/api/social-intel/platform-stats", { params: wardId ? { ward_id: wardId } : {} }),
   triggerScrape: (wardId?: number, keywords?: string) =>
     api.post("/api/social-intel/trigger-scrape", null, { params: { ward_id: wardId, keywords } }),
+  triggerWardScrape: (wardId?: number, keywords?: string) =>
+    api.post("/api/social-intel/trigger-ward-scrape", null, { params: { ward_id: wardId, keywords } }),
 };
 
 export const analyticsApi = {

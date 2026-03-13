@@ -242,11 +242,29 @@ export default function CommissionerDashboard() {
         const loadingToast = toast.loading("Triggering city-wide active scrape...", { duration: 5000 });
         try {
             const res = await socialIntelApi.triggerScrape();
-            toast.success(res.data.message || "Scrape triggered successfully", { id: loadingToast });
-        } catch (err: any) {
-            toast.error(err.response?.data?.detail || "Failed to trigger scrape", { id: loadingToast });
-        } finally {
-            setTimeout(() => setScraping(false), 2000);
+            toast.success(res.data.message || "Scrape triggered! Refreshing in ~35s…", { id: loadingToast, duration: 5000 });
+            // Auto-reload social data after scraper finishes
+            setTimeout(async () => {
+                try {
+                    const [sent, emerg, plats] = await Promise.all([
+                        socialIntelApi.getSentimentOverview().catch(() => ({ data: { total: 0, positive: 0, neutral: 0, negative: 0, score: 0 } })),
+                        socialIntelApi.getEmergingIssues(undefined, 24, 5).catch(() => ({ data: [] })),
+                        socialIntelApi.getPlatformStats().catch(() => ({ data: [] })),
+                    ]);
+                    setSentiment((sent as {data: SentimentOverview}).data);
+                    setEmerging((emerg as {data: EmergingIssue[]}).data);
+                    setPlatforms((plats as {data: PlatformStat[]}).data);
+                    toast.success("Social data refreshed!", { duration: 3000 });
+                } catch {
+                    // silently fail
+                } finally {
+                    setScraping(false);
+                }
+            }, 35000);
+        } catch (err: unknown) {
+            const msg = (err as {response?: {data?: {detail?: string}}})?.response?.data?.detail;
+            toast.error(msg || "Failed to trigger scrape", { id: loadingToast });
+            setScraping(false);
         }
     };
 

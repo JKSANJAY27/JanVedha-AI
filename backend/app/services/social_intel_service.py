@@ -25,6 +25,26 @@ DEFAULT_KEYWORDS = [
     "sewage", "road repair", "street light", "civic complaint",
 ]
 
+# ── Ward → area name mapping (Chennai wards used in the project) ─────────────
+# Add more wards as needed; scraping will inject area name into queries
+WARD_LOCATION_MAP: Dict[int, str] = {
+    1: "Ambattur",
+    2: "Anna Nagar",
+    3: "Adyar",
+    4: "Velachery",
+    5: "Perambur",
+    6: "Royapettah",
+    7: "Kodambakkam",
+    8: "Tondiarpet",
+    9: "Mylapore",
+    10: "Kolathur",
+    11: "Sholinganallur",
+    12: "Thiruvottiyur",
+    13: "Virugambakkam",
+    14: "Alandur",
+    15: "Madhavaram",
+}
+
 GEMINI_API_URL = (
     "https://generativelanguage.googleapis.com/v1beta/models/"
     "gemini-2.0-flash:generateContent"
@@ -53,16 +73,27 @@ def _get_scrapers():
     return scrapers
 
 
-# ── City keyword scoping ─────────────────────────────────────────────────────
+# ── City & ward keyword scoping ──────────────────────────────────────────────
 
-def _scope_keywords(keywords: List[str]) -> List[str]:
-    city = settings.DEMO_CITY
-    if not city:
-        return keywords
-    return [
-        f"{kw} {city}" if city.lower() not in kw.lower() else kw
-        for kw in keywords
-    ]
+def _scope_keywords(keywords: List[str], ward_id: Optional[int] = None) -> List[str]:
+    """Append city (and ward area name if known) to each keyword."""
+    city = settings.DEMO_CITY or ""
+    area = WARD_LOCATION_MAP.get(ward_id, "") if ward_id is not None else ""
+
+    scoped: List[str] = []
+    for kw in keywords:
+        # Build location suffix: prefer "area, city" when ward is known
+        if area:
+            location_suffix = f"{area} {city}".strip()
+        else:
+            location_suffix = city
+
+        if location_suffix and location_suffix.lower() not in kw.lower():
+            scoped.append(f"{kw} {location_suffix}")
+        else:
+            scoped.append(kw)
+
+    return scoped
 
 
 # ── Gemini LLM structuring ───────────────────────────────────────────────────
@@ -131,7 +162,7 @@ async def run_social_scrape(
     and persist new posts to MongoDB.
     Returns count of new posts saved.
     """
-    kw = _scope_keywords(keywords or DEFAULT_KEYWORDS)
+    kw = _scope_keywords(keywords or DEFAULT_KEYWORDS, ward_id=ward_id)
     scrapers = _get_scrapers()
 
     if not scrapers:

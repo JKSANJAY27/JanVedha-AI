@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
@@ -213,6 +213,38 @@ export default function CouncillorDashboard() {
     const [intelligenceLoading, setIntelligenceLoading] = useState(true);
 
     const [loading, setLoading] = useState(true);
+    const [scrapeLoading, setScrapeLoading] = useState(false);
+
+    const loadSocialData = useCallback(async (ward?: number) => {
+        try {
+            const [sent, emerg, posts] = await Promise.all([
+                socialIntelApi.getSentimentOverview(ward).catch(() => ({ data: { total: 0, positive: 0, neutral: 0, negative: 0, score: 0 } })),
+                socialIntelApi.getEmergingIssues(ward, 24, 6).catch(() => ({ data: [] })),
+                socialIntelApi.getSocialPosts(ward, undefined, 1, 10).catch(() => ({ data: { results: [] } })),
+            ]);
+            setSentiment(sent.data);
+            setEmerging(emerg.data);
+            setSocialPosts(posts.data?.results ?? []);
+        } catch {
+            toast.error("Failed to refresh social data");
+        }
+    }, []);
+
+    const handleScrape = useCallback(async (ward?: number) => {
+        if (scrapeLoading) return;
+        setScrapeLoading(true);
+        try {
+            await socialIntelApi.triggerWardScrape(ward);
+            toast.success("Ward scrape started! Refreshing data in ~35 seconds…", { duration: 5000 });
+            // Wait for scraper to finish, then reload
+            setTimeout(() => {
+                loadSocialData(ward).finally(() => setScrapeLoading(false));
+            }, 35000);
+        } catch {
+            toast.error("Failed to trigger scrape");
+            setScrapeLoading(false);
+        }
+    }, [scrapeLoading, loadSocialData]);
 
     useEffect(() => {
         const allowed = isCouncillor || isAdmin || isSupervisor;
@@ -237,9 +269,9 @@ export default function CouncillorDashboard() {
             setTrend(t.data);
             setTopIssues(issues.data);
             setOverdue(ov.data);
-            setSentiment(sent.data);
-            setEmerging(emerg.data);
-            setSocialPosts(posts.data?.results ?? []);
+            setSentiment((sent as { data: SentimentOverview }).data);
+            setEmerging((emerg as { data: EmergingIssue[] }).data);
+            setSocialPosts((posts as { data: { results: SocialPost[] } }).data?.results ?? []);
         }).catch(() => toast.error("Failed to load ward data"))
             .finally(() => setLoading(false));
 
@@ -561,6 +593,22 @@ export default function CouncillorDashboard() {
                         <span className="text-xl">📡</span>
                         <h2 className="text-base font-bold text-gray-800">Social Intelligence</h2>
                         <span className="text-xs bg-indigo-100 text-indigo-700 font-semibold px-2 py-0.5 rounded-full">Live · News & Social</span>
+                        <button
+                            onClick={() => handleScrape(user?.ward_id)}
+                            disabled={scrapeLoading}
+                            className="ml-auto flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border transition-all bg-white border-indigo-300 text-indigo-700 hover:bg-indigo-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {scrapeLoading ? (
+                                <>
+                                    <span className="w-3.5 h-3.5 border-2 border-indigo-300 border-t-indigo-600 rounded-full animate-spin" />
+                                    Fetching…
+                                </>
+                            ) : (
+                                <>
+                                    <span>🔄</span> Refresh Data
+                                </>
+                            )}
+                        </button>
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
