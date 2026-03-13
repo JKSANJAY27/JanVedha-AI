@@ -131,24 +131,29 @@ def _get_scrapers():
 # ── City & ward keyword scoping ──────────────────────────────────────────────
 
 def _scope_keywords(keywords: List[str], ward_id: Optional[int] = None) -> List[str]:
-    """Append city (and ward area name if known) to each keyword."""
-    city = settings.DEMO_CITY or ""
+    """
+    Build an optimized boolean query string for search APIs to avoid length limits
+    and impossible AND conditions.
+    Returns a single-element list so it works seamlessly with scraper interfaces.
+    """
+    city = settings.DEMO_CITY or "Chennai"
     area = WARD_LOCATION_MAP.get(ward_id, "") if ward_id is not None else ""
 
-    scoped: List[str] = []
-    for kw in keywords:
-        # Build location suffix: prefer "area, city" when ward is known
-        if area:
-            location_suffix = f"{area} {city}".strip()
-        else:
-            location_suffix = city
+    # Condense categories into a short OR group to fit within API limits (e.g. Gnews 100 max)
+    # Using the core root words
+    civic_terms = '"pothole" OR "garbage" OR "water" OR "road" OR "sewage" OR "civic" OR "power"'
+    
+    if area:
+        # Search for either the exact area, or the city, but prioritize matching area if possible
+        # Actually simplest is just requiring the area name
+        location = f'"{area}"'
+    else:
+        location = f'"{city}"'
 
-        if location_suffix and location_suffix.lower() not in kw.lower():
-            scoped.append(f"{kw} {location_suffix}")
-        else:
-            scoped.append(kw)
-
-    return scoped
+    query = f'{location} AND ({civic_terms})'
+    
+    # Return as a 1-element list so " ".join(keywords) in scrapers just uses this query directly
+    return [query]
 
 
 # ── Gemini LLM structuring ───────────────────────────────────────────────────

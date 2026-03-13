@@ -57,11 +57,11 @@ async def get_ward_summary(
         (t.resolved_at - t.created_at).days
         for t in closed if t.resolved_at
     ]
-    avg_resolution = round(sum(resolution_times) / len(resolution_times), 1) if resolution_times else 0
+    avg_resolution = round(sum(resolution_times) / len(resolution_times), 1) if resolution_times else 0  # type: ignore
 
     # Satisfaction average
     sat_scores = [t.citizen_satisfaction for t in all_tickets if t.citizen_satisfaction]
-    avg_sat = round(sum(sat_scores) / len(sat_scores), 1) if sat_scores else None
+    avg_sat = round(sum(sat_scores) / len(sat_scores), 1) if sat_scores else None  # type: ignore
 
     return {
         "ward_id": effective_ward,
@@ -69,7 +69,7 @@ async def get_ward_summary(
         "open": len(open_tickets),
         "closed": len(closed),
         "overdue": len(overdue),
-        "resolution_rate": round((len(closed) / len(all_tickets)) * 100, 1),
+        "resolution_rate": round((len(closed) / len(all_tickets)) * 100, 1),  # type: ignore
         "avg_resolution_days": avg_resolution,
         "avg_satisfaction": avg_sat,
     }
@@ -128,7 +128,7 @@ async def get_satisfaction_trend(
         ).to_list()
 
         scores = [t.citizen_satisfaction for t in tickets if t.citizen_satisfaction]
-        avg = round(sum(scores) / len(scores), 1) if scores else None
+        avg = round(sum(scores) / len(scores), 1) if scores else None  # type: ignore
         weekly_data.append({
             "week_label": week_end.strftime("W%W %b"),
             "week_start": week_start,
@@ -157,7 +157,7 @@ async def get_top_issues(
         cat = t.issue_category or "General"
         category_count[cat] = category_count.get(cat, 0) + 1
 
-    sorted_cats = sorted(category_count.items(), key=lambda x: x[1], reverse=True)[:limit]
+    sorted_cats = sorted(category_count.items(), key=lambda x: x[1], reverse=True)[:limit]  # type: ignore
     total = len(tickets) or 1
 
     return [
@@ -197,12 +197,12 @@ async def get_overdue_tickets(
             "ticket_code": t.ticket_code,
             "dept_id": t.dept_id,
             "issue_category": t.issue_category or "General",
-            "priority_label": t.priority_label,
+            "priority_label": t.priority_label.value if t.priority_label else "LOW",
             "sla_deadline": t.sla_deadline,
             "days_overdue": (now - t.sla_deadline).days if t.sla_deadline else 0,
-            "status": t.status,
+            "status": t.status.value if t.status else "OPEN",
         }
-        for t in overdue[:limit]
+        for t in overdue[:limit]  # type: ignore
     ]
 
 
@@ -280,10 +280,10 @@ async def get_priority_insights(
         source_count[src] = source_count.get(src, 0) + 1
         scores.append(t.priority_score or 0)
 
-    avg_score = round(sum(scores) / len(scores), 1) if scores else 0
+    avg_score = round(sum(scores) / len(scores), 1) if scores else 0  # type: ignore
 
     # Top-5 by priority score (descending)
-    top_tickets = sorted(tickets, key=lambda t: t.priority_score or 0, reverse=True)[:5]
+    top_tickets = sorted(tickets, key=lambda t: t.priority_score or 0, reverse=True)[:5]  # type: ignore
 
     now = datetime.utcnow()
     return {
