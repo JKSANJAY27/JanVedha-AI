@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
+import { usePathname } from "next/navigation";
 
 interface Message {
     id: string;
@@ -36,7 +37,13 @@ export default function ChatWidget() {
     const [unread, setUnread] = useState(0);
     const wsRef = useRef<WebSocket | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
-    const { user } = useAuth();
+    const { user, loading } = useAuth();
+    const pathname = usePathname();
+    const [isMounted, setIsMounted] = useState(false);
+
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
 
     useEffect(() => {
         if (messagesEndRef.current) {
@@ -46,6 +53,9 @@ export default function ChatWidget() {
 
     // Connect WebSocket
     useEffect(() => {
+        // Only connect if mounted and we are on a page where the widget should be shown
+        if (!isMounted || !user) return;
+
         const sessionId = Math.random().toString(36).substring(7);
         const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
         const wsBaseUrl = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8000";
@@ -76,7 +86,7 @@ export default function ChatWidget() {
         return () => {
             ws.close();
         };
-    }, []);
+    }, [isMounted, user]); // Reconnect when user logs in
 
     const sendMessage = (text: string) => {
         if (!text.trim()) return;
@@ -115,6 +125,26 @@ export default function ChatWidget() {
             }, 1200);
         }
     };
+
+    if (!isMounted || loading) {
+        return null;
+    }
+
+    const publicPaths = ["/user-login", "/login", "/signup", "/"];
+    const isPublicPath = publicPaths.includes(pathname);
+    
+    // Only show on root "/" (home) if public or specific, but here we explicitly hide on auth pages.
+    // Actually the requirement is "not appearing in login pages, only after someone is logged in"
+    // So if NOT authenticated, don't show it anywhere.
+    // If authenticated, show it (except maybe we can show it on homepage if they are logged in).
+    if (!user) {
+        return null; // hide for unauthenticated users entirely
+    }
+
+    // Hide specifically for auth paths even if somehow user is loaded
+    if (["/user-login", "/login", "/signup"].includes(pathname)) {
+        return null; 
+    }
 
     return (
         <>
@@ -251,3 +281,4 @@ export default function ChatWidget() {
         </>
     );
 }
+

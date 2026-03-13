@@ -2,15 +2,16 @@
 Chat WebSocket API — Gemini-powered civic assistant with live data & RBAC.
 """
 import json
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from typing import Optional, Callable, Any, List, Dict
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect # type: ignore
 from datetime import datetime
-from app.core.config import settings
-from app.services.auth_service import AuthService
-from app.mongodb.models.user import UserMongo
-from app.mongodb.models.ticket import TicketMongo
-from app.enums import UserRole
-import google.generativeai as genai
-from google.generativeai.types import content_types
+from app.core.config import settings # type: ignore
+from app.services.auth_service import AuthService # type: ignore
+from app.mongodb.models.user import UserMongo # type: ignore
+from app.mongodb.models.ticket import TicketMongo # type: ignore
+from app.enums import UserRole # type: ignore
+import google.generativeai as genai # type: ignore
+from google.generativeai.types import content_types # type: ignore
 
 router = APIRouter()
 
@@ -18,7 +19,7 @@ router = APIRouter()
 genai.configure(api_key=settings.GEMINI_API_KEY)
 
 
-def get_base_system_prompt(role: str, name: str, ward_id: int = None) -> str:
+def get_base_system_prompt(role: str, name: str, ward_id: Optional[int] = None) -> str:
     prompt = f"""You are JanVedha AI's conversational assistant for the Chennai Municipal Corporation.
 You are currently talking to: {name} (Role: {role}).
 """
@@ -64,7 +65,7 @@ async def get_ticket_details(ticket_code: str) -> dict:
 
 async def get_ward_summary(ward_id: int) -> dict:
     """Fetch live summary of tickets for a specific ward. Give the user counts of open, closed, and overdue tickets."""
-    tickets = await TicketMongo.find(TicketMongo.ward_id == ward_id).to_list()
+    tickets: List[TicketMongo] = await TicketMongo.find(TicketMongo.ward_id == ward_id).to_list() # type: ignore
     if not tickets:
         return {"message": f"No tickets found for ward {ward_id}."}
     
@@ -86,7 +87,7 @@ async def get_ward_summary(ward_id: int) -> dict:
 
 async def get_city_summary() -> dict:
     """Fetch live system-wide summary metrics for the entire city. Call this if the user asks for overall, city, or global stats."""
-    tickets = await TicketMongo.find_all().to_list()
+    tickets: List[TicketMongo] = await TicketMongo.find_all().to_list() # type: ignore
     if not tickets:
         return {"message": "No tickets found in the city."}
         
@@ -109,19 +110,62 @@ async def get_city_summary() -> dict:
 TOOLS = [get_ticket_details, get_ward_summary, get_city_summary]
 
 
-async def call_gemini(message: str, history: list[dict], user: UserMongo = None) -> str:
+async def call_gemini(message: str, history: List[Dict[str, Any]], user: UserMongo = None) -> str:
     """Call Gemini API utilizing Function Calling for live data."""
     try:
         # Determine RBAC Context
-        role = user.role if user else "PUBLIC_USER"
+        role = user.role if user else UserRole.PUBLIC_USER
         name = user.name if user else "Citizen"
         ward_id = user.ward_id if hasattr(user, "ward_id") else None
 
         system_instruction = get_base_system_prompt(role, name, ward_id)
 
+        # Secure Closures for RBAC Data Fetching
+        async def get_my_tickets() -> dict:
+            """Fetch the citizen's own submitted tickets and their statuses."""
+            if not user or not user.id:
+                return {"message": "User not authenticated properly."}
+            tickets = await TicketMongo.find(TicketMongo.reporter_user_id == str(user.id)).to_list()
+            if not tickets:
+                return {"message": "You have not submitted any tickets."}
+            return {
+                "tickets": [
+                    {
+                        "ticket_code": t.ticket_code, 
+                        "status": t.status, 
+                        "category": t.issue_category,
+                        "created_at": t.created_at.strftime("%Y-%m-%d")
+                    } for t in tickets
+                ]
+            }
+
+        async def get_department_tickets() -> dict:
+            """Fetch the recent tickets assigned to the officer's specific department."""
+            if not user or not user.dept_id:
+                return {"message": "You do not have a department assigned."}
+            tickets = await TicketMongo.find(TicketMongo.dept_id == user.dept_id).sort("-created_at").limit(20).to_list()
+            if not tickets:
+                return {"message": f"No tickets found for your department ({user.dept_id})."}
+            return {
+                "tickets": [
+                    {
+                        "ticket_code": t.ticket_code, 
+                        "status": t.status, 
+                        "ward_id": t.ward_id,
+                        "priority": t.priority_label
+                    } for t in tickets
+                ]
+            }
+
         # Remove restricted tools based on RBAC
-        available_tools = [get_ticket_details] # Everyone can query ticket codes
+        available_tools: List[Callable[..., Any]] = [get_ticket_details] # Everyone can query ticket codes
         
+        if role == UserRole.PUBLIC_USER:
+            available_tools.append(get_my_tickets)
+
+        if role == UserRole.OFFICER or getattr(user, "dept_id", None):
+            available_tools.append(get_department_tickets)
+            
         if role in {UserRole.COUNCILLOR, UserRole.WARD_OFFICER, UserRole.ZONAL_OFFICER, UserRole.SUPERVISOR, UserRole.SUPER_ADMIN, UserRole.COMMISSIONER}:
             available_tools.append(get_ward_summary)
             
@@ -129,14 +173,16 @@ async def call_gemini(message: str, history: list[dict], user: UserMongo = None)
             available_tools.append(get_city_summary)
 
         model = genai.GenerativeModel(
-            model_name="gemini-1.5-flash",
+            model_name="gemini-2.0-flash", # Use 2.0-flash for better function calling
             system_instruction=system_instruction,
             tools=available_tools
         )
 
         # Build conversation history
         chat_history = []
-        for h in history[-8:]:  # Last 8 plain messages
+        start_idx = max(0, len(history) - 8)
+        for i in range(start_idx, len(history)):
+            h = history[i]
             r = "user" if h["role"] == "user" else "model"
             chat_history.append({"role": r, "parts": [h["text"]]})
 
@@ -152,22 +198,22 @@ async def call_gemini(message: str, history: list[dict], user: UserMongo = None)
         lower = message.lower()
         if "ticket" in lower or "civ-" in lower.upper():
             return "To track your ticket, please visit the **Track** page. I encountered an error accessing live data right now."
-        return "I'm here to help with civic issues! You can ask me about filing complaints or tracking tickets."
+        return f"I'm here to help with civic issues! You can ask me about filing complaints or tracking tickets. (Error: {str(e)})"
 
 
 @router.websocket("/ws")
-async def chat_websocket(websocket: WebSocket, token: str = None):
+async def chat_websocket(websocket: WebSocket, token: Optional[str] = None):
     """Real-time Gemini chatbot via WebSocket, authenticated via query param."""
     await websocket.accept()
     
     # 1. Auth via JWT token
-    user = None
+    user: Optional[UserMongo] = None
     if token:
         try:
             payload = AuthService.decode_access_token(token)
             uid = payload.get("sub")
             if uid:
-                from beanie import PydanticObjectId
+                from beanie import PydanticObjectId # type: ignore
                 user = await UserMongo.get(PydanticObjectId(uid))
         except Exception:
             pass
@@ -203,7 +249,7 @@ async def chat_websocket(websocket: WebSocket, token: str = None):
                     actions.append({"label": "Submit Complaint", "href": "/"})
                 
                 # Check RBAC for button logic
-                r = user.role if user else "PUBLIC_USER"
+                r = user.role if user is not None else UserRole.PUBLIC_USER # type: ignore
                 if ("ward" in lower) and r in ["COUNCILLOR", "WARD_OFFICER"]:
                     actions.append({"label": "Ward Dashboard", "href": "/councillor"})
                 if "city" in lower and r in ["COMMISSIONER", "SUPER_ADMIN"]:
