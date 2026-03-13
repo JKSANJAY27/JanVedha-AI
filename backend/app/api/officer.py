@@ -12,6 +12,9 @@ from app.mongodb.models.user import UserMongo
 from app.mongodb.models.ticket import TicketMongo
 from app.services.ticket_service import TicketService
 from app.enums import UserRole, PriorityLabel, TicketStatus
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -348,6 +351,15 @@ async def assign_field_staff(
         "note": f"Field technician assigned and work started for {data.scheduled_date.strftime('%Y-%m-%d')} by {current_user.name}",
     })
     await ticket.save()
+
+    # Proactive citizen notification (Feature 2)
+    try:
+        import asyncio
+        from app.services.notification_service import notify_citizen
+        asyncio.create_task(notify_citizen(ticket_id=ticket_id, event_type="technician_assigned"))
+    except Exception as e:
+        logger.warning(f"Notification task failed to schedule: {e}")
+
     return {
         "id": str(ticket.id),
         "status": ticket.status,

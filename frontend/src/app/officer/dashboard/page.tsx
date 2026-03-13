@@ -13,7 +13,7 @@ import StatCard from "@/components/StatCard";
 import Link from "next/link";
 import { DEPT_NAMES, getWardLabel } from "@/lib/constants";
 import ResourceHealthCard from "@/components/ResourceHealthCard";
-// dynamic + IssueMap removed — supervisor view uses gauge-based design
+import ResolveWithProofModal from "@/components/ResolveWithProofModal";
 
 interface Ticket {
     id: string;
@@ -77,11 +77,12 @@ const STATUS_FILTERS = ["ALL", "OPEN", "ASSIGNED", "SCHEDULED", "IN_PROGRESS", "
 
 // ─── Ticket List Sub-component ────────────────────────────────────────────────
 
-function TicketList({ tickets, showAssign, onStatusUpdate, onOpenAssignModal }: {
+function TicketList({ tickets, showAssign, onStatusUpdate, onOpenAssignModal, onOpenResolveModal }: {
     tickets: Ticket[];
     showAssign?: boolean;
     onStatusUpdate?: (id: string, status: string) => void;
     onOpenAssignModal?: (ticket: Ticket) => void;
+    onOpenResolveModal?: (ticket: Ticket) => void;
 }) {
     const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({ CRITICAL: true });
     const [statusFilter, setStatusFilter] = useState("ALL");
@@ -169,6 +170,11 @@ function TicketList({ tickets, showAssign, onStatusUpdate, onOpenAssignModal }: 
                                                             {canAssign && (
                                                                 <button onClick={() => onOpenAssignModal(ticket)} className="text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 rounded px-2.5 py-1.5 font-medium transition-colors hover:bg-emerald-100">
                                                                     {ticket.status === "SCHEDULED" ? "Assign Technician" : "Schedule & Assign"}
+                                                                </button>
+                                                            )}
+                                                            {onOpenResolveModal && ticket.status === "IN_PROGRESS" && (
+                                                                <button onClick={() => onOpenResolveModal(ticket)} className="text-xs bg-purple-50 text-purple-700 border border-purple-200 rounded px-2.5 py-1.5 font-medium transition-colors hover:bg-purple-100">
+                                                                    Upload Proof & Resolve
                                                                 </button>
                                                             )}
                                                             <Link href={`/officer/tickets/${ticket.id}`} className="text-xs font-medium text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 rounded px-3 py-1.5 transition-colors">View →</Link>
@@ -733,6 +739,7 @@ function JuniorEngineerDashboard({ user }: { user: { name: string; dept_id?: str
     const [tickets, setTickets] = useState<Ticket[]>([]);
     const [loading, setLoading] = useState(true);
     const [assignModalTicket, setAssignModalTicket] = useState<Ticket | null>(null);
+    const [resolveModalTicket, setResolveModalTicket] = useState<Ticket | null>(null);
 
     // Modal state: step 1 = set deadline, step 2 = assign technician
     const [modalStep, setModalStep] = useState<1 | 2>(1);
@@ -880,7 +887,22 @@ function JuniorEngineerDashboard({ user }: { user: { name: string; dept_id?: str
                 <StatCard label="Critical" value={stats.critical} icon="🚨" color="red" />
             </div>
 
-            <TicketList tickets={tickets} showAssign onStatusUpdate={handleStatusUpdate} onOpenAssignModal={handleOpenAssign} />
+            <TicketList tickets={tickets} showAssign onStatusUpdate={handleStatusUpdate} onOpenAssignModal={handleOpenAssign} onOpenResolveModal={setResolveModalTicket} />
+
+            {/* ── Feature 1: Resolve With Proof Modal ── */}
+            {resolveModalTicket && (
+                <ResolveWithProofModal
+                    ticketId={resolveModalTicket.id}
+                    ticketCode={resolveModalTicket.ticket_code}
+                    issueType={resolveModalTicket.issue_category || "General"}
+                    technicianId={user.name} // JE or Technician name
+                    onSuccess={() => {
+                        handleStatusUpdate(resolveModalTicket.id, "CLOSED");
+                        // We could fetch again, but status update is fast enough
+                    }}
+                    onClose={() => setResolveModalTicket(null)}
+                />
+            )}
 
             {/* ── Schedule & Assign Modal ── */}
             <AnimatePresence>

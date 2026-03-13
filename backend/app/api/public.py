@@ -126,6 +126,15 @@ async def create_complaint(data: ComplaintCreateEvent):
     }
     if ticket.seasonal_alert:
         response["seasonal_alert"] = ticket.seasonal_alert
+
+    # Trigger proactive notification for ticket submission
+    try:
+        import asyncio
+        from app.services.notification_service import notify_citizen
+        asyncio.create_task(notify_citizen(ticket_id=str(ticket.id), event_type="ticket_acknowledged"))
+    except Exception as e:
+        pass # Ignore failure to schedule
+
     return response
 
 
@@ -147,6 +156,11 @@ async def track_ticket(ticket_code: str):
         "sla_deadline": ticket.sla_deadline,
         "suggestions": ticket.ai_suggestions,
         "seasonal_alert": ticket.seasonal_alert,
+        "work_verified": getattr(ticket, "work_verified", None),
+        "work_verification_explanation": getattr(ticket, "work_verification_explanation", None),
+        "work_verification_confidence": getattr(ticket, "work_verification_confidence", None),
+        "after_photo_url": getattr(ticket, "after_photo_url", None),
+        "work_verified_at": getattr(ticket, "work_verified_at", None),
         "timeline": [
             {
                 "event": entry.get("status", "UPDATED"),

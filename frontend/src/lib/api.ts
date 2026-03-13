@@ -1,6 +1,7 @@
 import axios from "axios";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+// Now relying on Next.js proxy rewrite for "/api" requests
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 
 export const api = axios.create({
   baseURL: API_BASE,
@@ -194,4 +195,51 @@ export const analyticsApi = {
     api.get("/api/analytics/benchmarks", { params: wardId ? { ward_id: wardId } : {} }),
 };
 
+// ─── Pillar 3: Public Trust API ───────────────────────────────────────────────
 
+export const trustApi = {
+  // Feature 1 — AI-Verified Work Proof
+  resolveWithProof: (ticketId: string, formData: FormData) =>
+    api.post(`/api/v1/trust/tickets/${ticketId}/resolve-with-proof`, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    }),
+  getVerifiedResolutions: (wardId?: number, limit = 50) =>
+    api.get("/api/v1/trust/tickets/verified-resolutions", {
+      params: { ward_id: wardId, limit },
+    }),
+
+  // Feature 2 — Notification log + ward config
+  getNotificationLog: (wardId?: number, limit = 100) =>
+    api.get("/api/v1/trust/notifications/log", { params: { ward_id: wardId, limit } }),
+  getTicketNotifications: (ticketCode: string) =>
+    api.get(`/api/v1/trust/notifications/ticket/${ticketCode}`),
+  getWardConfig: (wardId: number) => api.get(`/api/v1/trust/ward-config/${wardId}`),
+  updateWardConfig: (wardId: number, data: {
+    preferred_language?: string;
+    proactive_notifications_enabled?: boolean;
+    ward_name?: string;
+  }) => api.patch(`/api/v1/trust/ward-config/${wardId}`, data),
+
+  // Feature 3 — Misinformation flags
+  getMisinfoFlags: (wardId?: number, riskLevel?: string, status?: string, limit = 50) =>
+    api.get("/api/v1/trust/misinformation/flags", {
+      params: { ward_id: wardId, risk_level: riskLevel, status, limit },
+    }),
+  actionMisinfoFlag: (flagId: string, action: string, editedResponse?: string) =>
+    api.patch(`/api/v1/trust/misinformation/flags/${flagId}`, {
+      action,
+      edited_response: editedResponse,
+    }),
+  runMisinfoCheck: (wardId?: number) =>
+    api.post("/api/v1/trust/misinformation/run-check", null, {
+      params: { ward_id: wardId },
+    }),
+
+  // Feature 4 — Trust Score
+  getTrustScore: (wardId: number, month?: string) =>
+    api.get(`/api/v1/trust/wards/${wardId}/trust-score`, { params: month ? { month } : {} }),
+  getTrustScoreHistory: (wardId: number, months = 6) =>
+    api.get(`/api/v1/trust/wards/${wardId}/trust-score/history`, { params: { months } }),
+  getTrustScoreInsights: (wardId: number) =>
+    api.post(`/api/v1/trust/wards/${wardId}/trust-score/insights`),
+};

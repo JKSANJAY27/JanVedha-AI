@@ -41,6 +41,15 @@ async def lifespan(app: FastAPI):
         except Exception as e:
             print(f"Failed to start telegram bot: {e}")
 
+    # Start Misinformation Detector background task (Feature 3)
+    try:
+        import asyncio
+        from app.services.misinformation_detector import start_misinformation_detector
+        asyncio.create_task(start_misinformation_detector())
+        print("Misinformation detector started.")
+    except Exception as e:
+        print(f"Failed to start misinformation detector: {e}")
+
     yield
 
     # ── Shutdown ─────────────────────────────────────────────────────────────
@@ -71,7 +80,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-from app.api import public, auth, officer, webhooks, chat, calendar, councillor, commissioner, documents, social_intel, analytics
+from app.api import public, auth, officer, webhooks, chat, calendar, councillor, commissioner, documents, social_intel, analytics, public_trust
 
 app.include_router(public.router, prefix="/api/public", tags=["public"])
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
@@ -84,6 +93,7 @@ app.include_router(commissioner.router, prefix="/api/commissioner", tags=["commi
 app.include_router(documents.router, prefix="/api/documents", tags=["documents"])
 app.include_router(social_intel.router, prefix="/api/social-intel", tags=["social-intel"])
 app.include_router(analytics.router, prefix="/api/analytics", tags=["analytics"])
+app.include_router(public_trust.router, prefix="/api/v1/trust", tags=["public-trust"])
 
 
 @app.get("/api/health")

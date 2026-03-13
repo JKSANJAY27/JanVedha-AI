@@ -10,6 +10,7 @@ import { publicApi } from "@/lib/api";
 import { formatDate, formatRelative } from "@/lib/formatters";
 import StatusBadge from "@/components/StatusBadge";
 import Timeline from "@/components/Timeline";
+import NotificationTimeline from "@/components/NotificationTimeline";
 import { DEPT_NAMES } from "@/lib/constants";
 
 interface Ticket {
@@ -36,6 +37,12 @@ interface TicketDetail {
     sla_deadline?: string;
     location_text?: string;
     seasonal_alert?: string;
+    // Feature 1: AI Verified Work Proof
+    work_verified?: boolean | null;
+    work_verification_explanation?: string | null;
+    work_verification_confidence?: number | null;
+    after_photo_url?: string | null;
+    work_verified_at?: string | null;
     timeline?: Array<{
         event: string;
         timestamp: string;
@@ -184,6 +191,44 @@ function DetailPanel({ code, onClose }: { code: string; onClose: () => void }) {
                         <Timeline events={detail.timeline || [{ event: "CREATED", timestamp: detail.created_at, actor: "System (AI Pipeline)" }]} />
                         <p className="text-xs text-gray-400 mt-2 text-center italic">Only significant status changes are logged here</p>
                     </div>
+
+                    {/* Feature 1: AI Work Verification Badge */}
+                    {detail.work_verified !== undefined && detail.work_verified !== null && (
+                        <div className={`rounded-2xl p-4 border-2 ${
+                            detail.work_verified
+                                ? "bg-emerald-50 border-emerald-300"
+                                : "bg-amber-50 border-amber-300"
+                        }`}>
+                            <div className="flex items-center gap-3">
+                                <span className="text-3xl">{detail.work_verified ? "✅" : "🔍"}</span>
+                                <div className="flex-1">
+                                    <p className={`font-extrabold text-sm ${
+                                        detail.work_verified ? "text-emerald-700" : "text-amber-700"
+                                    }`}>
+                                        {detail.work_verified ? "AI-Verified Work Complete" : "Verification Pending Review"}
+                                    </p>
+                                    {detail.work_verification_explanation && (
+                                        <p className="text-xs text-gray-600 mt-1 leading-snug">
+                                            {detail.work_verification_explanation}
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+                            {detail.after_photo_url && (
+                                <div className="mt-3">
+                                    <p className="text-xs font-semibold text-gray-500 mb-2">📷 Proof Photo</p>
+                                    <img
+                                        src={detail.after_photo_url}
+                                        alt="Work proof"
+                                        className="w-full max-h-48 object-cover rounded-xl border border-emerald-200"
+                                    />
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Feature 2: Notification Timeline */}
+                    <NotificationTimeline ticketCode={detail.ticket_code} />
 
                     {/* Closed: download report */}
                     {detail.status === "CLOSED" && (

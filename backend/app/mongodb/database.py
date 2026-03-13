@@ -52,6 +52,11 @@ async def init_mongodb() -> None:
         ScheduledEventMongo,
         SocialPostMongo,
         WardBenchmarkMongo,
+        # Pillar 3: Public Trust
+        NotificationMongo,
+        MisinformationFlagMongo,
+        TrustScoreMongo,
+        WardConfigMongo,
     )
 
     uri = settings.MONGODB_URI
@@ -78,6 +83,11 @@ async def init_mongodb() -> None:
             ScheduledEventMongo,
             SocialPostMongo,
             WardBenchmarkMongo,
+            # Pillar 3: Public Trust
+            NotificationMongo,
+            MisinformationFlagMongo,
+            TrustScoreMongo,
+            WardConfigMongo,
         ],
     )
 

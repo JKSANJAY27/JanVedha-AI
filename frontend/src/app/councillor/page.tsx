@@ -9,6 +9,10 @@ import { councillorApi, socialIntelApi } from "@/lib/api";
 import { DEPT_NAMES } from "@/lib/constants";
 import ScenarioPlanner from "@/components/ScenarioPlanner";
 import WardBenchmarkPanel from "@/components/WardBenchmarkPanel";
+import WardTrustScoreCard from "@/components/WardTrustScoreCard";
+import VerifiedResolutionsTable from "@/components/VerifiedResolutionsTable";
+import CommunicationLogPanel from "@/components/CommunicationLogPanel";
+import MisinfoFlagsPanel from "@/components/MisinfoFlagsPanel";
 
 interface WardSummary {
     total: number;
@@ -586,6 +590,42 @@ export default function CouncillorDashboard() {
                         <WardBenchmarkPanel wardId={user?.ward_id} />
                     </div>
                 </div>
+
+                {/* ═══════════════════════════════════════════════════════════════ */}
+
+                {/* ══ PILLAR 3: Public Trust Section ══════════════════════════════ */}
+                <div>
+                    <div className="flex items-center gap-2 mb-6">
+                        <span className="text-xl">🛡️</span>
+                        <h2 className="text-lg font-extrabold text-slate-800 tracking-tight">Public Trust</h2>
+                        <span className="text-xs bg-emerald-100 text-emerald-700 font-bold px-2.5 py-1 rounded-full border border-emerald-200 shadow-sm ml-2">Pillar 3</span>
+                    </div>
+
+                    {/* Row 1: Trust Score + Misinformation side-by-side */}  
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                        {/* Feature 4 — Ward Trust Score */}
+                        {user?.ward_id && (
+                            <WardTrustScoreCard wardId={user.ward_id} showInsights={true} />
+                        )}
+                        {/* Feature 3 — Misinformation Flags */}
+                        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6">
+                            <MisinfoFlagsPanel wardId={user?.ward_id} />
+                        </div>
+                    </div>
+
+                    {/* Row 2: Verified Resolutions (Feature 1) */}
+                    <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 mb-6">
+                        <VerifiedResolutionsTable wardId={user?.ward_id} />
+                    </div>
+
+                    {/* Row 3: Communication Log (Feature 2) */}
+                    {user?.ward_id && (
+                        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6">
+                            <CommunicationLogPanel wardId={user.ward_id} />
+                        </div>
+                    )}
+                </div>
+                {/* ═══════════════════════════════════════════════════════════════ */}
 
                 {/* ══ Social Intelligence Section ══════════════════════════════════ */}
                 <div>

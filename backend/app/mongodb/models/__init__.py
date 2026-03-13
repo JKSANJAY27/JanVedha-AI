@@ -11,6 +11,11 @@ from .priority_model import PriorityModelMongo
 from .scheduled_event import ScheduledEventMongo
 from .social_post import SocialPostMongo
 from .ward_benchmark import WardBenchmarkMongo
+# Pillar 3: Public Trust
+from .notification import NotificationMongo
+from .misinformation_flag import MisinformationFlagMongo
+from .trust_score import TrustScoreMongo
+from .ward_config import WardConfigMongo
 
 __all__ = [
     "UserMongo",
@@ -25,4 +30,9 @@ __all__ = [
     "ScheduledEventMongo",
     "SocialPostMongo",
     "WardBenchmarkMongo",
+    # Pillar 3
+    "NotificationMongo",
+    "MisinformationFlagMongo",
+    "TrustScoreMongo",
+    "WardConfigMongo",
 ]
