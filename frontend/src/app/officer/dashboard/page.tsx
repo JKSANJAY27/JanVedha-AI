@@ -11,7 +11,7 @@ import PriorityBadge from "@/components/PriorityBadge";
 import StatusBadge from "@/components/StatusBadge";
 import StatCard from "@/components/StatCard";
 import Link from "next/link";
-import { DEPT_NAMES } from "@/lib/constants";
+import { DEPT_NAMES, getWardLabel } from "@/lib/constants";
 import ResourceHealthCard from "@/components/ResourceHealthCard";
 // dynamic + IssueMap removed — supervisor view uses gauge-based design
 
@@ -159,7 +159,7 @@ function TicketList({ tickets, showAssign, onStatusUpdate, onOpenAssignModal }: 
                                                     <motion.tr key={ticket.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.03 }} className="hover:bg-gray-50 transition-colors">
                                                         <td className="px-4 py-3 font-mono font-bold text-blue-600">{ticket.ticket_code}</td>
                                                         <td className="px-4 py-3 font-medium text-gray-800">{ticket.issue_category || "General Issue"}</td>
-                                                        <td className="px-4 py-3 text-gray-500">{ticket.ward_id ? `Ward ${ticket.ward_id}` : "Unspecified"}</td>
+                                                        <td className="px-4 py-3 text-gray-500">{ticket.ward_id ? getWardLabel(ticket.ward_id) : "Unspecified"}</td>
                                                         <td className="px-4 py-3 text-gray-500">
                                                             {ticket.technician_id ? `Staff (${ticket.technician_id.slice(-4)})` : ticket.assigned_officer_id ? `JE (${ticket.assigned_officer_id.slice(-4)})` : <span className="text-gray-400 italic">Unassigned</span>}
                                                         </td>
@@ -522,7 +522,7 @@ function MetricDetailPanel({
                                                 <tr key={t.id} className="hover:bg-gray-50 transition-colors">
                                                     <td className="px-4 py-3 font-mono font-bold text-blue-600 whitespace-nowrap">{t.ticket_code}</td>
                                                     <td className="px-4 py-3 text-gray-700 font-medium max-w-[140px] truncate">{t.issue_category || "General"}</td>
-                                                    <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{t.ward_id ? `Ward ${t.ward_id}` : "—"}</td>
+                                                    <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{t.ward_id ? getWardLabel(t.ward_id) : "—"}</td>
                                                     <td className="px-4 py-3">
                                                         <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
                                                             t.priority_label === "CRITICAL" ? "bg-red-100 text-red-700" :
@@ -643,7 +643,7 @@ function SupervisorDashboard({ user }: { user: { name: string; ward_id?: number;
                             <p className="text-xs text-slate-400 font-semibold uppercase tracking-widest mb-1">Operations Control Center</p>
                             <h2 className="text-2xl font-extrabold text-white">Performance Overview</h2>
                             <p className="text-slate-400 text-sm mt-1">
-                                Ward {user.ward_id ?? "—"} · Click any gauge to drill down
+                                {user.ward_id ? getWardLabel(user.ward_id) : "All Wards"} · Click any gauge to drill down
                             </p>
                         </div>
                         {unsatisfied.length > 0 ? (

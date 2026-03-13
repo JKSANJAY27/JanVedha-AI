@@ -7,7 +7,7 @@ import { formatDate } from "@/lib/formatters";
 import { publicApi, officerApi } from "@/lib/api";
 import toast from "react-hot-toast";
 import StatCard from "@/components/StatCard";
-import { DEPT_NAMES } from "@/lib/constants";
+import { DEPT_NAMES, getWardLabel } from "@/lib/constants";
 
 interface WardEntry {
     ward_id: number;
@@ -134,7 +134,7 @@ export default function ReportsPage() {
                 `Resolution Rate: ${stats?.resolved_pct ?? "N/A"}%\n` +
                 `Active Critical: ${stats?.active_critical ?? "N/A"}\n\n` +
                 `WARD LEADERBOARD\n` +
-                wards.map((w, i) => `  ${i + 1}. Ward ${w.ward_id}: ${w.resolution_rate}% (${w.resolved_tickets}/${w.total_tickets})`).join("\n");
+                wards.map((w, i) => `  ${i + 1}. ${getWardLabel(w.ward_id)}: ${w.resolution_rate}% (${w.resolved_tickets}/${w.total_tickets})`).join("\n");
         }
 
         const blob = new Blob([content], { type: "text/plain" });
@@ -376,7 +376,7 @@ export default function ReportsPage() {
                     >
                         <option value="all">All Wards (City Overview)</option>
                         {wards.map((w) => (
-                            <option key={w.ward_id} value={w.ward_id}>Ward {w.ward_id}</option>
+                            <option key={w.ward_id} value={w.ward_id}>{getWardLabel(w.ward_id)}</option>
                         ))}
                     </select>
                 </div>
@@ -386,7 +386,7 @@ export default function ReportsPage() {
                     <div className="flex items-start justify-between mb-6">
                         <div>
                             <h2 className="text-xl font-bold text-gray-900">
-                                {selectedWard === "all" ? "City-Wide Executive Summary" : `Ward ${selectedWard} Summary`}
+                                {selectedWard === "all" ? "City-Wide Executive Summary" : `${getWardLabel(selectedWard as number)} Summary`}
                             </h2>
                             <p className="text-gray-500 text-sm mt-1">{monthName}</p>
                         </div>
@@ -435,7 +435,7 @@ export default function ReportsPage() {
                                 {wards.map((w, i) => (
                                     <tr key={w.ward_id} className="hover:bg-gray-50 transition-colors">
                                         <td className="px-5 py-3 text-sm font-bold text-gray-400">#{i + 1}</td>
-                                        <td className="px-5 py-3 text-sm font-medium text-gray-900">Ward {w.ward_id}</td>
+                                        <td className="px-5 py-3 text-sm font-medium text-gray-900">{getWardLabel(w.ward_id)}</td>
                                         <td className="px-5 py-3 text-center text-sm text-gray-600">{w.total_tickets}</td>
                                         <td className="px-5 py-3 text-center text-sm text-green-600 font-medium">{w.resolved_tickets}</td>
                                         <td className="px-5 py-3 text-center">

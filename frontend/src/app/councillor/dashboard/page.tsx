@@ -11,7 +11,7 @@ import PriorityBadge from "@/components/PriorityBadge";
 import StatusBadge from "@/components/StatusBadge";
 import StatCard from "@/components/StatCard";
 import Link from "next/link";
-import { DEPT_NAMES } from "@/lib/constants";
+import { DEPT_NAMES, getWardLabel } from "@/lib/constants";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
 
 interface Ticket {
@@ -77,7 +77,7 @@ export default function CouncillorDashboard() {
         <div className="min-h-screen bg-slate-50">
             <div className="bg-gradient-to-r from-indigo-800 to-purple-900 text-white px-6 py-6">
                 <div className="max-w-7xl mx-auto">
-                    <p className="text-indigo-300 text-sm">Councillor · Ward {user?.ward_id ?? "—"}</p>
+                    <p className="text-indigo-300 text-sm">Councillor · {user?.ward_id ? getWardLabel(user.ward_id) : "All Wards"}</p>
                     <h1 className="text-2xl font-bold mt-0.5">Councillor Dashboard</h1>
                     <p className="text-indigo-200 text-sm mt-1">Complete ward issue overview with analytics</p>
                 </div>

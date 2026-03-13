@@ -10,7 +10,7 @@ import { formatDate, formatRelative, slaStatus } from "@/lib/formatters";
 import PriorityBadge from "@/components/PriorityBadge";
 import StatusBadge from "@/components/StatusBadge";
 import Timeline from "@/components/Timeline";
-import { DEPT_NAMES } from "@/lib/constants";
+import { DEPT_NAMES, getWardLabel } from "@/lib/constants";
 
 interface TicketDetail {
     id: string;
@@ -393,7 +393,7 @@ export default function TicketDetailPage() {
                                     {ticket.ward_id && (
                                         <div className="bg-gray-50 rounded-xl p-3">
                                             <p className="text-xs text-gray-400 mb-0.5">Ward</p>
-                                            <p className="text-sm font-medium text-gray-800">Ward {ticket.ward_id}</p>
+                                             <p className="text-sm font-medium text-gray-800">{getWardLabel(ticket.ward_id)}</p>
                                         </div>
                                     )}
                                     <div className="bg-gray-50 rounded-xl p-3">

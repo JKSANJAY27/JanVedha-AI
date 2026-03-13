@@ -11,7 +11,7 @@ import { publicApi } from "@/lib/api";
 import { formatDate } from "@/lib/formatters";
 import LoadingOverlay from "@/components/LoadingOverlay";
 import Link from "next/link";
-import { DEPT_NAMES } from "@/lib/constants";
+import { DEPT_NAMES, getWardLabel } from "@/lib/constants";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 
@@ -354,7 +354,7 @@ export default function SubmitComplaintPage() {
                       <option value="">Select Ward</option>
                       {Array.from({ length: 200 }, (_, i) => i + 1).map((w) => (
                         <option key={w} value={w}>
-                          Ward {w}
+                          {getWardLabel(w)}
                         </option>
                       ))}
                     </select>

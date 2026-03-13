@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 import toast from "react-hot-toast";
 import { useAuth } from "@/context/AuthContext";
 import { commissionerApi, socialIntelApi } from "@/lib/api";
-import { DEPT_NAMES } from "@/lib/constants";
+import { DEPT_NAMES, getWardLabel } from "@/lib/constants";
 
 interface CitySummary {
     total_tickets: number;
@@ -468,7 +468,7 @@ export default function CommissionerDashboard() {
                                             <p className="text-sm text-gray-700 truncate mt-0.5">{t.issue_category}</p>
                                             <div className="flex items-center gap-2 mt-1">
                                                 <p className="text-xs text-gray-500 border border-gray-200 px-1.5 rounded">{DEPT_NAMES[t.dept_id] ?? t.dept_id}</p>
-                                                <p className="text-xs font-medium text-slate-600 bg-slate-100 px-1.5 rounded">Ward {t.ward_id}</p>
+                                                 <p className="text-xs font-medium text-slate-600 bg-slate-100 px-1.5 rounded">{getWardLabel(t.ward_id)}</p>
                                                 {t.estimated_cost && (
                                                     <p className="text-xs font-medium text-emerald-700 bg-emerald-50 px-1.5 rounded border border-emerald-100">Est: {formatCurrency(t.estimated_cost)}</p>
                                                 )}
@@ -525,7 +525,7 @@ export default function CommissionerDashboard() {
                                                     <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center border border-slate-200 text-slate-700 font-bold text-sm group-hover:bg-slate-800 group-hover:text-white transition-colors">
                                                         {w.ward_id}
                                                     </div>
-                                                    <span className="font-semibold text-slate-700 group-hover:text-slate-900">Ward {w.ward_id}</span>
+                                                     <span className="font-semibold text-slate-700 group-hover:text-slate-900">{getWardLabel(w.ward_id)}</span>
                                                 </div>
                                             </td>
                                             <td className="px-4 py-4 text-center text-slate-600 font-medium tracking-tight">

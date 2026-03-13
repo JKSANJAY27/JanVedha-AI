@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { publicApi } from "@/lib/api";
 import { motion } from "framer-motion";
 import StatCard from "@/components/StatCard";
+import { getWardLabel } from "@/lib/constants";
 
 interface WardEntry {
     ward_id: number;
@@ -135,7 +136,7 @@ export default function WardPerformancePage() {
                                                     {i >= 3 && <span className="font-bold text-gray-400 text-sm">#{i + 1}</span>}
                                                 </td>
                                                 <td className="px-6 py-4">
-                                                    <p className="font-semibold text-gray-900 text-sm">Ward {ward.ward_id}</p>
+                                                     <p className="font-semibold text-gray-900 text-sm">{getWardLabel(ward.ward_id)}</p>
                                                 </td>
                                                 <td className="px-6 py-4 text-center text-sm text-gray-600">{ward.total_tickets}</td>
                                                 <td className="px-6 py-4 text-center text-sm text-green-600 font-medium">{ward.resolved_tickets}</td>
