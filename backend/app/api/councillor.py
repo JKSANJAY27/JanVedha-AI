@@ -197,10 +197,10 @@ async def get_overdue_tickets(
             "ticket_code": t.ticket_code,
             "dept_id": t.dept_id,
             "issue_category": t.issue_category or "General",
-            "priority_label": t.priority_label,
+            "priority_label": t.priority_label.value if t.priority_label else "LOW",
             "sla_deadline": t.sla_deadline,
             "days_overdue": (now - t.sla_deadline).days if t.sla_deadline else 0,
-            "status": t.status,
+            "status": t.status.value if t.status else "OPEN",
         }
         for t in overdue[:limit]
     ]
