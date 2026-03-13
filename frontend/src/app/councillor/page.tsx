@@ -205,6 +205,13 @@ export default function CouncillorDashboard() {
     const [sentiment, setSentiment] = useState<SentimentOverview | null>(null);
     const [emerging, setEmerging] = useState<EmergingIssue[]>([]);
     const [socialPosts, setSocialPosts] = useState<SocialPost[]>([]);
+    
+    // AI Intelligence state
+    const [briefing, setBriefing] = useState<string | null>(null);
+    const [rootCauses, setRootCauses] = useState<any[]>([]);
+    const [alerts, setAlerts] = useState<any[]>([]);
+    const [intelligenceLoading, setIntelligenceLoading] = useState(true);
+
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -213,6 +220,8 @@ export default function CouncillorDashboard() {
         if (!allowed) { router.push("/officer/dashboard"); return; }
 
         const ward = user.ward_id;
+        
+        // Load basic telemetry
         Promise.all([
             councillorApi.getWardSummary(ward),
             councillorApi.getDeptPerformance(ward),
@@ -233,6 +242,18 @@ export default function CouncillorDashboard() {
             setSocialPosts(posts.data?.results ?? []);
         }).catch(() => toast.error("Failed to load ward data"))
             .finally(() => setLoading(false));
+
+        // Load AI Intelligence separately so it doesn't block the main dashboard
+        Promise.all([
+            councillorApi.getIntelligenceBriefing(ward).catch(() => ({ data: { briefing: "AI Briefing unavailable." } })),
+            councillorApi.getRootCauses(ward).catch(() => ({ data: { root_causes: [] } })),
+            councillorApi.getPredictiveAlerts(ward).catch(() => ({ data: { alerts: [] } })),
+        ]).then(([briefResp, causesResp, alertsResp]) => {
+            setBriefing(briefResp.data.briefing);
+            setRootCauses(causesResp.data.root_causes || []);
+            setAlerts(alertsResp.data.alerts || []);
+        }).finally(() => setIntelligenceLoading(false));
+
     }, [user]);
 
     const PRIORITY_COLORS: Record<string, string> = {
@@ -281,6 +302,102 @@ export default function CouncillorDashboard() {
                         />
                     </div>
                 )}
+
+                {/* ══ AI Intelligence Section ══════════════════════════════════════ */}
+                <div>
+                    <div className="flex items-center gap-2 mb-4">
+                        <span className="text-xl">🧠</span>
+                        <h2 className="text-base font-bold text-gray-800">Local Leadership Intelligence</h2>
+                        <span className="text-xs bg-indigo-100 text-indigo-700 font-semibold px-2 py-0.5 rounded-full">Gemini AI</span>
+                    </div>
+
+                    {intelligenceLoading ? (
+                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 flex flex-col items-center justify-center">
+                            <div className="w-8 h-8 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mb-4" />
+                            <p className="text-sm text-gray-500 font-medium">Synthesizing comprehensive ward intelligence...</p>
+                            <p className="text-xs text-gray-400 mt-1">Analyzing cross-department data & geographic patterns</p>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            {/* 1. Ward Reality Briefing */}
+                            <div className="bg-gradient-to-br from-indigo-50 to-white rounded-2xl shadow-sm border border-indigo-100 p-5 col-span-1 lg:col-span-2">
+                                <div className="flex items-center gap-2 mb-3">
+                                    <span className="text-lg">🌅</span>
+                                    <h3 className="font-bold text-indigo-900 text-sm">Morning Reality Briefing</h3>
+                                </div>
+                                <div className="text-sm text-gray-700 leading-relaxed space-y-2">
+                                    {briefing ? (
+                                        <p>{briefing}</p>
+                                    ) : (
+                                        <p className="text-gray-400 italic">Briefing currently unavailable. Check back later.</p>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Predictive Alerts */}
+                            <div className="bg-gradient-to-br from-amber-50 to-white rounded-2xl shadow-sm border border-amber-100 p-5">
+                                <div className="flex items-center gap-2 mb-3">
+                                    <span className="text-lg">🔮</span>
+                                    <h3 className="font-bold text-amber-900 text-sm">Predictive Workload Alerts</h3>
+                                </div>
+                                <div className="space-y-3">
+                                    {alerts.length === 0 ? (
+                                        <div className="text-center py-4">
+                                            <span className="text-2xl opacity-50 block mb-1">🌤️</span>
+                                            <p className="text-xs text-amber-700">No seasonal spikes expected in the next 3 weeks.</p>
+                                        </div>
+                                    ) : (
+                                        alerts.map((alert, idx) => (
+                                            <div key={idx} className="bg-white rounded-lg p-3 border border-amber-200 shadow-sm">
+                                                <div className="flex items-center justify-between mb-1">
+                                                    <span className="text-xs font-bold text-orange-800 uppercase tracking-wide">{alert.category}</span>
+                                                    <span className="text-[10px] bg-red-100 text-red-700 font-bold px-1.5 py-0.5 rounded">+{alert.predicted_increase_pct}% Spiking</span>
+                                                </div>
+                                                <p className="text-xs text-gray-700">{alert.narrative}</p>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* 2. Root Cause Radar */}
+                            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 col-span-1 lg:col-span-3">
+                                <div className="flex items-center gap-2 mb-4">
+                                    <span className="text-lg">🎯</span>
+                                    <h3 className="font-bold text-gray-800 text-sm">Root Cause Radar</h3>
+                                    <span className="text-[10px] text-gray-400 ml-auto border border-gray-200 rounded px-1.5 py-0.5">Geospatial Clustering Active</span>
+                                </div>
+                                
+                                {rootCauses.length === 0 ? (
+                                    <div className="text-center py-6 text-gray-500 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                                        <span className="text-2xl mb-2 block opacity-50">✨</span>
+                                        <p className="text-sm font-medium">No systemic clusters detected</p>
+                                        <p className="text-xs mt-1">Issues appear geographically isolated right now.</p>
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                        {rootCauses.map((rc, idx) => (
+                                            <div key={idx} className="border border-gray-100 rounded-xl p-4 bg-gray-50/50 hover:bg-white transition-colors duration-200 group">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <div className="bg-rose-100 text-rose-700 text-xs font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>
+                                                        {rc.ticket_count} tickets
+                                                    </div>
+                                                    <span className="text-xs font-semibold text-gray-600">{rc.category}</span>
+                                                </div>
+                                                <p className="text-xs text-gray-700 leading-relaxed">{rc.insight}</p>
+                                                <div className="mt-3 text-[10px] text-indigo-600 font-medium opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 cursor-pointer">
+                                                    Escalate to {DEPT_NAMES[rc.category] || "Department"} Head <span>→</span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+                </div>
+                {/* ═══════════════════════════════════════════════════════════════ */}
 
                 {/* Middle row: Dept Performance + Satisfaction Trend */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

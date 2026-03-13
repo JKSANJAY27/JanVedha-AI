@@ -149,6 +149,12 @@ export const councillorApi = {
     api.get("/api/councillor/overdue-tickets", { params: wardId ? { ward_id: wardId } : {} }),
   getFeed: (wardId?: number) =>
     api.get("/api/councillor/announcement-feed", { params: wardId ? { ward_id: wardId } : {} }),
+  getIntelligenceBriefing: (wardId?: number) =>
+    api.get("/api/councillor/intelligence/briefing", { params: wardId ? { ward_id: wardId } : {} }),
+  getRootCauses: (wardId?: number) =>
+    api.get("/api/councillor/intelligence/root-causes", { params: wardId ? { ward_id: wardId } : {} }),
+  getPredictiveAlerts: (wardId?: number) =>
+    api.get("/api/councillor/intelligence/predictions", { params: wardId ? { ward_id: wardId } : {} }),
 };
 
 export const commissionerApi = {

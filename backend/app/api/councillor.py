@@ -15,8 +15,8 @@ router = APIRouter()
 
 
 def _require_councillor(current_user: UserMongo = Depends(get_current_user)) -> UserMongo:
-    """Allow councillors, ward officers, and admins to access these endpoints."""
-    allowed = {UserRole.COUNCILLOR, UserRole.WARD_OFFICER, UserRole.COMMISSIONER, UserRole.SUPER_ADMIN}
+    """Allow councillors, supervisors, and admins to access these endpoints."""
+    allowed = {UserRole.COUNCILLOR, UserRole.SUPERVISOR, UserRole.SUPER_ADMIN}
     if current_user.role not in allowed:
         from fastapi import HTTPException
         raise HTTPException(status_code=403, detail="Councillor access required")
@@ -310,3 +310,37 @@ async def get_priority_insights(
             for t in top_tickets
         ],
     }
+
+from app.services.intelligence_service import IntelligenceService
+
+@router.get("/intelligence/briefing")
+async def get_ward_intelligence_briefing(
+    ward_id: Optional[int] = Query(None),
+    current_user: UserMongo = Depends(_require_councillor),
+):
+    """Generates the AI Daily Brief for a ward."""
+    effective_ward = ward_id or current_user.ward_id
+    brief = await IntelligenceService.get_ward_briefing(effective_ward)
+    return {"ward_id": effective_ward, "briefing": brief}
+
+
+@router.get("/intelligence/root-causes")
+async def get_ward_root_causes(
+    ward_id: Optional[int] = Query(None),
+    current_user: UserMongo = Depends(_require_councillor),
+):
+    """Uses geolocation clustering and AI to find systemic issue patterns."""
+    effective_ward = ward_id or current_user.ward_id
+    clusters = await IntelligenceService.get_root_cause_radar(effective_ward)
+    return {"ward_id": effective_ward, "root_causes": clusters}
+
+
+@router.get("/intelligence/predictions")
+async def get_ward_predictions(
+    ward_id: Optional[int] = Query(None),
+    current_user: UserMongo = Depends(_require_councillor),
+):
+    """Uses the seasonal predictor to calculate impending workload spikes."""
+    effective_ward = ward_id or current_user.ward_id
+    alerts = await IntelligenceService.get_predictive_alerts(effective_ward)
+    return {"ward_id": effective_ward, "alerts": alerts}

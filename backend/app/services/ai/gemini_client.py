@@ -22,5 +22,5 @@ def get_llm(model: str = "gemini-2.0-flash") -> ChatGoogleGenerativeAI:
 
 
 def get_pro_llm() -> ChatGoogleGenerativeAI:
-    """Returns Gemini 1.5 Pro model for complex reasoning tasks."""
-    return get_llm(model="gemini-1.5-pro")
+    """Returns Gemini Pro model for complex reasoning tasks."""
+    return get_llm(model="gemini-2.0-flash")
