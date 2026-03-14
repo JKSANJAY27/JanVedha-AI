@@ -35,10 +35,15 @@ async def get_tickets(
     - COMMISSIONER / SUPER_ADMIN → all tickets
     """
     if current_user.role == UserRole.SUPERVISOR:
-        # Supervisors see ALL tickets — they are the routing authority
-        tickets = await TicketMongo.find_all().sort(
-            -TicketMongo.priority_score
-        ).limit(limit).to_list()
+        # Supervisors are scoped to their ward; COMMISSIONER/SUPER_ADMIN see all
+        if current_user.ward_id is not None:
+            tickets = await TicketMongo.find(
+                TicketMongo.ward_id == current_user.ward_id
+            ).sort(-TicketMongo.priority_score).limit(limit).to_list()
+        else:
+            tickets = await TicketMongo.find_all().sort(
+                -TicketMongo.priority_score
+            ).limit(limit).to_list()
 
     elif current_user.role == UserRole.COUNCILLOR:
         # Councillors are scoped to their ward
@@ -105,8 +110,13 @@ async def get_dashboard_summary(
     from datetime import datetime
 
     if current_user.role == UserRole.SUPERVISOR:
-        # Supervisors see all tickets for the full operational picture
-        all_tickets = await TicketMongo.find_all().to_list()
+        # Supervisors scoped to their ward
+        if current_user.ward_id is not None:
+            all_tickets = await TicketMongo.find(
+                TicketMongo.ward_id == current_user.ward_id
+            ).to_list()
+        else:
+            all_tickets = await TicketMongo.find_all().to_list()
     elif current_user.role == UserRole.COUNCILLOR:
         if current_user.ward_id is not None:
             all_tickets = await TicketMongo.find(
@@ -136,35 +146,50 @@ async def get_dashboard_summary(
     total_overdue = 0
     total_critical = 0
 
-    for t in all_tickets:
+    closed = [t for t in all_tickets if t.status in {TicketStatus.CLOSED}]
+    open_tickets = [t for t in all_tickets if t.status not in {TicketStatus.CLOSED, TicketStatus.REJECTED}]
+    overdue = [t for t in open_tickets if t.sla_deadline and t.sla_deadline < now]
+
+    dept_map: dict[str, dict[str, int | str]] = {}
+    for t in open_tickets:
         d = t.dept_id
-        if d not in dept_stats:
-            dept_stats[d] = {"dept_id": d, "open": 0, "closed": 0, "overdue": 0, "critical": 0}
+        if d not in dept_map:
+            dept_map[d] = {"dept_id": d, "total": 0, "open": 0, "closed": 0, "overdue": 0}
+        
+        dept_map[d]["total"] = int(dept_map[d]["total"]) + 1
+        dept_map[d]["open"] = int(dept_map[d]["open"]) + 1
+        if t.sla_deadline and t.sla_deadline < now:
+            dept_map[d]["overdue"] = int(dept_map[d]["overdue"]) + 1
+            
+    for t in closed:
+        d = t.dept_id
+        if d not in dept_map:
+            dept_map[d] = {"dept_id": d, "total": 0, "open": 0, "closed": 0, "overdue": 0}
+        
+        dept_map[d]["total"] = int(dept_map[d]["total"]) + 1
+        dept_map[d]["closed"] = int(dept_map[d]["closed"]) + 1
+    
+    result_list = list(dept_map.values())
+    result_list.sort(key=lambda x: int(x["overdue"]), reverse=True)
 
-        if t.status in open_statuses:
-            dept_stats[d]["open"] += 1
-            total_open += 1
-            if t.sla_deadline and t.sla_deadline < now:
-                dept_stats[d]["overdue"] += 1
-                total_overdue += 1
-        else:
-            dept_stats[d]["closed"] += 1
+    # Avg resolution time (days) for closed tickets
+    resolution_times = [
+        (t.resolved_at - t.created_at).days
+        for t in closed if t.resolved_at and t.created_at
+    ]
+    avg_resolution = round(float(sum(resolution_times) / len(resolution_times)), 1) if resolution_times else 0.0
 
-        if t.priority_label == "CRITICAL":
-            dept_stats[d]["critical"] += 1
-            total_critical += 1
-
-    sat_scores = [t.citizen_satisfaction for t in all_tickets if t.citizen_satisfaction]
-    avg_sat = round(sum(sat_scores) / len(sat_scores), 1) if sat_scores else None
+    sat_scores = [float(t.citizen_satisfaction) for t in all_tickets if t.citizen_satisfaction]
+    avg_sat = round(sum(sat_scores) / float(len(sat_scores)), 1) if sat_scores else None
 
     return {
         "total": len(all_tickets),
-        "open": total_open,
-        "closed": len(all_tickets) - total_open,
-        "overdue": total_overdue,
-        "critical": total_critical,
+        "open": len(open_tickets),
+        "closed": len(closed),
+        "overdue": len(overdue),
         "avg_satisfaction": avg_sat,
-        "by_department": list(dept_stats.values()),
+        "avg_resolution_time_days": avg_resolution,
+        "by_department": result_list,
     }
 
 

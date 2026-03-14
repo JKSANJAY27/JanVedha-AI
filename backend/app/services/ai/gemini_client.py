@@ -8,10 +8,10 @@ from app.core.config import settings
 
 
 @lru_cache(maxsize=1)
-def get_llm(model: str = "gemini-2.0-flash") -> ChatGoogleGenerativeAI:
+def get_llm(model: str = "gemini-1.5-flash") -> ChatGoogleGenerativeAI:
     """
-    Returns a cached LangChain Gemini LLM instance.
-    Defaults to the latest Gemini 2.0 Flash model.
+    Gets a standard LangChain LLM instance.
+    Defaults to the latest Gemini 1.5 Flash model.
     """
     return ChatGoogleGenerativeAI(
         model=model,
@@ -23,4 +23,10 @@ def get_llm(model: str = "gemini-2.0-flash") -> ChatGoogleGenerativeAI:
 
 def get_pro_llm() -> ChatGoogleGenerativeAI:
     """Returns Gemini Pro model for complex reasoning tasks."""
-    return get_llm(model="gemini-2.0-flash")
+    return get_llm(model="gemini-1.5-flash")
+
+
+def get_classifier_llm() -> ChatGoogleGenerativeAI:
+    """Returns Gemini model with best instruction following."""
+    # classification requires good instruction following, gemini-1.5-flash is best-effort general-purpose
+    return get_llm(model="gemini-1.5-flash")

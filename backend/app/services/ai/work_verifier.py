@@ -152,7 +152,7 @@ async def _verify_with_gemini(
         before_b64 = _bytes_to_b64(before_bytes, _detect_mime(before_bytes))
         after_b64 = _bytes_to_b64(after_bytes, _detect_mime(after_bytes))
 
-        llm = get_llm()  # gemini-2.0-flash — already configured in the project
+        llm = get_llm()  # gemini-1.5-flash — already configured in the project
 
         system = SystemMessage(content=GEMINI_SYSTEM_PROMPT)
         human = HumanMessage(content=[

@@ -96,10 +96,23 @@ class TicketService:
                 }
             )
 
-        # 5. Department SLA
-        dept = await DepartmentMongo.find_one(
-            DepartmentMongo.dept_id == pipeline_result.dept_id
-        )
+        # 5. Department SLA — try ward-scoped first, then fall back to global
+        dept = None
+        if ward_id is not None:
+            dept = await DepartmentMongo.find_one(
+                DepartmentMongo.dept_id == pipeline_result.dept_id,
+                DepartmentMongo.ward_id == ward_id,
+            )
+        if dept is None:
+            dept = await DepartmentMongo.find_one(
+                DepartmentMongo.dept_id == pipeline_result.dept_id,
+                DepartmentMongo.ward_id == None,  # noqa: E711
+            )
+        if dept is None:
+            # Final fallback: any dept with this id regardless of ward_id
+            dept = await DepartmentMongo.find_one(
+                DepartmentMongo.dept_id == pipeline_result.dept_id
+            )
         sla_days = dept.sla_days if dept else 7
         sla_deadline = datetime.utcnow() + timedelta(days=sla_days)
 

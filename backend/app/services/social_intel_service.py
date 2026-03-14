@@ -102,7 +102,7 @@ WARD_LOCATION_MAP: Dict[int, str] = {
 
 GEMINI_API_URL = (
     "https://generativelanguage.googleapis.com/v1beta/models/"
-    "gemini-2.0-flash:generateContent"
+    "gemini-1.5-flash:generateContent"
 )
 
 SYSTEM_PROMPT = """You are an AI governance analyst for Indian local governance.
