@@ -64,6 +64,29 @@ Furthermore, social media plays a growing role in shaping public opinion, yet it
 
 ---
 
+## 📸 Screenshots & Showcase
+
+<p align="center">
+  <img src="images/WhatsApp%20Image%202026-03-14%20at%204.06.52%20PM.jpeg" width="48%" alt="Dashboard Screenshot 1" />
+  <img src="images/WhatsApp%20Image%202026-03-14%20at%204.18.15%20PM.jpeg" width="48%" alt="Dashboard Screenshot 2" />
+</p>
+
+<p align="center">
+  <img src="images/WhatsApp%20Image%202026-03-14%20at%204.18.19%20PM.jpeg" width="48%" alt="Dashboard Screenshot 3" />
+  <img src="images/WhatsApp%20Image%202026-03-14%20at%204.18.27%20PM.jpeg" width="48%" alt="Dashboard Screenshot 4" />
+</p>
+
+<p align="center">
+  <img src="images/WhatsApp%20Image%202026-03-14%20at%204.18.31%20PM.jpeg" width="48%" alt="Dashboard Screenshot 5" />
+  <img src="images/WhatsApp%20Image%202026-03-14%20at%204.18.34%20PM.jpeg" width="48%" alt="Dashboard Screenshot 6" />
+</p>
+
+<p align="center">
+  <img src="images/WhatsApp%20Image%202026-03-14%20at%204.18.38%20PM.jpeg" width="48%" alt="Dashboard Screenshot 7" />
+</p>
+
+---
+
 ## 🛠 Tech Stack
 
 - **Frontend:** Next.js 16, React 19, Tailwind CSS v4, Framer Motion, Recharts, React Leaflet.
