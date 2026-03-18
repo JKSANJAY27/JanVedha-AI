@@ -20,6 +20,10 @@ from .ward_config import WardConfigMongo
 from .proposal import ProposalMongo
 # Feature: Constituent Casework
 from .casework import CaseworkMongo
+# Feature: Constituent Communication Center
+from .ward_communication import WardCommunicationMongo
+# Feature: Media & RTI Response Assistant
+from .media_rti_response import MediaRtiResponseMongo
 
 __all__ = [
     "UserMongo",
@@ -41,4 +45,6 @@ __all__ = [
     "WardConfigMongo",
     "ProposalMongo",
     "CaseworkMongo",
+    "WardCommunicationMongo",
+    "MediaRtiResponseMongo",
 ]

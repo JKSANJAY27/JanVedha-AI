@@ -288,3 +288,27 @@ export const caseworkApi = {
   markSent: (caseworkId: string, followUpId: string, sentVia: string) =>
     api.post(`/api/casework/${caseworkId}/mark-sent`, { follow_up_id: followUpId, sent_via: sentVia }),
 };
+
+export const communicationsApi = {
+  getSuggestions: (wardId: number) =>
+    api.get("/api/communications/suggestions", { params: { ward_id: wardId } }),
+  generate: (data: any) => api.post("/api/communications/generate", data),
+  list: (wardId?: number, limit = 10) =>
+    api.get("/api/communications", { params: { ward_id: wardId, limit } }),
+  get: (commId: string) => api.get(`/api/communications/${commId}`),
+  downloadPdf: (commId: string, language: string) =>
+    api.post(`/api/communications/${commId}/pdf`, null, { params: { language }, responseType: "blob" }),
+};
+
+export const mediaRtiApi = {
+  analyzeQuery: (wardId: string, queryText: string, type: "media" | "rti") =>
+    api.post("/api/media-rti/analyze-query", { ward_id: wardId, query_text: queryText, type }),
+  generate: (data: any) => api.post("/api/media-rti/generate", data),
+  list: (wardId?: number, type?: "media" | "rti", limit = 10) =>
+    api.get("/api/media-rti", { params: { ward_id: wardId, type, limit } }),
+  get: (responseId: string) => api.get(`/api/media-rti/${responseId}`),
+  downloadPdf: (responseId: string) =>
+    api.post(`/api/media-rti/${responseId}/generate-pdf`, null, { responseType: "blob" }),
+  extractQuery: (formData: FormData) =>
+    api.post("/api/media-rti/extract-query-from-image", formData, { headers: { "Content-Type": "multipart/form-data" } }),
+};

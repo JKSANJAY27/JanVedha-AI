@@ -61,6 +61,10 @@ async def init_mongodb() -> None:
         ProposalMongo,
         # Feature: Constituent Casework
         CaseworkMongo,
+        # Feature: Constituent Communication Center
+        WardCommunicationMongo,
+        # Feature: Media & RTI Response Assistant
+        MediaRtiResponseMongo,
     )
 
     uri = settings.MONGODB_URI
@@ -96,6 +100,10 @@ async def init_mongodb() -> None:
             ProposalMongo,
             # Feature: Constituent Casework
             CaseworkMongo,
+            # Feature: Constituent Communication Center
+            WardCommunicationMongo,
+            # Feature: Media & RTI Response Assistant
+            MediaRtiResponseMongo,
         ],
     )
 

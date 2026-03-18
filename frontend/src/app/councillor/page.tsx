@@ -325,6 +325,8 @@ export default function CouncillorDashboard() {
                             🏗️ Development
                         </span>
                         {[
+                            { href: "/councillor/communications", label: "Communications", icon: "📣" },
+                            { href: "/councillor/media-rti", label: "Media & RTI", icon: "🎙️" },
                             { href: "/councillor/casework", label: "Casework inbox", icon: "📂" },
                             { href: "/councillor/opportunity", label: "Opportunity Map", icon: "🗺️" },
                             { href: "/councillor/proposal", label: "Generate Proposal", icon: "📄" },
