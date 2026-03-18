@@ -31,7 +31,6 @@ class DepartmentMongo(Document):
     class Settings:
         name = "departments"
         indexes = [
-            "dept_id",
             "ward_id",
             [("dept_id", 1), ("ward_id", 1)],  # composite index for fast per-ward lookup
         ]

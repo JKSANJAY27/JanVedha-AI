@@ -25,7 +25,9 @@ async def lifespan(app: FastAPI):
 
     # Load the ML priority model from MongoDB (if trained data exists)
     from app.services.ai.priority_agent import load_priority_model
-    await load_priority_model()
+
+#    await load_priority_model()
+
 
     # Start Telegram Bot if configured
     from app.services.telegram_bot import get_bot_application
@@ -80,7 +82,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-from app.api import public, auth, officer, webhooks, chat, calendar, councillor, commissioner, documents, social_intel, analytics, public_trust, opportunity, proposals, casework
+from app.api import public, auth, officer, webhooks, chat, calendar, councillor, commissioner, documents, social_intel, analytics, public_trust, opportunity, proposals, casework, communications, media_rti
 
 app.include_router(public.router, prefix="/api/public", tags=["public"])
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
@@ -97,6 +99,8 @@ app.include_router(public_trust.router, prefix="/api/v1/trust", tags=["public-tr
 app.include_router(opportunity.router, prefix="/api/opportunity", tags=["opportunity"])
 app.include_router(proposals.router, prefix="/api/proposals", tags=["proposals"])
 app.include_router(casework.router, prefix="/api/casework", tags=["casework"])
+app.include_router(communications.router, prefix="/api/communications", tags=["communications"])
+app.include_router(media_rti.router, prefix="/api/media-rti", tags=["media-rti"])
 
 
 @app.get("/api/health")

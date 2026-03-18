@@ -34,6 +34,7 @@ class TicketMongo(Document):
     dept_id: Indexed(str)                            # type: ignore[valid-type]
     issue_category: Optional[str] = None             # AI-extracted category (e.g. "pothole")
     ward_id: Optional[Indexed(int)] = None           # type: ignore[valid-type]
+    auto_detected_ward: Optional[int] = None          # AI Gemini-detected ward (for audit)
     zone_id: Optional[int] = None
 
     # Location — GeoJSON for native geospatial queries

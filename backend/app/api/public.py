@@ -78,6 +78,26 @@ async def get_my_tickets(
     ]
 
 
+class DetectWardRequest(BaseModel):
+    location_text: str
+
+
+@router.post("/detect-ward")
+async def detect_ward(data: DetectWardRequest):
+    """
+    AI-based ward auto-detection from free-text location.
+    Uses Gemini to extract a Chennai locality, then fuzzy-maps it to a ward.
+    """
+    from app.services.ward_detection_service import WardDetectionService
+    result = await WardDetectionService.detect_ward(data.location_text)
+    return {
+        "detection_status": result.detection_status,
+        "locality": result.locality,
+        "ward_id": result.ward_id,
+        "ward_name": result.ward_name,
+    }
+
+
 class ComplaintCreateEvent(BaseModel):
     description: str
     location_text: str
@@ -87,6 +107,10 @@ class ComplaintCreateEvent(BaseModel):
     photo_url: Optional[str] = None
     reporter_user_id: Optional[str] = None
     ward_id: Optional[int] = None
+    # AI auto-detected ward (stored for analytics / audit)
+    auto_detected_ward: Optional[int] = None
+    # final_ward = user override if provided, else auto-detected
+    final_ward: Optional[int] = None
     # GPS coordinates sent directly from the browser (avoids geocoding delay)
     lat: Optional[float] = None
     lng: Optional[float] = None
@@ -97,7 +121,13 @@ async def create_complaint(data: ComplaintCreateEvent):
     """
     Submit a new civic complaint. Runs the full AI pipeline:
     classify → route → prioritize → suggest → memory check.
+
+    Ward resolution order:
+      1. final_ward (user override)
+      2. auto_detected_ward (Gemini auto-detected)
+      3. ward_id (legacy field)
     """
+    resolved_ward = data.final_ward or data.auto_detected_ward or data.ward_id
     ticket = await TicketService.create_ticket(
         description=data.description,
         location_text=data.location_text,
@@ -106,7 +136,8 @@ async def create_complaint(data: ComplaintCreateEvent):
         reporter_name=data.reporter_name,
         photo_url=data.photo_url,
         reporter_user_id=data.reporter_user_id,
-        ward_id=data.ward_id,
+        ward_id=resolved_ward,
+        auto_detected_ward=data.auto_detected_ward,
         source=TicketSource.WEB_PORTAL,
         lat=data.lat,
         lng=data.lng,

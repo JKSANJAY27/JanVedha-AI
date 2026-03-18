@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
 import { officerApi } from "@/lib/api";
@@ -209,7 +209,8 @@ function SpeedometerGauge({
     const startAngle = 210;
     const endAngle = -30;
     const totalDeg = 240;
-    const clampedVal = Math.max(0, Math.min(100, value));
+    const safeValue = (typeof value === 'number' && !isNaN(value)) ? value : 0;
+    const clampedVal = Math.max(0, Math.min(100, safeValue));
 
     function polarToCartesian(angle: number) {
         const rad = (angle * Math.PI) / 180;
@@ -570,6 +571,7 @@ function MetricDetailPanel({
 // ─── Supervisor Operational View ─────────────────────────────────────────────────────
 
 function SupervisorDashboard({ user }: { user: { name: string; ward_id?: number; role: string } }) {
+    const searchParams = useSearchParams();
     const [summary, setSummary] = useState<DashboardSummary | null>(null);
     const [tickets, setTickets] = useState<Ticket[]>([]);
     const [loading, setLoading] = useState(true);
@@ -637,6 +639,42 @@ function SupervisorDashboard({ user }: { user: { name: string; ward_id?: number;
     ];
 
     const unsatisfied = metrics.filter(m => m.status !== "good");
+    const deptFilter = searchParams.get('dept')?.toUpperCase();
+
+    // Map standard D-codes to legacy acronyms used by seed_demo_tickets.py
+    const legacyDeptMap: Record<string, string[]> = {
+        "D01": ["D01", "PWD", "ROADS"],
+        "D03": ["D03", "WATER"],
+        "D04": ["D04", "DRAINAGE", "SEWAGE"],
+        "D05": ["D05", "SWM", "WASTE"],
+        "D06": ["D06", "ELEC", "LIGHTING"],
+    };
+
+    if (deptFilter && DEPT_NAMES[deptFilter]) {
+        const allowedIds = legacyDeptMap[deptFilter] || [deptFilter];
+        const filteredTickets = tickets.filter(t => allowedIds.includes(t.dept_id.toUpperCase()));
+        return (
+            <div className="space-y-6">
+                <div>
+                    <div className="flex items-center gap-3 mb-2">
+                        <Link href="/officer/dashboard" className="text-sm font-medium text-slate-500 hover:text-indigo-600 transition-colors bg-white hover:bg-indigo-50 border border-slate-200 hover:border-indigo-200 px-4 py-2 rounded-xl inline-flex items-center gap-2 shadow-sm">
+                            <span className="text-lg leading-none">←</span> Back to Overview
+                        </Link>
+                    </div>
+                    <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-3 mt-4">
+                        <span className="bg-indigo-100 text-indigo-700 w-10 h-10 flex items-center justify-center rounded-xl text-sm font-black border border-indigo-200 shrink-0">
+                            {DEPT_NAMES[deptFilter].charAt(0)}
+                        </span>
+                        {DEPT_NAMES[deptFilter]}
+                    </h2>
+                    <p className="text-sm text-slate-500 mt-1.5 ml-14">Showing {filteredTickets.length} active issue{filteredTickets.length !== 1 ? 's' : ''} ranked by criticality level.</p>
+                </div>
+                <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-200">
+                    <TicketList tickets={filteredTickets} />
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-8">
@@ -1123,19 +1161,31 @@ export default function OfficerDashboard({ userOverride, forcedRole }: OfficerDa
                 </Link>
             )}
             {(isSupervisor || isAdmin) && (
-                <div className="flex gap-2 ml-2">
-                    <Link href="/officer/sanitation-dashboard"
-                        className="text-xs bg-emerald-500/20 text-emerald-100 border border-emerald-500/30 px-3 py-1.5 rounded-lg hover:bg-emerald-500/40 transition-colors">
-                        Sanitation
-                    </Link>
-                    <Link href="/officer/water-dashboard"
-                        className="text-xs bg-blue-500/20 text-blue-100 border border-blue-500/30 px-3 py-1.5 rounded-lg hover:bg-blue-500/40 transition-colors">
-                        Water
-                    </Link>
-                    <Link href="/officer/electrical-dashboard"
-                        className="text-xs bg-yellow-500/20 text-yellow-100 border border-yellow-500/30 px-3 py-1.5 rounded-lg hover:bg-yellow-500/40 transition-colors">
-                        Electricity
-                    </Link>
+                <div className="flex gap-2 ml-2 relative group">
+                    <button className="text-sm bg-indigo-600/90 border border-indigo-400/50 text-white font-medium px-4 py-2 rounded-xl hover:bg-indigo-600 transition-all flex items-center gap-2 shadow-lg hover:shadow-indigo-500/20">
+                        <span className="text-base">🏢</span> Select Department ▾
+                    </button>
+                    {/* Flyout Menu Container with padding to bridge the hover gap */}
+                    <div className="absolute top-full right-0 pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50 transform group-hover:translate-y-0 translate-y-3 pointer-events-none group-hover:pointer-events-auto origin-top-right">
+                        <div className="w-72 bg-slate-900/95 backdrop-blur-xl border border-slate-700/50 rounded-2xl shadow-2xl overflow-hidden p-3">
+                            <p className="text-[10px] font-extrabold text-slate-500 uppercase tracking-widest mb-3 px-3">Department Operations</p>
+                            <div className="max-h-[50vh] overflow-y-auto rounded-xl space-y-1 pr-1 custom-scrollbar">
+                                {Object.entries(DEPT_NAMES).map(([id, name]) => (
+                                    <Link key={id} href={`?dept=${id.toLowerCase()}`}
+                                        className="group/item block px-3 py-2.5 rounded-xl text-sm text-slate-300 hover:bg-white/10 hover:text-white transition-all flex items-center justify-between"
+                                    >
+                                        <div className="flex items-center gap-3 truncate">
+                                            <div className="w-8 h-8 rounded-lg bg-indigo-500/20 text-indigo-300 flex items-center justify-center text-xs font-bold border border-indigo-500/20 group-hover/item:border-indigo-400/40 group-hover/item:text-indigo-200 transition-colors shrink-0">
+                                                {name.charAt(0)}
+                                            </div>
+                                            <span className="truncate font-medium">{name}</span>
+                                        </div>
+                                        <span className="text-slate-600 group-hover/item:text-slate-400 group-hover/item:translate-x-1 transition-transform">→</span>
+                                    </Link>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>

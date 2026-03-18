@@ -69,6 +69,7 @@ beautifulsoup4
 jinja2
 weasyprint
 python-docx
+fpdf2                  # PDF generation for formal notices and RTI documents
 
 # ── Blockchain (optional, stub available) ─────────────────────────────────────
 web3
