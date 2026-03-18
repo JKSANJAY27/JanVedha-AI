@@ -57,7 +57,9 @@ async def _gemini_narrate(prompt: str) -> str:
         response = await llm.ainvoke(prompt)
         return response.content.strip()
     except Exception as e:
-        return f"[AI narration unavailable: {e}]"
+        import logging
+        logging.getLogger(__name__).warning("Gemini narration failed: %s", e)
+        return "AI executive summary is temporarily unavailable due to a configuration issue (e.g. invalid or expired API key)."
 
 
 # ─── DEPT_NAMES mapping (shared util) ─────────────────────────────────────────

@@ -209,7 +209,8 @@ function SpeedometerGauge({
     const startAngle = 210;
     const endAngle = -30;
     const totalDeg = 240;
-    const clampedVal = Math.max(0, Math.min(100, value));
+    const safeValue = (typeof value === 'number' && !isNaN(value)) ? value : 0;
+    const clampedVal = Math.max(0, Math.min(100, safeValue));
 
     function polarToCartesian(angle: number) {
         const rad = (angle * Math.PI) / 180;

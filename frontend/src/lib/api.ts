@@ -37,6 +37,8 @@ api.interceptors.response.use(
 export const publicApi = {
   submitComplaint: (data: object) =>
     api.post("/api/public/complaints", data),
+  detectWard: (locationText: string) =>
+    api.post("/api/public/detect-ward", { location_text: locationText }),
   trackTicket: (code: string) => api.get(`/api/public/track/${code}`),
   getStats: () => api.get("/api/public/stats"),
   getLeaderboard: () => api.get("/api/public/wards/leaderboard"),

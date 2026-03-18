@@ -18,7 +18,6 @@ import { useRouter } from "next/navigation";
 const schema = z.object({
   description: z.string().min(20, "Describe the issue in at least 20 characters"),
   location_text: z.string().min(5, "Please enter location"),
-  ward_id: z.string().min(1, "Please select a ward"),
   reporter_phone: z.string().regex(/^[6-9]\d{9}$/, "Enter valid 10-digit Indian mobile number"),
   reporter_name: z.string().optional(),
   consent_given: z.boolean().refine((v) => v === true, "You must consent to share info"),
@@ -86,6 +85,18 @@ export default function SubmitComplaintPage() {
   const [gpsCoords, setGpsCoords] = useState<{ lat: number; lng: number } | null>(null);
   const locationRef = useRef<HTMLInputElement | null>(null);
 
+  // ── Ward auto-detection state ───────────────────────────────────────────────
+  type WardDetectionState =
+    | { status: "idle" }
+    | { status: "detecting" }
+    | { status: "detected"; wardId: number; wardName: string; locality: string }
+    | { status: "manual_required"; locality?: string }
+    | { status: "override"; wardId: number };
+
+  const [wardDetection, setWardDetection] = useState<WardDetectionState>({ status: "idle" });
+  const [manualWardId, setManualWardId] = useState("");
+  const wardDetectTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const { ref: locationFormRef, ...locationRegister } = register("location_text");
 
   const combineRef = (el: HTMLInputElement | null) => {
@@ -93,9 +104,33 @@ export default function SubmitComplaintPage() {
     locationFormRef(el);
   };
 
+  // ── Ward auto-detection trigger ─────────────────────────────────────────────
+  const triggerWardDetection = async (locText: string) => {
+    if (!locText || locText.length < 5) return;
+    setWardDetection({ status: "detecting" });
+    try {
+      const res = await publicApi.detectWard(locText);
+      const { detection_status, ward_id, ward_name, locality } = res.data;
+      if (detection_status === "auto-detected" && ward_id) {
+        setWardDetection({ status: "detected", wardId: ward_id, wardName: ward_name, locality });
+      } else {
+        setWardDetection({ status: "manual_required", locality: locality || undefined });
+      }
+    } catch {
+      setWardDetection({ status: "manual_required" });
+    }
+  };
+
+  const onLocationBlur = () => {
+    const val = locationRef.current?.value || "";
+    if (wardDetectTimeout.current) clearTimeout(wardDetectTimeout.current);
+    wardDetectTimeout.current = setTimeout(() => triggerWardDetection(val), 600);
+  };
+
   const detectLocation = () => {
     setLocationLoading(true);
     setGpsCoords(null);
+    setWardDetection({ status: "idle" });
 
     const fallbackToIp = async () => {
       try {
@@ -113,6 +148,7 @@ export default function SubmitComplaintPage() {
           if (locationRef.current) locationRef.current.value = addr;
           setValue("location_text", addr, { shouldValidate: true });
           toast.success("Location approximated via IP");
+          triggerWardDetection(addr);
         } else throw new Error("No IP location data");
       } catch {
         toast.error("Location access failed. Please enter manually.");
@@ -133,10 +169,12 @@ export default function SubmitComplaintPage() {
           const addr = data.display_name || `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
           if (locationRef.current) locationRef.current.value = addr;
           setValue("location_text", addr, { shouldValidate: true });
+          triggerWardDetection(addr);
         } catch {
           const fallback = `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
           if (locationRef.current) locationRef.current.value = fallback;
           setValue("location_text", fallback, { shouldValidate: true });
+          triggerWardDetection(fallback);
         }
         setLocationLoading(false);
       },
@@ -162,6 +200,24 @@ export default function SubmitComplaintPage() {
   }, [isSubmitting]);
 
   const handleJsonSubmit = async (data: FormData) => {
+    // Resolve the final ward to submit
+    let finalWard: number | undefined;
+    let autoDetectedWard: number | undefined;
+
+    if (wardDetection.status === "detected") {
+      finalWard = wardDetection.wardId;
+      autoDetectedWard = wardDetection.wardId;
+    } else if (wardDetection.status === "override") {
+      finalWard = wardDetection.wardId;
+    } else if (wardDetection.status === "manual_required" && manualWardId) {
+      finalWard = parseInt(manualWardId, 10);
+    }
+
+    if (!finalWard) {
+      toast.error("Please select or confirm your ward before submitting.");
+      return;
+    }
+
     setIsSubmitting(true);
     setResult(null);
 
@@ -169,7 +225,9 @@ export default function SubmitComplaintPage() {
       description: data.description,
       location_text: data.location_text,
       reporter_phone: data.reporter_phone,
-      ward_id: parseInt(data.ward_id, 10),
+      ward_id: finalWard,
+      final_ward: finalWard,
+      auto_detected_ward: autoDetectedWard || null,
       consent_given: true,
       reporter_name: data.reporter_name || null,
       photo_url: null,
@@ -185,6 +243,8 @@ export default function SubmitComplaintPage() {
       reset();
       setPhoto(null);
       setPhotoPreview(null);
+      setWardDetection({ status: "idle" });
+      setManualWardId("");
     } catch (err: any) {
       const detail = err?.response?.data?.detail;
       if (err?.response?.status === 400 && detail?.question) {
@@ -341,41 +401,103 @@ export default function SubmitComplaintPage() {
                   </div>
                 </div>
 
-                {/* Location */}
+                {/* Location + Ward (auto-detect) */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                    Location & Ward <span className="text-red-500">*</span>
+                    Location <span className="text-red-500">*</span>
                   </label>
                   <div className="flex gap-2">
-                    <select
-                      {...register("ward_id")}
-                      className="border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                    >
-                      <option value="">Select Ward</option>
-                      {Array.from({ length: 200 }, (_, i) => i + 1).map((w) => (
-                        <option key={w} value={w}>
-                          {getWardLabel(w)}
-                        </option>
-                      ))}
-                    </select>
                     <input
                       {...locationRegister}
                       ref={combineRef}
                       type="text"
-                      placeholder="Enter address or use GPS…"
+                      onBlur={onLocationBlur}
+                      placeholder="Enter address or area (e.g. Velachery near Phoenix Mall)…"
                       className="flex-1 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                     <button
                       type="button"
                       onClick={detectLocation}
                       disabled={locationLoading}
-                      className="px-4 py-3 bg-blue-50 border border-blue-200 text-blue-600 rounded-xl text-sm font-medium hover:bg-blue-100 transition-colors disabled:opacity-50 flex items-center gap-1.5"
+                      className="px-4 py-3 bg-blue-50 border border-blue-200 text-blue-600 rounded-xl text-sm font-medium hover:bg-blue-100 transition-colors disabled:opacity-50 flex items-center gap-1.5 shrink-0"
                     >
                       {locationLoading ? <span className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" /> : "📍 GPS"}
                     </button>
                   </div>
-                  {errors.ward_id && <p className="text-red-500 text-xs mt-1">{errors.ward_id.message}</p>}
                   {errors.location_text && <p className="text-red-500 text-xs mt-1">{errors.location_text.message}</p>}
+
+                  {/* Ward detection result */}
+                  <div className="mt-2">
+                    {wardDetection.status === "detecting" && (
+                      <div className="flex items-center gap-2 text-sm text-blue-600 bg-blue-50 rounded-xl px-4 py-2.5">
+                        <span className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
+                        Detecting ward automatically…
+                      </div>
+                    )}
+
+                    {wardDetection.status === "detected" && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }}
+                        className="flex items-center justify-between bg-green-50 border border-green-200 rounded-xl px-4 py-2.5"
+                      >
+                        <div className="text-sm">
+                          <span className="text-green-700 font-semibold">📍 {wardDetection.locality}</span>
+                          <span className="mx-2 text-gray-400">·</span>
+                          <span className="text-green-800 font-bold">🏛️ Ward {wardDetection.wardId} — {wardDetection.wardName}</span>
+                          <span className="ml-2 text-xs bg-green-200 text-green-800 px-2 py-0.5 rounded-full font-medium">Auto-detected</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setWardDetection({ status: "manual_required" })}
+                          className="text-xs text-blue-600 hover:underline ml-2 shrink-0"
+                        >
+                          Change
+                        </button>
+                      </motion.div>
+                    )}
+
+                    {wardDetection.status === "override" && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }}
+                        className="flex items-center justify-between bg-indigo-50 border border-indigo-200 rounded-xl px-4 py-2.5"
+                      >
+                        <span className="text-sm text-indigo-800 font-semibold">🏛️ Ward {wardDetection.wardId} (manually selected)</span>
+                        <button
+                          type="button"
+                          onClick={() => setWardDetection({ status: "manual_required" })}
+                          className="text-xs text-blue-600 hover:underline ml-2 shrink-0"
+                        >
+                          Change
+                        </button>
+                      </motion.div>
+                    )}
+
+                    {wardDetection.status === "manual_required" && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }}
+                        className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3"
+                      >
+                        <p className="text-sm text-amber-800 font-medium mb-2">
+                          ⚠️ Unable to detect ward automatically — please select manually:
+                        </p>
+                        <select
+                          value={manualWardId}
+                          onChange={(e) => {
+                            setManualWardId(e.target.value);
+                            if (e.target.value) {
+                              setWardDetection({ status: "override", wardId: parseInt(e.target.value, 10) });
+                            }
+                          }}
+                          className="w-full border border-amber-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-white"
+                        >
+                          <option value="">Select your ward…</option>
+                          {Array.from({ length: 200 }, (_, i) => i + 1).map((w) => (
+                            <option key={w} value={w}>{getWardLabel(w)}</option>
+                          ))}
+                        </select>
+                      </motion.div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Name + Phone row */}

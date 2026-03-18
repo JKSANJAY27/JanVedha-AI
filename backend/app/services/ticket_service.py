@@ -63,6 +63,7 @@ class TicketService:
         source: TicketSource = TicketSource.WEB_PORTAL,
         reporter_user_id: Optional[str] = None,
         ward_id: Optional[int] = None,
+        auto_detected_ward: Optional[int] = None,
         lat: Optional[float] = None,
         lng: Optional[float] = None,
     ) -> TicketMongo:
@@ -146,6 +147,7 @@ class TicketService:
             reporter_name=reporter_name,
             reporter_user_id=reporter_user_id,
             ward_id=ward_id,
+            auto_detected_ward=auto_detected_ward,
             consent_given=True,
             consent_timestamp=datetime.utcnow(),
             language_detected=pipeline_result.language_detected,
