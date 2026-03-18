@@ -24,6 +24,7 @@ class TicketStatus(str, enum.Enum):
     CLOSED_UNVERIFIED = "CLOSED_UNVERIFIED"
     REOPENED = "REOPENED"
     REJECTED = "REJECTED"
+    WITHDRAWN = "WITHDRAWN"
 
 
 class PriorityLabel(str, enum.Enum):

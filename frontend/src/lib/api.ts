@@ -48,6 +48,8 @@ export const publicApi = {
   getMapIssues: (params?: Record<string, string>) =>
     api.get("/api/public/map/issues", { params }),
   getMyTickets: () => api.get("/api/public/my-tickets"),
+  withdrawTicket: (ticketCode: string, data: { withdrawal_reason: string; withdrawal_description?: string }) =>
+    api.post(`/api/public/my-tickets/${ticketCode}/withdraw`, data),
 };
 
 export const authApi = {

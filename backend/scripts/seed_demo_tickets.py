@@ -107,12 +107,12 @@ def make_ticket(i: int, lat: float, lng: float, category: str, ward_id: int) -> 
         "source": "WEB_PORTAL",
         "description": description,
         "dept_id": {
-            "roads": "PWD",
-            "water": "WATER",
-            "lighting": "ELEC",
-            "drainage": "DRAINAGE",
-            "waste": "SWM",
-        }.get(category, "PWD"),
+            "roads": "D01",
+            "water": "D03",
+            "lighting": "D06",
+            "drainage": "D04",
+            "waste": "D05",
+        }.get(category, "D01"),
         "issue_category": category,
         "ward_id": ward_id,
         "location": {

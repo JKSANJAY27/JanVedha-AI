@@ -21,6 +21,9 @@ router = APIRouter()
 
 def get_public_status(ticket: TicketMongo) -> str:
     """Helper to dynamically determine public ticket status based on logic."""
+    # 0. Withdrawal - citizen revoked
+    if ticket.status == "WITHDRAWN":
+        return "WITHDRAWN"
     # 1. Terminal / Force-closed states
     if ticket.status == "REJECTED":
         return "REJECTED"
@@ -73,9 +76,77 @@ async def get_my_tickets(
             "location_text": t.location_text,
             "created_at": t.created_at,
             "sla_deadline": t.sla_deadline,
+            # Withdrawal info
+            "withdrawal_reason": t.withdrawal_reason,
+            "withdrawal_description": t.withdrawal_description,
+            "withdrawn_at": t.withdrawn_at,
         }
         for t in tickets
     ]
+
+
+WITHDRAWAL_REASONS = {
+    "already_resolved": "Issue already resolved",
+    "submitted_by_mistake": "Complaint submitted by mistake",
+    "duplicate": "Duplicate complaint",
+    "no_longer_relevant": "No longer relevant",
+    "other": "Other",
+}
+
+
+class WithdrawTicketRequest(BaseModel):
+    withdrawal_reason: str
+    withdrawal_description: Optional[str] = None
+
+
+@router.post("/my-tickets/{ticket_code}/withdraw")
+async def withdraw_ticket(
+    ticket_code: str,
+    data: WithdrawTicketRequest,
+    current_user: UserMongo = Depends(get_current_user),
+):
+    """
+    Allow a citizen to withdraw their own complaint.
+    Sets status to WITHDRAWN, stores reason + timestamp.
+    Does NOT delete the record.
+    """
+    ticket = await TicketMongo.find_one(TicketMongo.ticket_code == ticket_code)
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+
+    # Ownership check
+    if ticket.reporter_user_id != str(current_user.id):
+        raise HTTPException(status_code=403, detail="Not your ticket")
+
+    # Cannot withdraw already terminal tickets
+    if ticket.status in ("CLOSED", "REJECTED", "WITHDRAWN"):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Can't withdraw a ticket that is already {ticket.status.lower()}.",
+        )
+
+    # Validate reason
+    if data.withdrawal_reason not in WITHDRAWAL_REASONS:
+        raise HTTPException(status_code=400, detail="Invalid withdrawal reason")
+
+    now = datetime.utcnow()
+    ticket.status = "WITHDRAWN"  # type: ignore
+    ticket.withdrawal_reason = data.withdrawal_reason
+    ticket.withdrawal_description = data.withdrawal_description
+    ticket.withdrawn_by = str(current_user.id)
+    ticket.withdrawn_at = now
+    ticket.status_timeline.append({
+        "status": "WITHDRAWN",
+        "timestamp": now.isoformat(),
+        "actor_role": "PUBLIC_USER",
+        "note": (
+            f"Citizen withdrew complaint. "
+            f"Reason: {WITHDRAWAL_REASONS[data.withdrawal_reason]}."
+            + (f" Note: {data.withdrawal_description}" if data.withdrawal_description else "")
+        ),
+    })
+    await ticket.save()
+    return {"ticket_code": ticket.ticket_code, "status": "WITHDRAWN"}
 
 
 class DetectWardRequest(BaseModel):

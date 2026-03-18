@@ -72,8 +72,8 @@ const PRIORITY_ICONS: Record<string, string> = {
     CRITICAL: "🔴", HIGH: "🟠", MEDIUM: "🟡", LOW: "🟢",
 };
 
-// Valid statuses after removing deprecated ones
-const STATUS_FILTERS = ["ALL", "OPEN", "ASSIGNED", "SCHEDULED", "IN_PROGRESS", "CLOSED"];
+// Valid statuses
+const STATUS_FILTERS = ["ALL", "OPEN", "ASSIGNED", "SCHEDULED", "IN_PROGRESS", "CLOSED", "WITHDRAWN"];
 
 // ─── Ticket List Sub-component ────────────────────────────────────────────────
 
@@ -88,7 +88,7 @@ function TicketList({ tickets, showAssign, onStatusUpdate, onOpenAssignModal, on
     const [statusFilter, setStatusFilter] = useState("ALL");
 
     const filtered = statusFilter === "ALL"
-        ? tickets
+        ? tickets.filter(t => t.status !== "WITHDRAWN")
         : tickets.filter(t => t.status === statusFilter);
 
     const grouped = PRIORITY_ORDER.reduce<Record<string, Ticket[]>>((acc, p) => {
@@ -167,17 +167,25 @@ function TicketList({ tickets, showAssign, onStatusUpdate, onOpenAssignModal, on
                                                         <td className="px-4 py-3"><StatusBadge status={ticket.status} size="sm" /></td>
                                                         <td className={`px-4 py-3 ${sla ? sla.cls : "text-gray-400"}`}>{sla ? sla.label : "N/A"}</td>
                                                         <td className="px-4 py-3 text-right space-x-2 whitespace-nowrap">
-                                                            {canAssign && (
-                                                                <button onClick={() => onOpenAssignModal(ticket)} className="text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 rounded px-2.5 py-1.5 font-medium transition-colors hover:bg-emerald-100">
-                                                                    {ticket.status === "SCHEDULED" ? "Assign Technician" : "Schedule & Assign"}
-                                                                </button>
+                                                            {ticket.status === "WITHDRAWN" ? (
+                                                                <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-500 bg-gray-100 border border-gray-200 rounded-full px-2.5 py-1">
+                                                                    🚫 Withdrawn by Citizen
+                                                                </span>
+                                                            ) : (
+                                                                <>
+                                                                    {canAssign && (
+                                                                        <button onClick={() => onOpenAssignModal(ticket)} className="text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 rounded px-2.5 py-1.5 font-medium transition-colors hover:bg-emerald-100">
+                                                                            {ticket.status === "SCHEDULED" ? "Assign Technician" : "Schedule & Assign"}
+                                                                        </button>
+                                                                    )}
+                                                                    {onOpenResolveModal && ticket.status === "IN_PROGRESS" && (
+                                                                        <button onClick={() => onOpenResolveModal(ticket)} className="text-xs bg-purple-50 text-purple-700 border border-purple-200 rounded px-2.5 py-1.5 font-medium transition-colors hover:bg-purple-100">
+                                                                            Upload Proof & Resolve
+                                                                        </button>
+                                                                    )}
+                                                                    <Link href={`/officer/tickets/${ticket.id}`} className="text-xs font-medium text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 rounded px-3 py-1.5 transition-colors">View →</Link>
+                                                                </>
                                                             )}
-                                                            {onOpenResolveModal && ticket.status === "IN_PROGRESS" && (
-                                                                <button onClick={() => onOpenResolveModal(ticket)} className="text-xs bg-purple-50 text-purple-700 border border-purple-200 rounded px-2.5 py-1.5 font-medium transition-colors hover:bg-purple-100">
-                                                                    Upload Proof & Resolve
-                                                                </button>
-                                                            )}
-                                                            <Link href={`/officer/tickets/${ticket.id}`} className="text-xs font-medium text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 rounded px-3 py-1.5 transition-colors">View →</Link>
                                                         </td>
                                                     </motion.tr>
                                                 );
@@ -796,20 +804,18 @@ function JuniorEngineerDashboard({ user }: { user: { name: string; dept_id?: str
 
     const refreshTickets = useCallback(() => {
         officerApi.getTickets(100).then(res => {
-            const deptTickets = user.dept_id ? res.data.filter((t: Ticket) => t.dept_id === user.dept_id) : res.data;
-            setTickets(deptTickets);
+            setTickets(res.data);
         });
-    }, [user.dept_id]);
+    }, []);
 
     useEffect(() => {
         officerApi.getTickets(100)
             .then(res => {
-                const deptTickets = user.dept_id ? res.data.filter((t: Ticket) => t.dept_id === user.dept_id) : res.data;
-                setTickets(deptTickets);
+                setTickets(res.data);
             })
             .catch(() => toast.error("Failed to load tickets"))
             .finally(() => setLoading(false));
-    }, [user.dept_id]);
+    }, []); // Run once on mount
 
     const handleStatusUpdate = (id: string, status: string) => {
         setTickets(prev => prev.map(t => t.id === id ? { ...t, status } : t));

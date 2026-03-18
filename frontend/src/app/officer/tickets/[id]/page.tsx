@@ -39,6 +39,10 @@ interface TicketDetail {
     work_verified?: boolean | null;
     work_verification_confidence?: number;
     work_verification_method?: string;
+    // Withdrawal
+    withdrawal_reason?: string | null;
+    withdrawal_description?: string | null;
+    withdrawn_at?: string | null;
 }
 
 const STATUSES = ["OPEN", "ASSIGNED", "SCHEDULED", "IN_PROGRESS", "CLOSED", "REJECTED"];
@@ -448,7 +452,46 @@ export default function TicketDetailPage() {
                             </div>
                         </div>
 
-                        {/* Priority analysis */}
+                        {/* Withdrawal Notice */}
+                        {ticket.status === "WITHDRAWN" && (
+                            <div className="bg-gray-50 border-2 border-gray-200 rounded-2xl shadow-sm p-6">
+                                <div className="flex items-center gap-3 mb-3">
+                                    <span className="text-3xl">🚫</span>
+                                    <div>
+                                        <h2 className="font-bold text-gray-800">Withdrawn by Citizen</h2>
+                                        <p className="text-xs text-gray-500">The citizen who submitted this complaint has withdrawn it.</p>
+                                    </div>
+                                </div>
+                                <div className="bg-white rounded-xl p-4 border border-gray-100 space-y-2">
+                                    {ticket.withdrawal_reason && (
+                                        <div>
+                                            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Reason</p>
+                                            <p className="text-sm font-medium text-gray-800 mt-0.5">{
+                                                ({
+                                                    already_resolved: "Issue already resolved",
+                                                    submitted_by_mistake: "Complaint submitted by mistake",
+                                                    duplicate: "Duplicate complaint",
+                                                    no_longer_relevant: "No longer relevant",
+                                                    other: "Other",
+                                                } as Record<string,string>)[ticket.withdrawal_reason] ?? ticket.withdrawal_reason
+                                            }</p>
+                                        </div>
+                                    )}
+                                    {ticket.withdrawal_description && (
+                                        <div>
+                                            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mt-2">Citizen&apos;s Note</p>
+                                            <p className="text-sm text-gray-700 italic mt-0.5">&ldquo;{ticket.withdrawal_description}&rdquo;</p>
+                                        </div>
+                                    )}
+                                    {ticket.withdrawn_at && (
+                                        <p className="text-xs text-gray-400 mt-2 pt-2 border-t border-gray-100">
+                                            Withdrawn {new Date(ticket.withdrawn_at).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
                         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
                             <div className="flex items-center justify-between mb-4">
                                 <h2 className="font-bold text-gray-900">Priority Analysis</h2>

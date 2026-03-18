@@ -147,7 +147,7 @@ async def get_dashboard_summary(
     total_critical = 0
 
     closed = [t for t in all_tickets if t.status in {TicketStatus.CLOSED}]
-    open_tickets = [t for t in all_tickets if t.status not in {TicketStatus.CLOSED, TicketStatus.REJECTED}]
+    open_tickets = [t for t in all_tickets if t.status not in {TicketStatus.CLOSED, TicketStatus.REJECTED, TicketStatus.WITHDRAWN}]
     overdue = [t for t in open_tickets if t.sla_deadline and t.sla_deadline < now]
 
     dept_map: dict[str, dict[str, int | str]] = {}
@@ -232,6 +232,12 @@ async def get_ticket(
         "photo_url": ticket.photo_url,
         "before_photo_url": ticket.before_photo_url,
         "after_photo_url": ticket.after_photo_url,
+        "withdrawal_reason": getattr(ticket, "withdrawal_reason", None),
+        "withdrawal_description": getattr(ticket, "withdrawal_description", None),
+        "withdrawn_at": getattr(ticket, "withdrawn_at", None),
+        "withdrawn_by": getattr(ticket, "withdrawn_by", None),
+        "work_verified": getattr(ticket, "work_verified", None),
+        "work_verification_confidence": getattr(ticket, "work_verification_confidence", None),
     }
 
 
@@ -1047,6 +1053,9 @@ def _ticket_list_item(t: TicketMongo) -> dict:
         "work_verification_confidence": t.work_verification_confidence,
         "lat": lat,
         "lng": lng,
+        "withdrawal_reason": getattr(t, "withdrawal_reason", None),
+        "withdrawal_description": getattr(t, "withdrawal_description", None),
+        "withdrawn_at": getattr(t, "withdrawn_at", None),
     }
 
 # Trigger auto-reload

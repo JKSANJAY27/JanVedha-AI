@@ -61,7 +61,7 @@ async def seed_users():
             "phone": "7777777777",
             "role": "JUNIOR_ENGINEER",
             "ward_id": 1,
-            "dept_id": "D05",
+            "dept_id": "D06",
             "password": "password123",
         },
         {
@@ -79,7 +79,7 @@ async def seed_users():
             "phone": "7777777779",
             "role": "JUNIOR_ENGINEER",
             "ward_id": 1,
-            "dept_id": "D01",
+            "dept_id": "D03",
             "password": "password123",
         },
         {
@@ -88,7 +88,7 @@ async def seed_users():
             "phone": "6666666666",
             "role": "FIELD_STAFF",
             "ward_id": 1,
-            "dept_id": "D05",
+            "dept_id": "D06",
             "password": "password123",
         },
         {

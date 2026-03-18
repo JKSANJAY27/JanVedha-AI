@@ -73,6 +73,10 @@ export function formatStatus(
             };
         case "REJECTED":
             return { bg: "bg-red-100", text: "text-red-700", dot: "bg-red-500" };
+        case "WITHDRAWN":
+            return { bg: "bg-gray-100", text: "text-gray-500", dot: "bg-gray-400" };
+        case "SCHEDULED":
+            return { bg: "bg-sky-100", text: "text-sky-700", dot: "bg-sky-500" };
         default:
             return { bg: "bg-gray-100", text: "text-gray-600", dot: "bg-gray-400" };
     }

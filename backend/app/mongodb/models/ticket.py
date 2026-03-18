@@ -126,6 +126,12 @@ class TicketMongo(Document):
     work_verification_explanation: Optional[str] = None  # Human-readable verdict
     work_verified_at: Optional[datetime] = None
 
+    # Citizen withdrawal fields
+    withdrawal_reason: Optional[str] = None          # predefined reason key
+    withdrawal_description: Optional[str] = None     # optional free-text
+    withdrawn_by: Optional[str] = None               # reporter_user_id
+    withdrawn_at: Optional[datetime] = None
+
     class Settings:
         name = "tickets"
         indexes = [

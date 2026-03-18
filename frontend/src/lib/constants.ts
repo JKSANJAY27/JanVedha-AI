@@ -38,6 +38,7 @@ export const STATUS_LABELS: Record<string, string> = {
     CLOSED_UNVERIFIED: "Closed (Unverified)",
     REOPENED: "Reopened",
     REJECTED: "Rejected",
+    WITHDRAWN: "Withdrawn by Citizen",
 };
 
 export const USER_ROLES: Record<string, string> = {
