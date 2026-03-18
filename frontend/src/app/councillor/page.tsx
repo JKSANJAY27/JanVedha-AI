@@ -318,6 +318,27 @@ export default function CouncillorDashboard() {
                     <p className="text-emerald-300 text-sm">Councillor · Ward {user?.ward_id}</p>
                     <h1 className="text-2xl font-bold mt-0.5">Ward {user?.ward_id} — Insights Dashboard 🏛️</h1>
                     <p className="text-emerald-200 text-xs mt-1">Ward-level civic intelligence — tickets + social signals</p>
+
+                    {/* Development nav strip */}
+                    <div className="flex items-center gap-1 mt-4 pt-3 border-t border-emerald-600 flex-wrap">
+                        <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider mr-2">
+                            🏗️ Development
+                        </span>
+                        {[
+                            { href: "/councillor/opportunity", label: "Opportunity Map", icon: "🗺️" },
+                            { href: "/councillor/proposal", label: "Generate Proposal", icon: "📄" },
+                            { href: "/councillor/proposals", label: "Past Proposals", icon: "📋" },
+                        ].map(({ href, label, icon }) => (
+                            <a
+                                key={href}
+                                href={href}
+                                className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white transition-colors"
+                            >
+                                <span>{icon}</span>
+                                {label}
+                            </a>
+                        ))}
+                    </div>
                 </div>
             </div>
 

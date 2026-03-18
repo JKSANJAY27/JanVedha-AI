@@ -196,7 +196,7 @@ async def generate_trust_score_insights(ward_id: int, score_data: Dict) -> str:
     try:
         import google.generativeai as genai
         genai.configure(api_key=settings.GEMINI_API_KEY)
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        model = genai.GenerativeModel("gemini-2.5-flash")
 
         components = score_data.get("components", {})
         prompt = f"""You are a civic performance analyst. Below is the Public Trust Score breakdown for Ward {ward_id}:
@@ -226,3 +226,4 @@ def _fallback_insight(score_data: Dict) -> str:
     elif score >= 50:
         return "Trust score is moderate. Focus on improving verified completion rates and reducing resolution times to boost public confidence."
     return "Trust score needs improvement. Prioritize clearing overdue tickets and ensuring work is photo-verified to rebuild public trust."
+

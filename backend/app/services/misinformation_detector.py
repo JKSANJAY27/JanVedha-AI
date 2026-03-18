@@ -28,7 +28,7 @@ async def detect_misinformation_in_posts(posts: List[Dict], ward_id: int) -> Lis
     try:
         import google.generativeai as genai
         genai.configure(api_key=settings.GEMINI_API_KEY)
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        model = genai.GenerativeModel("gemini-2.5-flash")
 
         posts_text = "\n".join([
             f"[Post {p.get('post_id', i)}]: {p.get('text', '')}"
@@ -125,7 +125,7 @@ async def draft_counter_response(claim: str, counter_data: Dict, ward_id: int) -
     try:
         import google.generativeai as genai
         genai.configure(api_key=settings.GEMINI_API_KEY)
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        model = genai.GenerativeModel("gemini-2.5-flash")
 
         data_summary = f"""
 - Total complaints (last 30 days): {counter_data.get('total_tickets_last_30_days', 0)}
@@ -242,3 +242,4 @@ async def start_misinformation_detector():
         except Exception as e:
             logger.error(f"Misinformation detector loop error: {e}")
         await asyncio.sleep(30 * 60)  # 30 minutes
+

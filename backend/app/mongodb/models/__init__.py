@@ -16,6 +16,8 @@ from .notification import NotificationMongo
 from .misinformation_flag import MisinformationFlagMongo
 from .trust_score import TrustScoreMongo
 from .ward_config import WardConfigMongo
+# Feature: Infrastructure Opportunity & Proposals
+from .proposal import ProposalMongo
 
 __all__ = [
     "UserMongo",
@@ -35,4 +37,5 @@ __all__ = [
     "MisinformationFlagMongo",
     "TrustScoreMongo",
     "WardConfigMongo",
+    "ProposalMongo",
 ]

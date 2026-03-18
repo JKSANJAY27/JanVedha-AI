@@ -173,7 +173,7 @@ async def call_gemini(message: str, history: List[Dict[str, Any]], user: UserMon
             available_tools.append(get_city_summary)
 
         model = genai.GenerativeModel(
-            model_name="gemini-1.5-flash", # Use 1.5-flash for reliability and quota
+            model_name="gemini-2.5-flash", # Use 1.5-flash for reliability and quota
             system_instruction=system_instruction,
             tools=available_tools
         )
@@ -271,3 +271,4 @@ async def chat_websocket(websocket: WebSocket, token: Optional[str] = None):
             }))
         except Exception:
             pass
+

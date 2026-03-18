@@ -243,3 +243,28 @@ export const trustApi = {
   getTrustScoreInsights: (wardId: number) =>
     api.post(`/api/v1/trust/wards/${wardId}/trust-score/insights`),
 };
+
+export const opportunityApi = {
+  getZones: (wardId?: number, days = 180) =>
+    api.get("/api/opportunity/zones", { params: { ward_id: wardId, days } }),
+};
+
+export const proposalsApi = {
+  generate: (data: {
+    ward_id?: number;
+    zone_cell_id?: string;
+    zone_lat: number;
+    zone_lng: number;
+    development_type: string;
+    estimated_cost?: number;
+    councillor_name: string;
+    ward_name: string;
+    additional_context?: string;
+  }) => api.post("/api/proposals/generate", data),
+  download: (id: string) =>
+    api.get(`/api/proposals/${id}/download`, { responseType: "blob" }),
+  list: (wardId?: number) =>
+    api.get("/api/proposals", { params: { ward_id: wardId } }),
+  get: (id: string) => api.get(`/api/proposals/${id}`),
+};
+

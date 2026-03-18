@@ -32,7 +32,7 @@ async def generate_citizen_message(
     try:
         import google.generativeai as genai
         genai.configure(api_key=settings.GEMINI_API_KEY)
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        model = genai.GenerativeModel("gemini-2.5-flash")
 
         resolved_extra = ""
         if event_type == "issue_resolved" and verification_statement:
@@ -185,3 +185,4 @@ async def notify_citizen(
 
     except Exception as e:
         logger.error(f"notify_citizen failed for ticket_id={ticket_id} event={event_type}: {e}")
+

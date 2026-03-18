@@ -102,7 +102,7 @@ WARD_LOCATION_MAP: Dict[int, str] = {
 
 GEMINI_API_URL = (
     "https://generativelanguage.googleapis.com/v1beta/models/"
-    "gemini-1.5-flash:generateContent"
+    "gemini-2.5-flash:generateContent"
 )
 
 SYSTEM_PROMPT = """You are an AI governance analyst for Indian local governance.
@@ -428,3 +428,4 @@ def _post_to_dict(p: SocialPostMongo) -> Dict[str, Any]:
         "scraped_at": p.scraped_at.isoformat() if p.scraped_at else None,
         "post_timestamp": p.post_timestamp.isoformat() if p.post_timestamp else None,
     }
+

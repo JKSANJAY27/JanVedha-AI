@@ -68,6 +68,7 @@ beautifulsoup4
 # ── Documents / Templates ─────────────────────────────────────────────────────
 jinja2
 weasyprint
+python-docx
 
 # ── Blockchain (optional, stub available) ─────────────────────────────────────
 web3

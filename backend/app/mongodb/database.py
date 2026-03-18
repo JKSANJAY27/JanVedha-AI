@@ -57,6 +57,8 @@ async def init_mongodb() -> None:
         MisinformationFlagMongo,
         TrustScoreMongo,
         WardConfigMongo,
+        # Feature: Opportunity Spotter & Proposals
+        ProposalMongo,
     )
 
     uri = settings.MONGODB_URI
@@ -88,6 +90,8 @@ async def init_mongodb() -> None:
             MisinformationFlagMongo,
             TrustScoreMongo,
             WardConfigMongo,
+            # Feature: Opportunity Spotter & Proposals
+            ProposalMongo,
         ],
     )
 

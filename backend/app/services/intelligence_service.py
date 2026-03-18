@@ -51,7 +51,7 @@ async def _call_gemini(prompt: str, fallback: str) -> str:
     try:
         from langchain_google_genai import ChatGoogleGenerativeAI
         llm = ChatGoogleGenerativeAI(
-            model="gemini-1.5-flash",
+            model="gemini-2.5-flash",
             google_api_key=settings.GEMINI_API_KEY,
             temperature=0.3,
         )
@@ -333,3 +333,4 @@ Be concise and actionable."""
         # Sort by predicted increase
         alerts.sort(key=lambda a: a["predicted_increase_pct"], reverse=True)
         return alerts[:5]
+

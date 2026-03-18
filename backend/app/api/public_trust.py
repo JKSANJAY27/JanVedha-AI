@@ -33,7 +33,7 @@ async def _call_gemini_vision(image_b64: str, issue_type: str, coords: Optional[
     try:
         import google.generativeai as genai
         genai.configure(api_key=settings.GEMINI_API_KEY)
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        model = genai.GenerativeModel("gemini-2.5-flash")
 
         image_data = {
             "mime_type": "image/jpeg",
@@ -509,3 +509,4 @@ async def get_trust_score_insights(
     insight = await generate_trust_score_insights(ward_id, score_data)
 
     return {"ward_id": ward_id, "month": month, "insight": insight, "score": score_data}
+
