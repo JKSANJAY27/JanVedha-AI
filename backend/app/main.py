@@ -25,7 +25,9 @@ async def lifespan(app: FastAPI):
 
     # Load the ML priority model from MongoDB (if trained data exists)
     from app.services.ai.priority_agent import load_priority_model
-    await load_priority_model()
+
+#    await load_priority_model()
+
 
     # Start Telegram Bot if configured
     from app.services.telegram_bot import get_bot_application
