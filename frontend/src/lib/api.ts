@@ -94,8 +94,13 @@ export const officerApi = {
       technician_id: technicianId,
       scheduled_date: scheduledDate
     }),
-  uploadProof: (id: string, photoUrl: string) =>
-    api.post(`/api/officer/tickets/${id}/verify-completion`, { after_photo_url: photoUrl }),
+  uploadProof: (id: string, formData: FormData) =>
+    api.post(`/api/officer/tickets/${id}/verify-completion`, formData, {
+      transformRequest: (data, headers) => {
+        delete headers["Content-Type"];
+        return data;
+      }
+    }),
   getLocationHistory: (id: string) =>
     api.get(`/api/officer/tickets/${id}/location-history`),
   addRemark: (id: string, text: string) =>
@@ -172,12 +177,14 @@ export const commissionerApi = {
 export const socialIntelApi = {
   getSentimentOverview: (wardId?: number) =>
     api.get("/api/social-intel/sentiment-overview", { params: wardId ? { ward_id: wardId } : {} }),
-  getEmergingIssues: (wardId?: number, hours = 24, limit = 8) =>
+  getEmergingIssues: (wardId?: number, hours = 72, limit = 6) =>
     api.get("/api/social-intel/emerging-issues", { params: { ward_id: wardId, hours, limit } }),
   getSocialPosts: (wardId?: number, platform?: string, page = 1, pageSize = 20) =>
     api.get("/api/social-intel/social-posts", { params: { ward_id: wardId, platform, page, page_size: pageSize } }),
   getPlatformStats: (wardId?: number) =>
     api.get("/api/social-intel/platform-stats", { params: wardId ? { ward_id: wardId } : {} }),
+  getStatus: (wardId?: number) =>
+    api.get("/api/social-intel/status", { params: wardId ? { ward_id: wardId } : {} }),
   triggerScrape: (wardId?: number, keywords?: string) =>
     api.post("/api/social-intel/trigger-scrape", null, { params: { ward_id: wardId, keywords } }),
   triggerWardScrape: (wardId?: number, keywords?: string) =>
@@ -205,7 +212,10 @@ export const trustApi = {
   // Feature 1 — AI-Verified Work Proof
   resolveWithProof: (ticketId: string, formData: FormData) =>
     api.post(`/api/v1/trust/tickets/${ticketId}/resolve-with-proof`, formData, {
-      headers: { "Content-Type": "multipart/form-data" },
+      transformRequest: (data, headers) => {
+        delete headers["Content-Type"];
+        return data;
+      }
     }),
   getVerifiedResolutions: (wardId?: number, limit = 50) =>
     api.get("/api/v1/trust/tickets/verified-resolutions", {
