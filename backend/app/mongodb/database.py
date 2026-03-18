@@ -59,6 +59,8 @@ async def init_mongodb() -> None:
         WardConfigMongo,
         # Feature: Opportunity Spotter & Proposals
         ProposalMongo,
+        # Feature: Constituent Casework
+        CaseworkMongo,
     )
 
     uri = settings.MONGODB_URI
@@ -92,6 +94,8 @@ async def init_mongodb() -> None:
             WardConfigMongo,
             # Feature: Opportunity Spotter & Proposals
             ProposalMongo,
+            # Feature: Constituent Casework
+            CaseworkMongo,
         ],
     )
 

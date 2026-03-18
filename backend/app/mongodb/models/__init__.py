@@ -18,6 +18,8 @@ from .trust_score import TrustScoreMongo
 from .ward_config import WardConfigMongo
 # Feature: Infrastructure Opportunity & Proposals
 from .proposal import ProposalMongo
+# Feature: Constituent Casework
+from .casework import CaseworkMongo
 
 __all__ = [
     "UserMongo",
@@ -38,4 +40,5 @@ __all__ = [
     "TrustScoreMongo",
     "WardConfigMongo",
     "ProposalMongo",
+    "CaseworkMongo",
 ]

@@ -80,7 +80,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-from app.api import public, auth, officer, webhooks, chat, calendar, councillor, commissioner, documents, social_intel, analytics, public_trust, opportunity, proposals
+from app.api import public, auth, officer, webhooks, chat, calendar, councillor, commissioner, documents, social_intel, analytics, public_trust, opportunity, proposals, casework
 
 app.include_router(public.router, prefix="/api/public", tags=["public"])
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
@@ -96,6 +96,7 @@ app.include_router(analytics.router, prefix="/api/analytics", tags=["analytics"]
 app.include_router(public_trust.router, prefix="/api/v1/trust", tags=["public-trust"])
 app.include_router(opportunity.router, prefix="/api/opportunity", tags=["opportunity"])
 app.include_router(proposals.router, prefix="/api/proposals", tags=["proposals"])
+app.include_router(casework.router, prefix="/api/casework", tags=["casework"])
 
 
 @app.get("/api/health")

@@ -268,3 +268,23 @@ export const proposalsApi = {
   get: (id: string) => api.get(`/api/proposals/${id}`),
 };
 
+export const caseworkApi = {
+  list: (wardId: number, params?: { status?: string; escalated_only?: boolean; search?: string; page?: number; limit?: number }) =>
+    api.get("/api/casework", { params: { ward_id: wardId, ...params } }),
+  getCounts: (wardId: number) =>
+    api.get("/api/casework/counts", { params: { ward_id: wardId } }),
+  get: (caseworkId: string) => api.get(`/api/casework/${caseworkId}`),
+  getConstituentHistory: (phone: string, wardId: number) =>
+    api.get(`/api/casework/constituent/${phone}`, { params: { ward_id: wardId } }),
+  matchTickets: (wardId: number, category: string, description: string) =>
+    api.get("/api/casework/match-tickets", { params: { ward_id: wardId, category, description } }),
+  log: (data: object) => api.post("/api/casework/log", data),
+  linkTicket: (caseworkId: string, ticketId: string) =>
+    api.post(`/api/casework/${caseworkId}/link-ticket`, { ticket_id: ticketId }),
+  createTicket: (caseworkId: string, title?: string) =>
+    api.post(`/api/casework/${caseworkId}/create-ticket`, { title }),
+  draftFollowup: (caseworkId: string, language: string) =>
+    api.post(`/api/casework/${caseworkId}/draft-followup`, { language }),
+  markSent: (caseworkId: string, followUpId: string, sentVia: string) =>
+    api.post(`/api/casework/${caseworkId}/mark-sent`, { follow_up_id: followUpId, sent_via: sentVia }),
+};
