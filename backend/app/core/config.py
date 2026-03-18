@@ -62,6 +62,7 @@ class Settings(BaseSettings):
     GNEWS_API_KEY: str = "34f5754bd852334a1bc6b1a6e1970f44"
     CURRENTS_API_KEY: str = "yHyeCtUokXL6t6-Evcw4zuJ_bXGfJ4xt6dQcmgzOqqhLou39"
     NEWSDATA_API_KEY: str = "pub_ea435c80fd684848b16cb1ad2fc1c469"
+    NEWS_API_KEY: str = "2082e154a8944e1988b2c6015c6b7ddc"  # NewsAPI.org
     # City scope for scrapers
     DEMO_CITY: str = "Chennai"
     # Scrape interval (minutes)

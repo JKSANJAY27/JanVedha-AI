@@ -36,6 +36,11 @@ class SocialPostMongo(Document):
     summary: Optional[str] = None          # one-liner from Gemini
     action_needed: Optional[str] = None
 
+    # AI pipeline metadata
+    ai_generated: bool = False                  # True = Gemini-generated, False = scraped
+    relevance_score: Optional[float] = None     # Gemini's relevance rating 0-1
+    gemini_insight: Optional[str] = None        # Gemini's extra analysis note
+
     # Scraper metadata
     keywords: List[str] = Field(default_factory=list)
     post_timestamp: Optional[datetime] = None   # when the original post was made

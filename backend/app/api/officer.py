@@ -883,10 +883,13 @@ class WorkCompletionRequest(BaseModel):
     notes: Optional[str] = None           # Optional technician notes
 
 
+from fastapi import UploadFile, File, Form
+
 @router.post("/tickets/{ticket_id}/verify-completion")
 async def verify_work_completion(
     ticket_id: str,
-    data: WorkCompletionRequest,
+    file: UploadFile = File(...),
+    notes: Optional[str] = Form(None),
     current_user: UserMongo = Depends(get_current_user),
 ):
     """
@@ -894,34 +897,39 @@ async def verify_work_completion(
     has been resolved by comparing it with the original 'before' photo.
 
     Flow:
-    1. Technician takes after photo on site and submits its URL here
-    2. System fetches both before (from ticket) & after images
+    1. Technician takes after photo on site and submits its file here
+    2. System converts to base64 data URI
     3. Gemini Vision analyses both + issue context → verdict
     4. Ticket updated with: after_photo_url, work_verified, verification result
     5. Status auto-transitions to PENDING_VERIFICATION (officer can then CLOSE)
-
-    Args:
-        ticket_id: MongoDB ObjectId of the ticket
-        after_photo_url: URL of the technician's after-work photo
     """
     from beanie import PydanticObjectId
     from datetime import datetime
+    import base64
     from app.services.ai.work_verifier import verify_work_completion as _verify
 
     ticket = await TicketMongo.get(PydanticObjectId(ticket_id))
     if not ticket:
         raise HTTPException(status_code=404, detail="Ticket not found")
 
-    # Only technicians or ward officers can submit completion
-    allowed = {UserRole.TECHNICIAN, UserRole.WARD_OFFICER,
+    # Only field staff or ward officers can submit completion
+    allowed = {UserRole.FIELD_STAFF, UserRole.JUNIOR_ENGINEER, UserRole.WARD_OFFICER,
                UserRole.COMMISSIONER, UserRole.SUPER_ADMIN}
     if current_user.role not in allowed:
         raise HTTPException(status_code=403, detail="Only technicians/officers can verify completion")
 
+    # Read and encode the photo
+    photo_bytes = await file.read()
+    if len(photo_bytes) > 10 * 1024 * 1024:  # 10 MB limit
+        raise HTTPException(status_code=400, detail="Photo too large. Maximum size is 10 MB.")
+
+    image_b64 = base64.b64encode(photo_bytes).decode("utf-8")
+    after_photo_url = f"data:{file.content_type or 'image/jpeg'};base64,{image_b64}"
+
     # Need a before photo for comparison
     if not ticket.before_photo_url and not ticket.photo_url:
         # No before image — store result but cannot do AI verification
-        ticket.after_photo_url = data.after_photo_url
+        ticket.after_photo_url = after_photo_url
         ticket.work_verified = None   # indeterminate
         ticket.work_verification_confidence = 0.0
         ticket.work_verification_method = "no_before_image"
@@ -936,7 +944,7 @@ async def verify_work_completion(
             "status": "PENDING_VERIFICATION",
             "timestamp": datetime.utcnow().isoformat(),
             "actor_role": current_user.role,
-            "note": f"After photo submitted (no before photo for AI comparison). Notes: {data.notes or ''}",
+            "note": f"After photo submitted (no before photo for AI comparison). Notes: {notes or ''}",
         })
         await ticket.save()
         return {
@@ -953,13 +961,13 @@ async def verify_work_completion(
     # Run AI verification (3-tier fallback: Gemini → SSIM → pixel)
     result = await _verify(
         before_url=before_url,
-        after_url=data.after_photo_url,
+        after_url=after_photo_url,
         issue_category=ticket.issue_category or "general",
         description=ticket.description,
     )
 
     # Persist results to ticket
-    ticket.after_photo_url = data.after_photo_url
+    ticket.after_photo_url = after_photo_url
     ticket.work_verified = result.verified
     ticket.work_verification_confidence = result.confidence
     ticket.work_verification_method = result.method
@@ -967,20 +975,26 @@ async def verify_work_completion(
     ticket.work_verified_at = datetime.utcnow()
 
     # Auto-transition status
+    new_status = "PENDING_VERIFICATION"
     if ticket.status not in {"CLOSED", "REJECTED"}:
-        ticket.status = "PENDING_VERIFICATION"  # type: ignore
+        if result.verified is True:
+            new_status = "CLOSED"
+        elif result.verified is False:
+            new_status = "REJECTED"
+            
+        ticket.status = new_status  # type: ignore
 
-    ticket.status_timeline.append({
-        "status": "PENDING_VERIFICATION",
-        "timestamp": datetime.utcnow().isoformat(),
-        "actor_role": current_user.role,
-        "note": (
-            f"AI Work Verification: {'✅ VERIFIED' if result.verified else '❌ NOT VERIFIED'} "
-            f"(confidence={result.confidence:.0%}, method={result.method}). "
-            f"{result.explanation}. "
-            f"Notes: {data.notes or 'None'}"
-        ),
-    })
+        ticket.status_timeline.append({
+            "status": new_status,
+            "timestamp": datetime.utcnow().isoformat(),
+            "actor_role": current_user.role,
+            "note": (
+                f"AI Work Verification: {'✅ VERIFIED' if result.verified else '❌ NOT VERIFIED'} "
+                f"(confidence={result.confidence:.0%}, method={result.method}). "
+                f"{result.explanation}. "
+                f"Notes: {notes or 'None'}"
+            ),
+        })
 
     await ticket.save()
 
@@ -989,7 +1003,7 @@ async def verify_work_completion(
         **result.to_dict(),
         "ssim_score": result.ssim_score,
         "phash_distance": result.phash_distance,
-        "status_updated_to": "PENDING_VERIFICATION",
+        "status_updated_to": new_status,
     }
 
 

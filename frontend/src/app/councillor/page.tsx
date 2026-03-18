@@ -58,6 +58,10 @@ interface SentimentOverview {
     neutral: number;
     negative: number;
     score: number;
+    label?: string;
+    narrative?: string;
+    top_concerns?: string[];
+    ai_powered?: boolean;
 }
 
 interface EmergingIssue {
@@ -65,8 +69,15 @@ interface EmergingIssue {
     count: number;
     negative_count: number;
     max_urgency: string;
+    urgency?: string;
     platforms: string[];
     sample_summary: string | null;
+    headline?: string;
+    insight?: string;
+    recommended_action?: string;
+    trend?: string;
+    source_urls?: string[];
+    ai_powered?: boolean;
 }
 
 interface SocialPost {
@@ -79,7 +90,10 @@ interface SocialPost {
     sentiment: string | null;
     summary: string | null;
     scraped_at: string | null;
+    post_timestamp: string | null;
     source_url: string;
+    ai_generated?: boolean;
+    gemini_insight?: string | null;
 }
 
 const PLATFORM_ICONS: Record<string, string> = {
@@ -108,34 +122,74 @@ function SentimentGauge({ data }: { data: SentimentOverview }) {
     const score = data.score;
     const scoreColor = score > 0.2 ? "text-emerald-600" : score < -0.2 ? "text-red-600" : "text-yellow-600";
 
+    const labelColors: Record<string, string> = {
+        "Very Negative": "bg-red-100 text-red-700 border-red-200",
+        "Negative": "bg-red-100 text-red-600 border-red-200",
+        "Cautious": "bg-orange-100 text-orange-700 border-orange-200",
+        "Mixed": "bg-yellow-100 text-yellow-700 border-yellow-200",
+        "Stable": "bg-blue-100 text-blue-700 border-blue-200",
+        "Positive": "bg-emerald-100 text-emerald-700 border-emerald-200",
+        "Very Positive": "bg-emerald-100 text-emerald-800 border-emerald-300",
+    };
+
     if (data.total === 0) {
         return (
             <div className="flex flex-col items-center justify-center py-8 text-center text-gray-400">
                 <span className="text-3xl mb-2">📡</span>
-                <p className="text-sm">No social signals yet</p>
-                <p className="text-xs mt-1">Trigger a scrape from the Commissioner dashboard to start collecting data</p>
+                <p className="text-sm font-medium">No civic signals yet</p>
+                <p className="text-xs mt-1 text-gray-300">Click "Refresh Data" to fetch news + AI insights</p>
             </div>
         );
     }
 
     return (
-        <div>
-            <div className="flex items-center justify-between mb-2">
-                <span className={`text-2xl font-bold ${scoreColor}`}>
-                    {score > 0 ? "+" : ""}{score.toFixed(2)}
-                </span>
-                <span className="text-xs text-gray-400">{data.total} posts · last 7 days</span>
+        <div className="space-y-3">
+            {/* Score + Label */}
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                    <span className={`text-2xl font-bold ${scoreColor}`}>
+                        {score > 0 ? "+" : ""}{score.toFixed(2)}
+                    </span>
+                    {data.label && (
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${labelColors[data.label] ?? "bg-gray-100 text-gray-600 border-gray-200"}`}>
+                            {data.label}
+                        </span>
+                    )}
+                    {data.ai_powered && (
+                        <span className="text-[10px] bg-indigo-50 text-indigo-600 font-semibold px-1.5 py-0.5 rounded border border-indigo-100">🤖 AI</span>
+                    )}
+                </div>
+                <span className="text-xs text-gray-400">{data.total} signals · 7 days</span>
             </div>
-            <div className="flex rounded-full overflow-hidden h-4 w-full mb-3">
+
+            {/* Bar */}
+            <div className="flex rounded-full overflow-hidden h-3 w-full">
                 {negPct > 0 && <div className="bg-red-400 transition-all" style={{ width: `${negPct}%` }} title={`Negative: ${negPct}%`} />}
                 {neuPct > 0 && <div className="bg-gray-300 transition-all" style={{ width: `${neuPct}%` }} title={`Neutral: ${neuPct}%`} />}
                 {posPct > 0 && <div className="bg-emerald-400 transition-all" style={{ width: `${posPct}%` }} title={`Positive: ${posPct}%`} />}
             </div>
             <div className="flex gap-4 text-xs">
-                <span className="text-red-600 font-medium">🔴 {negPct}% Negative</span>
-                <span className="text-gray-500">⚪ {neuPct}% Neutral</span>
-                <span className="text-emerald-600 font-medium">🟢 {posPct}% Positive</span>
+                <span className="text-red-600 font-medium">🔴 {negPct}% Neg</span>
+                <span className="text-gray-400">⚪ {neuPct}% Neutral</span>
+                <span className="text-emerald-600 font-medium">🟢 {posPct}% Pos</span>
             </div>
+
+            {/* AI Narrative */}
+            {data.narrative && (
+                <div className="bg-indigo-50 rounded-xl p-3 border border-indigo-100 mt-1">
+                    <p className="text-[11px] text-indigo-800 leading-relaxed">{data.narrative}</p>
+                </div>
+            )}
+
+            {/* Top Concerns */}
+            {data.top_concerns && data.top_concerns.length > 0 && (
+                <div className="flex flex-wrap gap-1 pt-1">
+                    <span className="text-[10px] text-gray-400 mr-1">Top concerns:</span>
+                    {data.top_concerns.map(c => (
+                        <span key={c} className="text-[10px] bg-red-50 text-red-600 border border-red-100 px-1.5 py-0.5 rounded-full font-medium">{c}</span>
+                    ))}
+                </div>
+            )}
         </div>
     );
 }
@@ -218,17 +272,20 @@ export default function CouncillorDashboard() {
 
     const [loading, setLoading] = useState(true);
     const [scrapeLoading, setScrapeLoading] = useState(false);
+    const [lastScrapeTime, setLastScrapeTime] = useState<string | null>(null);
 
     const loadSocialData = useCallback(async (ward?: number) => {
         try {
-            const [sent, emerg, posts] = await Promise.all([
+            const [sent, emerg, posts, status] = await Promise.all([
                 socialIntelApi.getSentimentOverview(ward).catch(() => ({ data: { total: 0, positive: 0, neutral: 0, negative: 0, score: 0 } })),
-                socialIntelApi.getEmergingIssues(ward, 24, 6).catch(() => ({ data: [] })),
+                socialIntelApi.getEmergingIssues(ward, 72, 6).catch(() => ({ data: [] })),
                 socialIntelApi.getSocialPosts(ward, undefined, 1, 10).catch(() => ({ data: { results: [] } })),
+                socialIntelApi.getStatus(ward).catch(() => ({ data: { last_scraped_at: null } })),
             ]);
             setSentiment(sent.data);
             setEmerging(emerg.data);
             setSocialPosts(posts.data?.results ?? []);
+            setLastScrapeTime((status.data as { last_scraped_at: string | null }).last_scraped_at);
         } catch {
             toast.error("Failed to refresh social data");
         }
@@ -239,11 +296,10 @@ export default function CouncillorDashboard() {
         setScrapeLoading(true);
         try {
             await socialIntelApi.triggerWardScrape(ward);
-            toast.success("Ward scrape started! Refreshing data in ~35 seconds…", { duration: 5000 });
-            // Wait for scraper to finish, then reload
+            toast.success("Civic intelligence pipeline started! (NewsAPI + Gemini AI) — refreshing in ~40s", { duration: 6000 });
             setTimeout(() => {
                 loadSocialData(ward).finally(() => setScrapeLoading(false));
-            }, 35000);
+            }, 42000);
         } catch {
             toast.error("Failed to trigger scrape");
             setScrapeLoading(false);
@@ -265,9 +321,10 @@ export default function CouncillorDashboard() {
             councillorApi.getTopIssues(ward, 8),
             councillorApi.getOverdueTickets(ward),
             socialIntelApi.getSentimentOverview(ward).catch(() => ({ data: { total: 0, positive: 0, neutral: 0, negative: 0, score: 0 } })),
-            socialIntelApi.getEmergingIssues(ward, 24, 6).catch(() => ({ data: [] })),
+            socialIntelApi.getEmergingIssues(ward, 72, 6).catch(() => ({ data: [] })),
             socialIntelApi.getSocialPosts(ward, undefined, 1, 10).catch(() => ({ data: { results: [] } })),
-        ]).then(([s, d, t, issues, ov, sent, emerg, posts]) => {
+            socialIntelApi.getStatus(ward).catch(() => ({ data: { last_scraped_at: null } })),
+        ]).then(([s, d, t, issues, ov, sent, emerg, posts, status]) => {
             setSummary(s.data);
             setDeptPerf(d.data);
             setTrend(t.data);
@@ -276,6 +333,7 @@ export default function CouncillorDashboard() {
             setSentiment((sent as { data: SentimentOverview }).data);
             setEmerging((emerg as { data: EmergingIssue[] }).data);
             setSocialPosts((posts as { data: { results: SocialPost[] } }).data?.results ?? []);
+            setLastScrapeTime((status as { data: { last_scraped_at: string | null } }).data.last_scraped_at);
         }).catch(() => toast.error("Failed to load ward data"))
             .finally(() => setLoading(false));
 
@@ -651,10 +709,15 @@ export default function CouncillorDashboard() {
 
                 {/* ══ Social Intelligence Section ══════════════════════════════════ */}
                 <div>
-                    <div className="flex items-center gap-2 mb-4">
+                    <div className="flex items-center gap-2 mb-4 flex-wrap">
                         <span className="text-xl">📡</span>
                         <h2 className="text-base font-bold text-gray-800">Social Intelligence</h2>
-                        <span className="text-xs bg-indigo-100 text-indigo-700 font-semibold px-2 py-0.5 rounded-full">Live · News & Social</span>
+                        <span className="text-xs bg-indigo-100 text-indigo-700 font-semibold px-2 py-0.5 rounded-full">NewsAPI + Gemini AI</span>
+                        {lastScrapeTime && (
+                            <span className="text-[10px] text-gray-400 ml-1">
+                                Last updated: {new Date(lastScrapeTime).toLocaleString("en-IN", { dateStyle: "short", timeStyle: "short" })}
+                            </span>
+                        )}
                         <button
                             onClick={() => handleScrape(user?.ward_id)}
                             disabled={scrapeLoading}
@@ -666,19 +729,19 @@ export default function CouncillorDashboard() {
                                     Fetching…
                                 </>
                             ) : (
-                                <>
-                                    <span>🔄</span> Refresh Data
-                                </>
+                                <><span>🔄</span> Refresh Data</>
                             )}
                         </button>
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        {/* Sentiment Gauge */}
-                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+
+                        {/* ── Ward Sentiment ────────────────────────────────── */}
+                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex flex-col">
                             <div className="flex items-center gap-2 mb-4">
                                 <span className="text-lg">💬</span>
-                                <h3 className="font-bold text-gray-700 text-sm">Ward Sentiment (7 days)</h3>
+                                <h3 className="font-bold text-gray-700 text-sm">Ward Sentiment</h3>
+                                <span className="text-[10px] text-gray-400 ml-auto">7 days</span>
                             </div>
                             {sentiment ? (
                                 <SentimentGauge data={sentiment} />
@@ -687,96 +750,144 @@ export default function CouncillorDashboard() {
                             )}
                         </div>
 
-                        {/* Emerging Issues */}
-                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+                        {/* ── Emerging Issues ───────────────────────────────── */}
+                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex flex-col">
                             <div className="flex items-center gap-2 mb-4">
                                 <span className="text-lg">🚨</span>
-                                <h3 className="font-bold text-gray-700 text-sm">Emerging Issues (24h)</h3>
+                                <h3 className="font-bold text-gray-700 text-sm">Emerging Issues</h3>
+                                <span className="text-[10px] text-gray-400 ml-auto">72h window</span>
                             </div>
                             {emerging.length === 0 ? (
-                                <div className="flex flex-col items-center justify-center py-6 text-gray-400 text-sm">
+                                <div className="flex flex-col items-center justify-center py-6 text-gray-400 text-sm flex-1">
                                     <span className="text-2xl mb-2">🔍</span>
                                     <p>No emerging signals yet</p>
+                                    <p className="text-xs mt-1 text-gray-300">Click Refresh Data to fetch AI insights</p>
                                 </div>
                             ) : (
-                                <div className="space-y-2.5">
-                                    {emerging.map((issue, i) => (
-                                        <motion.div
-                                            key={issue.category}
-                                            initial={{ opacity: 0, x: -8 }}
-                                            animate={{ opacity: 1, x: 0 }}
-                                            transition={{ delay: i * 0.05 }}
-                                            className="flex items-start justify-between gap-2"
-                                        >
-                                            <div className="flex-1 min-w-0">
-                                                <div className="flex items-center gap-1.5 flex-wrap">
+                                <div className="space-y-3 overflow-y-auto max-h-72">
+                                    {emerging.map((issue, i) => {
+                                        const trendBadge: Record<string, string> = {
+                                            spike: "🔺 Spike", first_reported: "🆕 New", steady: "➡ Steady",
+                                        };
+                                        return (
+                                            <motion.div
+                                                key={issue.category + i}
+                                                initial={{ opacity: 0, x: -8 }}
+                                                animate={{ opacity: 1, x: 0 }}
+                                                transition={{ delay: i * 0.05 }}
+                                                className="border border-gray-100 rounded-xl p-3 bg-gray-50/50 hover:bg-white transition-colors"
+                                            >
+                                                <div className="flex items-center gap-1.5 flex-wrap mb-1">
                                                     <span className="text-xs font-bold text-gray-800">{issue.category}</span>
-                                                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${URGENCY_COLORS[issue.max_urgency] ?? "bg-gray-100 text-gray-500 border-gray-200"}`}>
-                                                        {issue.max_urgency}
+                                                    <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${URGENCY_COLORS[issue.max_urgency ?? issue.urgency ?? "medium"] ?? "bg-gray-100 text-gray-500 border-gray-200"}`}>
+                                                        {issue.max_urgency ?? issue.urgency}
                                                     </span>
+                                                    {issue.trend && (
+                                                        <span className="text-[9px] text-gray-500 ml-auto">{trendBadge[issue.trend] ?? ""}</span>
+                                                    )}
                                                 </div>
-                                                {issue.sample_summary && (
-                                                    <p className="text-[10px] text-gray-500 mt-0.5 line-clamp-1">{issue.sample_summary}</p>
+                                                {(issue.headline || issue.sample_summary) && (
+                                                    <p className="text-[10px] text-gray-600 mb-1 line-clamp-1">{issue.headline || issue.sample_summary}</p>
                                                 )}
-                                                <div className="flex gap-1 mt-1">
-                                                    {issue.platforms.slice(0, 3).map(p => (
-                                                        <span key={p} className="text-[10px] bg-slate-100 text-slate-600 px-1.5 rounded">
-                                                            {PLATFORM_ICONS[p] ?? "📄"} {p}
-                                                        </span>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                            <span className="text-xs font-bold text-indigo-700 shrink-0">{issue.count}</span>
-                                        </motion.div>
-                                    ))}
+                                                {issue.insight && (
+                                                    <p className="text-[10px] text-indigo-700 leading-snug mb-1.5 italic">{issue.insight}</p>
+                                                )}
+                                                {issue.recommended_action && (
+                                                    <p className="text-[10px] text-emerald-700 font-medium">✅ {issue.recommended_action}</p>
+                                                )}
+                                                {issue.source_urls && issue.source_urls.length > 0 && (
+                                                    <div className="flex flex-wrap gap-1 mt-1.5">
+                                                        {issue.source_urls.slice(0, 2).map((url, ui) => (
+                                                            <a
+                                                                key={ui}
+                                                                href={url}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="text-[9px] text-blue-600 hover:underline bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100 truncate max-w-[120px]"
+                                                            >
+                                                                📰 Source {ui + 1}
+                                                            </a>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </motion.div>
+                                        );
+                                    })}
                                 </div>
                             )}
                         </div>
 
-                        {/* Social Post Stream */}
+                        {/* ── Latest Social Posts ───────────────────────────── */}
                         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
                             <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
                                 <span className="text-lg">🌐</span>
-                                <h3 className="font-bold text-gray-700 text-sm">Latest Social Posts</h3>
+                                <h3 className="font-bold text-gray-700 text-sm">Latest Posts &amp; Articles</h3>
                                 <span className="ml-auto text-xs text-gray-400">{socialPosts.length} shown</span>
                             </div>
-                            <div className="divide-y divide-gray-50 max-h-72 overflow-y-auto flex-1">
+                            <div className="divide-y divide-gray-50 max-h-[420px] overflow-y-auto flex-1">
                                 {socialPosts.length === 0 ? (
                                     <div className="flex flex-col items-center justify-center py-8 text-gray-400 text-center px-4">
                                         <span className="text-3xl mb-2">📭</span>
-                                        <p className="text-sm">No posts collected yet</p>
-                                        <p className="text-xs mt-1 text-gray-300">Commissioner can trigger a scrape to start</p>
+                                        <p className="text-sm">No articles collected yet</p>
+                                        <p className="text-xs mt-1 text-gray-300">Click Refresh Data above to start</p>
                                     </div>
                                 ) : (
-                                    socialPosts.map(post => (
-                                        <div key={post.id} className="px-4 py-3">
-                                            <div className="flex items-center gap-1.5 mb-1">
-                                                <span className="text-sm">{PLATFORM_ICONS[post.platform] ?? "📄"}</span>
-                                                <span className="text-xs font-semibold text-gray-600 capitalize">{post.platform}</span>
-                                                {post.urgency && (
-                                                    <span className={`text-[9px] font-bold px-1 py-0.5 rounded border ml-auto ${URGENCY_COLORS[post.urgency] ?? "bg-gray-100 text-gray-500 border-gray-200"}`}>
-                                                        {post.urgency}
+                                    socialPosts.map(post => {
+                                        const isAI = post.ai_generated;
+                                        const timeAgo = post.post_timestamp
+                                            ? new Date(post.post_timestamp).toLocaleDateString("en-IN", { month: "short", day: "numeric" })
+                                            : post.scraped_at
+                                                ? new Date(post.scraped_at).toLocaleDateString("en-IN", { month: "short", day: "numeric" })
+                                                : null;
+                                        return (
+                                            <div key={post.id} className="px-4 py-3 hover:bg-gray-50 transition-colors group">
+                                                <div className="flex items-center gap-1.5 mb-1">
+                                                    <span className="text-sm">{isAI ? "🤖" : (PLATFORM_ICONS[post.platform] ?? "📄")}</span>
+                                                    <span className="text-[10px] font-semibold text-gray-500 capitalize">
+                                                        {isAI ? "Gemini AI" : (post.author || post.platform)}
                                                     </span>
+                                                    {timeAgo && <span className="text-[9px] text-gray-300 ml-auto">{timeAgo}</span>}
+                                                    {post.urgency && (
+                                                        <span className={`text-[9px] font-bold px-1 py-0.5 rounded border ${URGENCY_COLORS[post.urgency] ?? "bg-gray-100 text-gray-500 border-gray-200"}`}>
+                                                            {post.urgency}
+                                                        </span>
+                                                    )}
+                                                    {post.sentiment && (
+                                                        <span className={`text-[9px] font-semibold ${SENTIMENT_COLORS[post.sentiment] ?? "text-gray-400"}`}>
+                                                            {post.sentiment === "negative" ? "😞" : post.sentiment === "positive" ? "😊" : "😐"}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                {post.summary ? (
+                                                    <p className="text-xs text-gray-700 line-clamp-2 leading-snug">{post.summary}</p>
+                                                ) : (
+                                                    <p className="text-xs text-gray-600 line-clamp-2 leading-snug">{post.content}</p>
                                                 )}
-                                                {post.sentiment && (
-                                                    <span className={`text-[9px] font-semibold ${SENTIMENT_COLORS[post.sentiment] ?? "text-gray-400"}`}>
-                                                        {post.sentiment === "negative" ? "😞" : post.sentiment === "positive" ? "😊" : "😐"}
-                                                    </span>
+                                                {post.gemini_insight && (
+                                                    <p className="text-[10px] text-indigo-600 italic mt-0.5 line-clamp-1">{post.gemini_insight}</p>
                                                 )}
+                                                <div className="flex items-center gap-2 mt-1.5">
+                                                    {post.category && (
+                                                        <span className="text-[9px] bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded border border-indigo-100">{post.category}</span>
+                                                    )}
+                                                    {post.source_url && (
+                                                        <a
+                                                            href={post.source_url}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="text-[9px] text-blue-500 hover:text-blue-700 hover:underline font-medium opacity-0 group-hover:opacity-100 transition-opacity ml-auto"
+                                                        >
+                                                            {isAI ? "Search news →" : "Read article →"}
+                                                        </a>
+                                                    )}
+                                                </div>
                                             </div>
-                                            {post.summary ? (
-                                                <p className="text-xs text-gray-700 line-clamp-2">{post.summary}</p>
-                                            ) : (
-                                                <p className="text-xs text-gray-600 line-clamp-2">{post.content}</p>
-                                            )}
-                                            {post.category && (
-                                                <span className="inline-block mt-1 text-[9px] bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded">{post.category}</span>
-                                            )}
-                                        </div>
-                                    ))
+                                        );
+                                    })
                                 )}
                             </div>
                         </div>
+
                     </div>
                 </div>
                 {/* ═══════════════════════════════════════════════════════════════ */}

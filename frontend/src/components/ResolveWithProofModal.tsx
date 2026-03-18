@@ -97,19 +97,20 @@ export default function ResolveWithProofModal({
           className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden"
         >
           {/* Header */}
-          <div className="bg-gradient-to-r from-emerald-600 to-teal-600 px-6 py-5 text-white">
+          {/* Header */}
+          <div className={`px-6 py-5 text-white ${step === "result" && verificationResult?.verified === false ? "bg-gradient-to-r from-red-600 to-rose-600" : "bg-gradient-to-r from-emerald-600 to-teal-600"}`}>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-emerald-200 text-xs font-semibold uppercase tracking-widest mb-1">
-                  AI-Verified Resolution
+                <p className={`${step === "result" && verificationResult?.verified === false ? "text-red-200" : "text-emerald-200"} text-xs font-semibold uppercase tracking-widest mb-1`}>
+                  {step === "result" && verificationResult?.verified === false ? "AI Verification Failed" : "AI-Verified Resolution"}
                 </p>
-                <h2 className="text-xl font-extrabold">Mark as Resolved</h2>
-                <p className="text-emerald-200 text-sm mt-0.5">
+                <h2 className="text-xl font-extrabold">{step === "result" && verificationResult?.verified === false ? "Proof Rejected" : "Mark as Resolved"}</h2>
+                <p className={`${step === "result" && verificationResult?.verified === false ? "text-red-200" : "text-emerald-200"} text-sm mt-0.5`}>
                   {ticketCode} · {issueType}
                 </p>
               </div>
               <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center text-2xl">
-                📸
+                {step === "result" && verificationResult?.verified === false ? "❌" : "📸"}
               </div>
             </div>
           </div>
@@ -130,6 +131,7 @@ export default function ResolveWithProofModal({
                     ${preview ? "border-emerald-400 bg-emerald-50" : "border-gray-300 bg-gray-50 hover:border-emerald-400 hover:bg-emerald-50"}`}
                 >
                   {preview ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
                     <img src={preview} alt="Proof preview" className="max-h-48 rounded-xl object-cover shadow-md" />
                   ) : (
                     <>
@@ -161,12 +163,12 @@ export default function ResolveWithProofModal({
                     Cancel
                   </button>
                   <button
-                    onClick={handleSubmit}
-                    disabled={!photo || uploading}
-                    className="flex-1 py-3 rounded-2xl bg-emerald-600 text-white font-bold hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    id="resolve-submit-btn"
+                     onClick={handleSubmit}
+                     disabled={!photo || uploading}
+                     className="flex-1 py-3 rounded-2xl bg-emerald-600 text-white font-bold hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                     id="resolve-submit-btn"
                   >
-                    Submit & Verify with AI →
+                    {uploading ? "Submitting..." : "Submit & Verify with AI →"}
                   </button>
                 </div>
               </>
@@ -192,12 +194,12 @@ export default function ResolveWithProofModal({
               <>
                 <div className={`rounded-2xl border-2 p-5 ${confidenceConfig[verificationResult.confidence]?.bg}`}>
                   <div className="flex items-center gap-3 mb-3">
-                    <span className="text-3xl">{confidenceConfig[verificationResult.confidence]?.icon}</span>
+                    <span className="text-3xl">{verificationResult.verified === false ? "❌" : confidenceConfig[verificationResult.confidence]?.icon}</span>
                     <div>
-                      <p className={`font-extrabold text-lg ${confidenceConfig[verificationResult.confidence]?.color}`}>
+                      <p className={`font-extrabold text-lg ${verificationResult.verified === false ? "text-red-700" : confidenceConfig[verificationResult.confidence]?.color}`}>
                         {verificationResult.verified === true ? "Work Verified!" : verificationResult.verified === false ? "Verification Failed" : "Verification Inconclusive"}
                       </p>
-                      <p className={`text-sm font-semibold ${confidenceConfig[verificationResult.confidence]?.color}`}>
+                      <p className={`text-sm font-semibold ${verificationResult.verified === false ? "text-red-600" : confidenceConfig[verificationResult.confidence]?.color}`}>
                         {confidenceConfig[verificationResult.confidence]?.label}
                       </p>
                     </div>
@@ -213,19 +215,28 @@ export default function ResolveWithProofModal({
                   )}
                 </div>
 
-                <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 text-sm text-emerald-800">
-                  ✅ Ticket status has been updated to <strong>Closed</strong> and the proof is now visible to the citizen and councillor.
-                </div>
+                {verificationResult.verified === false ? (
+                  <div className="bg-red-50 border border-red-200 rounded-2xl p-4 text-sm text-red-800">
+                    ❌ Ticket status has been updated to <strong>Rejected</strong> and sent back to the technician.
+                  </div>
+                ) : (
+                  <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 text-sm text-emerald-800">
+                    ✅ Ticket status has been updated to <strong>Closed</strong> and the proof is now visible to the citizen and councillor.
+                  </div>
+                )}
 
                 <button
                   onClick={onClose}
-                  className="w-full py-3 rounded-2xl bg-emerald-600 text-white font-bold hover:bg-emerald-700 transition-colors"
+                  className={`w-full py-3 rounded-2xl text-white font-bold transition-colors ${
+                    verificationResult.verified === false ? "bg-red-600 hover:bg-red-700" : "bg-emerald-600 hover:bg-emerald-700"
+                  }`}
                 >
                   Done
                 </button>
               </>
             )}
           </div>
+
         </motion.div>
       </div>
     </AnimatePresence>

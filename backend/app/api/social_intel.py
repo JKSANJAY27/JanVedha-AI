@@ -34,12 +34,12 @@ async def sentiment_overview(
     current_user: UserMongo = Depends(_require_leader),
 ):
     """
-    Return sentiment counts and score for social media posts
-    in the last 7 days. Councillors see their own ward by default.
+    Return AI-powered ward sentiment analysis (last 7 days).
+    Councillors see their own ward by default.
+    Response includes: score, label, narrative, top_concerns, ai_powered flag.
     """
     from app.services.social_intel_service import get_sentiment_overview
 
-    # Councillors default to their own ward
     effective_ward = ward_id
     if current_user.role == UserRole.COUNCILLOR and effective_ward is None:
         effective_ward = current_user.ward_id
@@ -50,12 +50,13 @@ async def sentiment_overview(
 @router.get("/emerging-issues")
 async def emerging_issues(
     ward_id: Optional[int] = Query(None),
-    hours: int = Query(24, ge=1, le=168, description="Look-back window in hours"),
-    limit: int = Query(8, ge=1, le=20),
+    hours: int = Query(72, ge=1, le=168, description="Look-back window in hours"),
+    limit: int = Query(6, ge=1, le=20),
     current_user: UserMongo = Depends(_require_leader),
 ):
     """
-    Return top issue categories that are spiking on social media.
+    Return top emerging civic issue clusters from AI analysis.
+    Each issue includes: category, urgency, headline, count, insight, recommended_action, source_urls.
     """
     from app.services.social_intel_service import get_emerging_issues
 
@@ -75,7 +76,8 @@ async def social_posts(
     current_user: UserMongo = Depends(_require_leader),
 ):
     """
-    Return paginated social media posts, newest first.
+    Return paginated social posts (news + Gemini AI), newest first.
+    Each post includes source_url for linking, ai_generated flag, and gemini_insight.
     """
     from app.services.social_intel_service import get_social_posts
 
@@ -106,6 +108,24 @@ async def platform_stats(
     return await get_platform_stats(ward_id=effective_ward)
 
 
+@router.get("/status")
+async def scrape_status(
+    ward_id: Optional[int] = Query(None),
+    current_user: UserMongo = Depends(_require_leader),
+):
+    """
+    Return last scrape timestamp and total post count for the ward.
+    Used by the frontend 'Refresh Data' button to show last updated time.
+    """
+    from app.services.social_intel_service import get_scrape_status
+
+    effective_ward = ward_id
+    if current_user.role == UserRole.COUNCILLOR and effective_ward is None:
+        effective_ward = current_user.ward_id
+
+    return await get_scrape_status(ward_id=effective_ward)
+
+
 @router.post("/trigger-scrape")
 async def trigger_scrape(
     background_tasks: BackgroundTasks,
@@ -114,27 +134,22 @@ async def trigger_scrape(
     current_user: UserMongo = Depends(_require_leader),
 ):
     """
-    Manually trigger a social media scrape.
-    Commissioners/Admins: city-wide or any ward.
-    Councillors/Supervisors: auto-scoped to their ward.
-    Runs in the background and returns immediately.
+    Manually trigger a civic intelligence scrape (NewsAPI + Gemini AI).
+    Runs in background. Check status or refresh data after ~40 seconds.
     """
     from app.services.social_intel_service import run_social_scrape
 
-    # Councillors and supervisors restricted to their own ward
     effective_ward = ward_id
     if current_user.role in {UserRole.COUNCILLOR, UserRole.SUPERVISOR}:
         effective_ward = current_user.ward_id
 
     kw_list = [k.strip() for k in keywords.split(",")] if keywords else None
-
-    background_tasks.add_task(run_social_scrape, kw_list, 20, effective_ward)
+    background_tasks.add_task(run_social_scrape, kw_list, 25, effective_ward)
 
     return {
         "status": "triggered",
-        "message": "Social media scrape started in background. Check back in 30-60 seconds.",
+        "message": "Civic intelligence pipeline started (NewsAPI + Gemini AI). Refresh data in ~40 seconds.",
         "ward_id": effective_ward,
-        "keywords": kw_list,
     }
 
 
@@ -142,27 +157,24 @@ async def trigger_scrape(
 async def trigger_ward_scrape(
     background_tasks: BackgroundTasks,
     ward_id: Optional[int] = Query(None),
-    keywords: Optional[str] = Query(None, description="Comma-separated keywords to scrape"),
+    keywords: Optional[str] = Query(None),
     current_user: UserMongo = Depends(_require_leader),
 ):
     """
-    Manually trigger a ward-level social media scrape.
-    Councillors can only scrape their own ward; Commissioners can specify any ward.
+    Trigger a ward-level civic intelligence scrape.
+    Councillors are scoped to their own ward automatically.
     """
     from app.services.social_intel_service import run_social_scrape
 
-    # Councillors are restricted to their own ward
     effective_ward = ward_id
     if current_user.role == UserRole.COUNCILLOR:
         effective_ward = current_user.ward_id
 
     kw_list = [k.strip() for k in keywords.split(",")] if keywords else None
-
-    background_tasks.add_task(run_social_scrape, kw_list, 15, effective_ward)
+    background_tasks.add_task(run_social_scrape, kw_list, 20, effective_ward)
 
     return {
         "status": "triggered",
-        "message": "Ward scrape started in background. Refresh data in 30-60 seconds.",
+        "message": "Ward civic intelligence pipeline started. NewsAPI + Gemini AI running. Refresh in ~40 seconds.",
         "ward_id": effective_ward,
-        "keywords": kw_list,
     }

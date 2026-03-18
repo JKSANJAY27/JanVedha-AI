@@ -39,6 +39,7 @@ interface TicketDetail {
     work_verified?: boolean | null;
     work_verification_confidence?: number;
     work_verification_method?: string;
+    work_verification_explanation?: string;
 }
 
 const STATUSES = ["OPEN", "ASSIGNED", "SCHEDULED", "IN_PROGRESS", "CLOSED", "REJECTED"];
@@ -70,7 +71,8 @@ export default function TicketDetailPage() {
 
     const [locationHistory, setLocationHistory] = useState<any[]>([]);
 
-    const [proofUrl, setProofUrl] = useState("");
+    const [proofFile, setProofFile] = useState<File | null>(null);
+    const [proofPreviewUrl, setProofPreviewUrl] = useState<string>("");
     const [uploadingProof, setUploadingProof] = useState(false);
     const [showProofUpload, setShowProofUpload] = useState(false);
 
@@ -182,15 +184,30 @@ export default function TicketDetailPage() {
         }
     };
 
+    const handleProofFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            setProofFile(file);
+            setProofPreviewUrl(URL.createObjectURL(file));
+        }
+    };
+
     const handleProofUpload = async () => {
-        if (!proofUrl.trim()) { toast.error("Please enter a photo URL"); return; }
+        if (!proofFile) { toast.error("Please select a photo"); return; }
         setUploadingProof(true);
         try {
-            const res = await officerApi.uploadProof(ticketId, proofUrl);
+            const formData = new FormData();
+            formData.append("file", proofFile);
+            
+            const res = await officerApi.uploadProof(ticketId, formData);
             setTicket(prev => prev ? {
                 ...prev,
-                after_photo_url: proofUrl,
+                after_photo_url: res.data.after_photo_url,
                 status: "PENDING_VERIFICATION",
+                work_verified: res.data.work_verified,
+                work_verification_confidence: res.data.confidence,
+                work_verification_method: res.data.method,
+                work_verification_explanation: res.data.explanation,
             } : prev);
             setNewStatus("PENDING_VERIFICATION");
             if (res.data.work_verified) {
@@ -760,13 +777,24 @@ export default function TicketDetailPage() {
                                 {showProofUpload && (
                                     <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="mt-4 pt-4 border-t border-indigo-200 space-y-3">
                                         <p className="text-sm font-medium text-indigo-900">Upload Photo Evidence</p>
-                                        <input
-                                            type="url"
-                                            value={proofUrl}
-                                            onChange={e => setProofUrl(e.target.value)}
-                                            placeholder="Valid image URL (e.g. https://imgur.com/...)"
-                                            className="w-full border border-indigo-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                        />
+                                        <div className="border-2 border-dashed border-indigo-300 rounded-xl p-4 text-center hover:bg-indigo-50 transition-colors relative">
+                                            <input 
+                                                type="file" 
+                                                accept="image/*"
+                                                onChange={handleProofFileChange}
+                                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer border-0 p-0 m-0 cursor-auto z-10 block rounded-xl focus:outline-none"
+                                            />
+                                            {proofPreviewUrl ? (
+                                                /* eslint-disable-next-line @next/next/no-img-element */
+                                                <img src={proofPreviewUrl} alt="Preview" className="w-full h-40 object-cover rounded-lg shadow-sm" />
+                                            ) : (
+                                                <div className="text-indigo-500 py-6">
+                                                    <span className="text-3xl mb-2 block">📷</span>
+                                                    <span className="text-sm font-semibold block">Tap to upload photo</span>
+                                                    <span className="text-xs mt-1 block opacity-80">(or drag & drop here)</span>
+                                                </div>
+                                            )}
+                                        </div>
                                         <div className="flex gap-2">
                                             <button onClick={handleProofUpload} disabled={uploadingProof} className="flex-1 bg-indigo-600 text-white rounded-xl py-2 text-sm font-semibold transition-colors hover:bg-indigo-700">
                                                 {uploadingProof ? "Uploading..." : "Submit Proof"}
