@@ -26,41 +26,57 @@ Furthermore, social media plays a growing role in shaping public opinion, yet it
 
 ## ✨ Key Features Implemented
 
-1. **Omnichannel & AI-Structured Intake:** 
-   AI systems automatically collect, structure, and categorize citizen issues. Natural language processing parses inputs and intelligently maps them to the correct department and ward ID.
+### 1. 🎥 Autonomous CCTV Sentinel (Vision AI)
+*   **The Problem:** Many civic issues (garbage, waterlogging, illegal parking) occur in public view but go unreported for hours.
+*   **The Solution:** Uses **OpenCV** and **Gemini 1.5 Flash** to autonomously analyze CCTV feeds.
+*   **Intelligence:** It extracts frames, categorizes issues, assigns confidence scores, and suggests ticket metadata automatically.
+*   **Decision Loop:** Councillors can review detections in a dedicated dashboard, verifying and converting them into formal department tickets with a single click.
 
-2. **Ward-Based Ticket Routing & Filtering:** 
-   Strict Role-Based Access Control (RBAC) ensures Junior Engineers only see issues for their specific ward and department. A robust migration and assignment engine manages jurisdictional boundaries effectively.
+### 2. 🗺️ Infrastructure Opportunity Spotter
+*   **The Problem:** Repeated repairs on the same street indicate systemic infrastructure failure, not just a one-off issue.
+*   **The Solution:** An interactive geospatial grid (500m x 500m) that identifies "Opportunity Zones."
+*   **Metrics:** It analyzes 6+ months of historical data to track **Complaint Volume**, **Resolution Failure Rates**, and **Recurrence Scores**.
+*   **AI Insight:** Top failing zones are narrated by Gemini to explain *why* the area is failing and what long-term intervention is required.
 
-3. **Intelligent Prioritization Engine:** 
-   Utilizes machine learning to prioritize tasks. Tickets aren't just listed; they are ranked by urgency, impact, and recurrence, allowing engineers and supervisors to focus on what matters most.
+### 3. 📄 AI Development Proposal Generator
+*   **The Problem:** Local leaders often lack the staff or data to draft professional, mathematically justified funding proposals.
+*   **The Solution:** Generates formal municipal proposals in **.docx** format.
+*   **Evidence Gathering:** Automatically queries all tickets within a 1km radius to build a bulletproof problem statement.
+*   **Costing & Timelines:** Auto-estimates budgets using standard municipal cost lookups and generates structured implementation timelines.
 
-4. **Interactive Issue Maps (Geospatial Visualization):**
-   Real-time maps (`react-leaflet`) visually represent the density and location of citizen issues. This geographic intelligence allows officials to spot regional systemic problems and deploy resources effectively across various zones.
+### 4. 🎙️ Constituent Casework Log (Voice-First)
+*   **The Problem:** Councillors receive dozens of verbal walk-in complaints daily; logging text manually is a bottleneck.
+*   **The Solution:** A voice-to-JSON logging system using **MediaRecorder** and Gemini's audio processing.
+*   **Escalation Detection:** The system automatically flags "Recurrent Grievances" if the same constituent files multiple issues in a short period.
+*   **Privacy:** Features automatic phone number masking (`98XXXX3210`) for public list views while maintaining a full history for the councillor.
 
-5. **Proactive Citizen Issue Tracking & Status Timelines:**
-   Citizens are no longer left in the dark. A dedicated tracking dashboard provides a detailed transparency timeline, allowing residents to proactively monitor the status, verification proofs, and resolution progress of their submitted issues.
+### 5. 📰 Media & RTI Response Assistant
+*   **The Problem:** RTIs and press queries require strict data accuracy and formal formatting, often leading to delays or misinformation.
+*   **The Solution:** A robust AI drafting tool grounded in live ward statistics.
+*   **RTI OCR:** Uses Gemini Vision to extract queries from scanned RTI paper documents.
+*   **Data Grounding:** The tool queries live ticket metrics (resolution rates, repair times) to ensure the responses are factual and not hallucinated.
 
-6. **Geo-Tagged & Time-Stamped Verification:** 
-   Ensures accountability by requiring geo-tagged and time-stamped evidence for completed work, eliminating "ghost" resolutions and verifying ground reality. Supervisors can view the resolution proofs directly via integrated modals.
+### 6. 📢 Constituent Communication Center
+*   **The Problem:** Communicating ward updates (water cuts, work completion) across SMS, WhatsApp, and notices takes too much time.
+*   **The Solution:** A **bilingual (Tamil & English)** multichannel broadcast hub.
+*   **One-Click Drafts:** Generates punchy social posts, character-limited SMS updates, and formal PDF notices (`fpdf2`) simultaneously.
+*   **Verification Proofs:** Links announcements directly to specific resolved tickets, providing citizens with "Proof of Work" images.
 
-7. **Smart Calendar Scheduling & Technician Assignment:**
-   Built-in smart calendar widgets allow officials to seamlessly schedule public works and directly assign tasks to specific field technicians, ensuring structured and timeline-driven execution rather than ad-hoc responses.
+### 7. 🛡️ Social Intel & Misinformation Flagging
+*   **Intelligence:** Scrapes social media and news for ward-specific keywords.
+*   **NLP:** Detects citizen sentiment spikes and explicitly flags potential misinformation campaigns.
+*   **Context:** Alerts are mapped to specific wards, allowing councillors to respond to digital narratives before they escalate.
 
-8. **Social Intel & Misinformation Flagging (Ward-Mapped):** 
-   Real-time fetching and scraping of social media and news, aggressively filtered by ward location keywords. It analyzes citizen sentiment, detects emerging issues, and explicitly flags misinformation campaigns. Features manual triggers for on-demand intelligence refresh.
+### 8. 📊 Explainable AI Prioritization & Smart Routing
+*   **Algorithm:** Uses **LightGBM & SHAP** to score tickets based on impact, recurrence, and urgency.
+*   **RBAC:** Strict Role-Based Access Control ensures that officials see only the data relevant to their specific department and jurisdiction.
 
-9. **Advanced Councillor & Supervisor Capabilities:**
-   The leadership dashboards feature specialized tools such as **Ward Benchmark Panels** (to compare execution velocity), **Ward Trust Score Cards** (measuring constituent satisfaction), **Scenario Planners**, and **Resource Health Cards**, ensuring administration is managed by metrics rather than assumptions.
+### 9. 🤖 Gemini-Powered Decision Bot
+*   **Context-Aware:** An embedded assistant that knows the user's role and data access level.
+*   **Functionality:** Junior Engineers can ask about pending tasks, while Commissioners can query high-level city trends and bottlenecks.
 
-10. **Gemini 2.5 Pro Chatbot Integration:** 
-   An embedded context-aware AI assistant. Junior Engineers can query their department's pending tasks, while Commissioners can ask high-level questions about city-wide sentiment and bottlenecks. The bot strictly adheres to the user's data access permissions.
-
-11. **AI-Assisted Public Communication:** 
-   Generates official public updates and drafts responses through a comprehensive **Communication Log Panel** based on real-time execution data, ensuring citizens receive transparent, empathetic, and accurate information.
-
-12. **Role-Specific Real-Time Dashboards:** 
-   Customized UI for Commissioners, Councillors, Supervisors, Junior Engineers, and Citizens—offering unmatched visibility into execution status and public trust metrics through rich components like Recharts.
+### 10. 🏛️ Role-Specific Real-Time Dashboards
+*   **Visualization:** Interactive Leaflet maps and Recharts-powered analytics offer unmatched visibility into execution status and public trust metrics.
 
 ---
 
@@ -90,38 +106,36 @@ Furthermore, social media plays a growing role in shaping public opinion, yet it
 ## 🛠 Tech Stack
 
 - **Frontend:** Next.js 16, React 19, Tailwind CSS v4, Framer Motion, Recharts, React Leaflet.
-- **Backend:** FastAPI, Python 3.11+, MongoDB (Motor).
-- **AI / ML Ecosystem:** LangChain, Google Gemini 2.5 Pro, LightGBM & SHAP (Prioritization), HuggingFace Transformers (IndicBERT for Sentiment), Prophet (Anomaly/Spike forecasting).
-- **Data Gathering:** AsyncPRAW & BeautifulSoup for robust social media and news scraping.
+- **Backend:** FastAPI, Python 3.11+, **Beanie ODM** (Motor) for MongoDB.
+- **AI / ML Ecosystem:** LangChain, Google Gemini 2.5 (Pro & Flash), LightGBM & SHAP (Prioritization), IndicBERT (Sentiment), Prophet (Forecasting).
+- **Libraries:** **OpenCV** (Vision Extraction), **python-docx** (Proposal Generation), **fpdf2** (Bilingual PDF Generation), AsyncPRAW & BeautifulSoup (Scraping).
 
 ---
 
 ## 🧪 Testing the Application 
 
-You can log in to the various dashboards using the seed credentials provided below to test role-specific functionalities.
+### 1. Seed the Database
+Populate your local MongoDB with cameras, alerts, and historical ticket data:
 
-### 🏛 Administrative & Leadership Roles
-*These roles have broader access to view analytics, social sentiment, and cross-departmental data.*
+```bash
+cd backend
+python scripts/seed_cameras.py
+python scripts/seed_demo_alerts.py
+python scripts/seed_demo_tickets.py
+python scripts/seed_demo_casework.py
+```
 
-| Role | Email | Password |
-| :--- | :--- | :--- |
-| **Commissioner / Super Admin** | `admin@janvedha.com` | `password123` |
-| **Ward 1 Councillor** | `councillor@janvedha.com` | `password123` |
-| **Ward 1 Supervisor** | `pgo@janvedha.com` | `password123` |
+### 2. Login Credentials
+Access the various dashboards using the credentials below.
 
-### 👷 Department-Specific Roles (Junior Engineers)
-*These roles test the ward-based ticket routing. When logged in, they will only see tickets assigned to their specific department within their jurisdiction.*
+| Role | Email | Password | Notable Features |
+| :--- | :--- | :--- | :--- |
+| **Commissioner** | `admin@janvedha.com` | `password123` | City-wide Vision Alerts, Social Intel |
+| **Ward Councillor** | `councillor@janvedha.com` | `password123` | Casework Inbox, Proposal Gen, Comms |
+| **Ward Supervisor** | `pgo@janvedha.com` | `password123` | Ticket Verification, Proof Review |
+| **Junior Engineer** | `water@janvedha.com` | `password123` | Dept-specific ticket routing |
 
-| Department | Email | Password |
-| :--- | :--- | :--- |
-| **Water Supply (Dept D01)** | `water@janvedha.com` | `password123` |
-| **Electrical (Dept D05)** | `dept@janvedha.com` | `password123` |
-| **Health & Sanitation (Dept D08)**| `sanitation@janvedha.com`| `password123` |
-| **Roads & Bridges (Dept D01)** | `je.d01@janvedha.ai` | `Password123` |
-| **Buildings & Planning (Dept D02)**| `je.d02@janvedha.ai` | `Password123` |
-| **Sewage & Drainage (Dept D04)** | `je.d04@janvedha.ai` | `Password123` |
+*(Note: Additional JE accounts for D03 to D14 follow the format `je.dXX@janvedha.ai` with password `Password123` where `XX` is the department ID).*
 
-*(Note: Additional JE accounts for D03 to D14 follow the format `je.dXX@janvedha.ai` with password `Password123`).*
-
-### 🚶 Citizen / Public User Role
-You can register a new account from the portal to test the public complaint submission process, which automatically mandates ward selection and categorizes the ticket for backend routing.
+### 3. Citizen Experience
+You can register a new account from the web portal to test the public complaint submission process, which automatically mandates ward selection and categorizes the ticket for backend routing.
