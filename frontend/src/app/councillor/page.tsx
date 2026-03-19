@@ -142,6 +142,14 @@ function SentimentGauge({ data }: { data: SentimentOverview }) {
         );
     }
 
+    const getHostName = (url: string) => {
+        try {
+            return new URL(url).hostname.replace('www.', '');
+        } catch {
+            return 'Source';
+        }
+    };
+
     return (
         <div className="space-y-3">
             {/* Score + Label */}
@@ -808,7 +816,12 @@ export default function CouncillorDashboard() {
                                                                 rel="noopener noreferrer"
                                                                 className="text-[9px] text-blue-600 hover:underline bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100 truncate max-w-[120px]"
                                                             >
-                                                                📰 Source {ui + 1}
+                                                                📰 {
+                                                                    (() => {
+                                                                        try { return new URL(url).hostname.replace('www.', '') }
+                                                                        catch { return `Source ${ui + 1}` }
+                                                                    })()
+                                                                }
                                                             </a>
                                                         ))}
                                                     </div>
@@ -878,9 +891,15 @@ export default function CouncillorDashboard() {
                                                             href={post.source_url}
                                                             target="_blank"
                                                             rel="noopener noreferrer"
-                                                            className="text-[9px] text-blue-500 hover:text-blue-700 hover:underline font-medium opacity-0 group-hover:opacity-100 transition-opacity ml-auto"
+                                                            className="text-[9px] text-blue-500 hover:text-blue-700 hover:underline font-medium transition-opacity ml-auto truncate max-w-[150px]"
+                                                            title={post.source_url}
                                                         >
-                                                            {isAI ? "Search news →" : "Read article →"}
+                                                            {isAI ? "Search news →" : (
+                                                                (() => {
+                                                                    try { return `From: ${new URL(post.source_url).hostname.replace('www.', '')} →` }
+                                                                    catch { return "Read article →" }
+                                                                })()
+                                                            )}
                                                         </a>
                                                     )}
                                                 </div>
