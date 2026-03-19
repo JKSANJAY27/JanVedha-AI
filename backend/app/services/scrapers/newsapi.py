@@ -15,17 +15,15 @@ from app.services.scrapers.base import BaseScraper, ScrapedItem
 
 NEWSAPI_BASE_URL = "https://newsapi.org/v2/everything"
 
-# Simple keyword queries — one at a time, no complex boolean chains
-# These are proven to work on the NewsAPI free developer plan
-SIMPLE_QUERIES = [
-    "India pothole road",
-    "India garbage municipal",
-    "India water supply shortage",
-    "India sewage drain flooding",
-    "Chennai civic municipal",
-    "India electricity outage streetlight",
-    "India footpath encroachment",
-    "India municipal corporation complaint",
+# These fallback queries are used only if no ward area is provided.
+DEFAULT_CITY = "Chennai"
+FALLBACK_QUERIES = [
+    f"{DEFAULT_CITY} civic",
+    f"{DEFAULT_CITY} pothole",
+    f"{DEFAULT_CITY} garbage",
+    f"{DEFAULT_CITY} water shortage",
+    f"{DEFAULT_CITY} drainage",
+    f"{DEFAULT_CITY} electricity",
 ]
 
 
@@ -45,18 +43,27 @@ class NewsApiScraper(BaseScraper):
             self.logger.error("NEWS_API_KEY is not set — NewsAPI scraper disabled")
             return []
 
-        from_date = (datetime.now(timezone.utc) - timedelta(days=30)).date().isoformat()
+        from_date = (datetime.now(timezone.utc) - timedelta(days=27)).date().isoformat()
 
         all_items: List[ScrapedItem] = []
         seen_urls: set = set()
 
         # Build query list — prepend area-specific query if available
-        queries = list(SIMPLE_QUERIES)
+        queries = []
         if keywords:
             for kw in keywords:
                 if kw and len(kw) < 30:
-                    queries.insert(0, f"{kw} civic issue")
+                    queries.extend([
+                        f"{kw} civic",
+                        f"{kw} infrastructure",
+                        f"{kw} road",
+                        f"{kw} water",
+                        f"{kw} {DEFAULT_CITY}",
+                    ])
                     break
+        
+        # Add fallbacks dynamically
+        queries.extend(FALLBACK_QUERIES)
 
         # Run up to 4 queries to get enough articles (100/day rate limit)
         per_query = max(5, max_results // 4)
@@ -90,8 +97,9 @@ class NewsApiScraper(BaseScraper):
                 resp = await client.get(NEWSAPI_BASE_URL, params=params)
 
                 if resp.status_code == 426:
+                    err_msg = resp.text
                     self.logger.error(
-                        "NewsAPI 426 (query too complex for free plan): '%s'", query
+                        "NewsAPI 426 (plan limit): '%s' - %s", query, err_msg
                     )
                     return []
 

@@ -65,6 +65,9 @@ async def init_mongodb() -> None:
         WardCommunicationMongo,
         # Feature: Media & RTI Response Assistant
         MediaRtiResponseMongo,
+        # Feature: CCTV Civic Issue Detection
+        Camera,
+        CCTVAlert,
     )
 
     uri = settings.MONGODB_URI
@@ -104,6 +107,9 @@ async def init_mongodb() -> None:
             WardCommunicationMongo,
             # Feature: Media & RTI Response Assistant
             MediaRtiResponseMongo,
+            # Feature: CCTV Civic Issue Detection
+            Camera,
+            CCTVAlert,
         ],
     )
 

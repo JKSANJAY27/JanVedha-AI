@@ -114,7 +114,7 @@ async def run_social_scrape(
 
     # ── Step 2: Save ALL NewsAPI articles directly (no Gemini filter) ───────
     saved = 0
-    dedup_window = datetime.now(timezone.utc) - timedelta(hours=48)
+    dedup_window = datetime.utcnow() - timedelta(hours=48)
 
     for item in newsapi_items:
         try:
@@ -208,7 +208,7 @@ async def get_sentiment_overview(ward_id: Optional[int] = None) -> Dict[str, Any
     Uses Gemini to produce a sentiment score, label, and narrative.
     Falls back to count-based if no AI key.
     """
-    since = datetime.now(timezone.utc) - timedelta(days=7)
+    since = datetime.utcnow() - timedelta(days=7)
     query = [SocialPostMongo.scraped_at >= since]
     if ward_id is not None:
         query.append(SocialPostMongo.ward_id == ward_id)
@@ -245,7 +245,7 @@ async def get_emerging_issues(
     Return top emerging civic issue clusters from the last N hours.
     Uses Gemini to identify patterns and provide insights.
     """
-    since = datetime.now(timezone.utc) - timedelta(hours=hours)
+    since = datetime.utcnow() - timedelta(hours=hours)
     query = [SocialPostMongo.scraped_at >= since]
     if ward_id is not None:
         query.append(SocialPostMongo.ward_id == ward_id)

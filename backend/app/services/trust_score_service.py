@@ -36,9 +36,10 @@ async def compute_trust_score(ward_id: int, month: str) -> Dict[str, Any]:
     month_end = datetime(year_int, month_int, last_day, 23, 59, 59)
 
     # ── Fetch tickets resolved in this month ──────────────────────────────────
+    from beanie.operators import In
     resolved_tickets = await TicketMongo.find(
         TicketMongo.ward_id == ward_id,
-        TicketMongo.status.in_(["CLOSED", "RESOLVED"]),
+        In(TicketMongo.status, ["CLOSED", "RESOLVED"]),
         TicketMongo.resolved_at >= month_start,
         TicketMongo.resolved_at <= month_end,
     ).to_list()

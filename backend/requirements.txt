@@ -73,3 +73,7 @@ fpdf2                  # PDF generation for formal notices and RTI documents
 
 # ── Blockchain (optional, stub available) ─────────────────────────────────────
 web3
+
+# ── CCTV Feature ─────────────────────────────────────────────────────────────
+opencv-python-headless>=4.9.0
+Pillow>=10.3.0

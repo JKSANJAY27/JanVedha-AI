@@ -164,8 +164,9 @@ async def get_verified_resolutions(
     Councillor view: list of all AI-verified resolutions in a ward.
     Highlights low-confidence ones for review.
     """
+    from beanie.operators import In
     query_filters = [
-        TicketMongo.status.in_(["CLOSED", "RESOLVED"]),
+        In(TicketMongo.status, ["CLOSED", "RESOLVED"]),
         TicketMongo.work_verified != None,
     ]
     effective_ward = ward_id or current_user.ward_id

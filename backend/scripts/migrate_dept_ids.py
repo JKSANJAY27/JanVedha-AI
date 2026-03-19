@@ -7,9 +7,8 @@ from motor.motor_asyncio import AsyncIOMotorClient
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 async def migrate():
-    # Load URI from setting and avoid hardcoding secrets
-    from app.core.config import settings
-    uri = settings.MONGODB_URI
+    # Load URI from .env manually to be safe
+    uri = "mongodb+srv://haritottatry_db_user:FZNbpZISYLiP4e9v@cluster0.ai6oe8o.mongodb.net/janvedha?retryWrites=true&w=majority"
     
     client = AsyncIOMotorClient(uri)
     db = client["janvedha"]

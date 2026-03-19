@@ -14,6 +14,7 @@ import json
 import logging
 from datetime import datetime, timezone
 from typing import Optional, List, Dict, Any
+import asyncio
 
 import httpx
 
@@ -54,20 +55,35 @@ async def _call_gemini(
         },
     }
 
-    try:
-        async with httpx.AsyncClient(timeout=90.0) as client:
-            resp = await client.post(
-                f"{GEMINI_API_URL}?key={settings.GEMINI_API_KEY}",
-                json=payload,
-                headers={"Content-Type": "application/json"},
-            )
-            resp.raise_for_status()
-            data = resp.json()
-            return data["candidates"][0]["content"]["parts"][0]["text"]
-    except httpx.TimeoutException:
-        logger.error("Gemini API timed out")
-    except Exception as e:
-        logger.error("Gemini API call failed: %s", e)
+    for attempt in range(5):
+        try:
+            async with httpx.AsyncClient(timeout=90.0) as client:
+                resp = await client.post(
+                    f"{GEMINI_API_URL}?key={settings.GEMINI_API_KEY}",
+                    json=payload,
+                    headers={"Content-Type": "application/json"},
+                )
+                if resp.status_code == 429:
+                    retry_after = 2 ** attempt
+                    logger.warning("Gemini 429 Too Many Requests. Retrying in %s seconds...", retry_after)
+                    await asyncio.sleep(retry_after)
+                    continue
+
+                resp.raise_for_status()
+                data = resp.json()
+                return data["candidates"][0]["content"]["parts"][0]["text"]
+        except httpx.TimeoutException:
+            logger.error("Gemini API timed out")
+            break
+        except Exception as e:
+            if hasattr(e, 'response') and e.response is not None and e.response.status_code == 429:
+                retry_after = 2 ** attempt
+                logger.warning("Gemini 429 Too Many Requests. Retrying in %s seconds...", retry_after)
+                await asyncio.sleep(retry_after)
+                continue
+            logger.error("Gemini API call failed: %s", e)
+            break
+    
     return None
 
 
