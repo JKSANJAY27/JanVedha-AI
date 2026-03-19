@@ -386,6 +386,7 @@ export default function CouncillorDashboard() {
                             { href: "/councillor/communications", label: "Communications", icon: "📣" },
                             { href: "/councillor/media-rti", label: "Media & RTI", icon: "🎙️" },
                             { href: "/councillor/casework", label: "Casework inbox", icon: "📂" },
+                            { href: "/councillor/cctv", label: "CCTV Alerts", icon: "🎥" },
                             { href: "/councillor/opportunity", label: "Opportunity Map", icon: "🗺️" },
                             { href: "/councillor/proposal", label: "Generate Proposal", icon: "📄" },
                             { href: "/councillor/proposals", label: "Past Proposals", icon: "📋" },

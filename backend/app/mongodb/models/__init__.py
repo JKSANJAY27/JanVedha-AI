@@ -24,6 +24,9 @@ from .casework import CaseworkMongo
 from .ward_communication import WardCommunicationMongo
 # Feature: Media & RTI Response Assistant
 from .media_rti_response import MediaRtiResponseMongo
+# Feature: CCTV Civic Issue Detection
+from .camera import Camera
+from .cctv_alert import CCTVAlert
 
 __all__ = [
     "UserMongo",
@@ -47,4 +50,6 @@ __all__ = [
     "CaseworkMongo",
     "WardCommunicationMongo",
     "MediaRtiResponseMongo",
+    "Camera",
+    "CCTVAlert",
 ]
