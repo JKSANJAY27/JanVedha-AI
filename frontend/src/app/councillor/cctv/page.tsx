@@ -31,9 +31,9 @@ export default function CouncillorCCTVPage() {
         if (!user?.ward_id) return;
         try {
             const [alertsRes, camerasRes, countsRes] = await Promise.all([
-                fetch(`http://localhost:8000/api/cctv/alerts?ward_id=${user.ward_id}&limit=50`),
-                fetch(`http://localhost:8000/api/cctv/cameras?ward_id=${user.ward_id}`),
-                fetch(`http://localhost:8000/api/cctv/alerts/counts?ward_id=${user.ward_id}`)
+                fetch(`http://localhost:8001/api/cctv/alerts?ward_id=${user.ward_id}&limit=50`),
+                fetch(`http://localhost:8001/api/cctv/cameras?ward_id=${user.ward_id}`),
+                fetch(`http://localhost:8001/api/cctv/alerts/counts?ward_id=${user.ward_id}`)
             ]);
 
             const alertsData = await alertsRes.json();
@@ -63,7 +63,7 @@ export default function CouncillorCCTVPage() {
     const handleVerify = async (action: string, data: any) => {
         if (!selectedAlert) return false;
         try {
-            const res = await fetch(`http://localhost:8000/api/cctv/alerts/${selectedAlert.alert_id}/verify`, {
+            const res = await fetch(`http://localhost:8001/api/cctv/alerts/${selectedAlert.alert_id}/verify`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ ...data, ward_id: user?.ward_id })

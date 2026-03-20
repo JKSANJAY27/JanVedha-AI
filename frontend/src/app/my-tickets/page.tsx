@@ -234,7 +234,7 @@ function DetailPanel({ code, onClose }: { code: string; onClose: () => void }) {
                     <NotificationTimeline ticketCode={detail.ticket_code} />
                     {detail.status === "CLOSED" && (
                         <button
-                            onClick={() => window.open(`http://localhost:8000/api/v1/public/track/${detail.ticket_code}/apr`, "_blank")}
+                            onClick={() => window.open(`http://localhost:8001/api/v1/public/track/${detail.ticket_code}/apr`, "_blank")}
                             className="w-full text-center px-4 py-3 bg-emerald-600 text-white font-semibold rounded-xl hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2"
                         >
                             📄 Download Resolution Report

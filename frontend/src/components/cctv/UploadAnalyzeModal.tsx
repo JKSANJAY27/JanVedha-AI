@@ -46,7 +46,7 @@ export default function UploadAnalyzeModal({ isOpen, onClose, cameras, wardId, u
       setTimeout(() => setStatus('extracting'), 1000);
       setTimeout(() => setStatus('analyzing'), 2000);
       
-      const res = await fetch('http://localhost:8000/api/cctv/upload-and-analyze', {
+      const res = await fetch('http://localhost:8001/api/cctv/upload-and-analyze', {
         method: 'POST',
         body: formData,
       });
@@ -196,7 +196,7 @@ export default function UploadAnalyzeModal({ isOpen, onClose, cameras, wardId, u
         ) : status === 'complete' && result ? (
           <div className="flex-1 flex flex-col bg-gray-50">
             <div className="w-full h-[240px] bg-[#1a1a1a] relative">
-              <img src={`http://localhost:8000/api/cctv/alerts/${result.alert_id}/frame`} alt="Analyzed frame" className="w-full h-full object-cover" />
+              <img src={`http://localhost:8001/api/cctv/alerts/${result.alert_id}/frame`} alt="Analyzed frame" className="w-full h-full object-cover" />
             </div>
             
             <div className="p-6">

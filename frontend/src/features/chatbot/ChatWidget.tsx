@@ -58,7 +58,7 @@ export default function ChatWidget() {
 
         const sessionId = Math.random().toString(36).substring(7);
         const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
-        const wsBaseUrl = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8000";
+        const wsBaseUrl = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8001";
         const wsUrl = `${wsBaseUrl}/api/chat/ws${token ? `?token=${token}` : ""}`;
         const ws = new WebSocket(wsUrl);
         wsRef.current = ws;
