@@ -17,6 +17,39 @@ services:
     ports: ["27017:27017"]
     volumes: [mongo_data:/data/db]
 
+  clickhouse:
+    image: clickhouse/clickhouse-server:23.11
+    environment:
+      - CLICKHOUSE_DB=langfuse
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+
+  langfuse-server:
+    image: ghcr.io/langfuse/langfuse:3
+    depends_on:
+      - postgres
+      - clickhouse
+      - redis
+    ports:
+      - "4000:3000"
+    environment:
+      - NEXTAUTH_URL=http://localhost:4000
+      - NEXTAUTH_SECRET=mysecret_dont_use_in_prod
+      - SALT=mysalt_dont_use_in_prod
+      - DATABASE_URL=postgresql://civicai:civicai_local@postgres:5432/civicai
+      - DIRECT_URL=postgresql://civicai:civicai_local@postgres:5432/civicai
+      - CLICKHOUSE_URL=http://clickhouse:8123
+      - CLICKHOUSE_USER=default
+      - CLICKHOUSE_PASSWORD=
+      - CLICKHOUSE_DB=langfuse
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_AUTH=
+
 volumes:
   postgres_data:
   mongo_data:
+  clickhouse_data:

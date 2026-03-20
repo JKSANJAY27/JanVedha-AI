@@ -326,3 +326,16 @@ export const mediaRtiApi = {
   extractQuery: (formData: FormData) =>
     api.post("/api/media-rti/extract-query-from-image", formData, { headers: { "Content-Type": "multipart/form-data" } }),
 };
+
+export const schemeAdvisorApi = {
+  query: (data: { constituent_profile: string; ward_id?: number }) =>
+    api.post("/api/scheme-advisor/query", data),
+  getHistory: (limit = 10, skip = 0) =>
+    api.get("/api/scheme-advisor/history", { params: { limit, skip } }),
+  getDetails: (queryId: string) =>
+    api.get(`/api/scheme-advisor/query/${queryId}`),
+  submitFeedback: (queryId: string, score: number) =>
+    api.post(`/api/scheme-advisor/${queryId}/feedback`, { score }),
+  getStats: () =>
+    api.get("/api/scheme-advisor/stats"),
+};

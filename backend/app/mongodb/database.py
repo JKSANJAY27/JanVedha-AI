@@ -70,10 +70,12 @@ async def init_mongodb() -> None:
         CCTVAlert,
     )
 
+    from app.mongodb.models.scheme_query import SchemeQueryMongo
+
     uri = settings.MONGODB_URI
 
     import certifi
-    _motor_client = AsyncIOMotorClient(uri, tlsCAFile=certifi.where())
+    _motor_client = AsyncIOMotorClient(uri)
 
     # Extract DB name from URI (e.g. "mongodb://localhost:27017/civicai" → "civicai")
     db_name = settings.MONGODB_URI.rsplit("/", 1)[-1].split("?")[0] or "civicai"
@@ -110,6 +112,7 @@ async def init_mongodb() -> None:
             # Feature: CCTV Civic Issue Detection
             Camera,
             CCTVAlert,
+            SchemeQueryMongo,
         ],
     )
 

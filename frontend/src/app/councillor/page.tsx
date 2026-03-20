@@ -396,6 +396,7 @@ export default function CouncillorDashboard() {
                             { href: "/councillor/casework", label: "Casework inbox", icon: "📂" },
                             { href: "/councillor/cctv", label: "CCTV Alerts", icon: "🎥" },
                             { href: "/councillor/opportunity", label: "Opportunity Map", icon: "🗺️" },
+                            { href: "/councillor/scheme-advisor", label: "Scheme Advisor", icon: "🏛️" },
                             { href: "/councillor/proposal", label: "Generate Proposal", icon: "📄" },
                             { href: "/councillor/proposals", label: "Past Proposals", icon: "📋" },
                         ].map(({ href, label, icon }) => (
@@ -429,6 +430,85 @@ export default function CouncillorDashboard() {
                         />
                     </div>
                 )}
+
+                {/* ══ Constituent Services Section ══════════════════════════════════ */}
+                <div>
+                    <div className="flex items-center gap-2 mb-6">
+                        <span className="text-xl">🤝</span>
+                        <h2 className="text-lg font-extrabold text-slate-800 tracking-tight">Constituent Services</h2>
+                        <span className="text-xs bg-purple-100 text-purple-700 font-bold px-2.5 py-1 rounded-full border border-purple-200 shadow-sm ml-2">AI-Powered</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                        {/* ── Scheme Advisor ─────────────────────────────────────── */}
+                        <div
+                            onClick={() => router.push("/councillor/scheme-advisor")}
+                            className="col-span-1 md:col-span-2 bg-gradient-to-br from-indigo-600 to-purple-700 text-white rounded-3xl shadow-md p-6 cursor-pointer hover:shadow-xl hover:scale-[1.01] transition-all duration-200 flex flex-col justify-between group"
+                        >
+                            <div>
+                                <div className="flex items-center gap-3 mb-4">
+                                    <div className="bg-white/15 backdrop-blur-sm rounded-2xl p-3 text-3xl group-hover:scale-110 transition-transform duration-300">
+                                        🏛️
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] font-bold uppercase tracking-widest text-indigo-200 mb-0.5">RAG · Citation AI</p>
+                                        <h3 className="text-xl font-extrabold">Constituent Scheme Advisor</h3>
+                                    </div>
+                                </div>
+                                <p className="text-sm text-indigo-100 leading-relaxed mb-6">
+                                    Describe a constituent's demographic profile in plain text and instantly check eligibility across <strong className="text-white">10+ State and Central Government welfare schemes</strong>. Powered by a hybrid Vector + Keyword RAG pipeline with Gemini AI.
+                                </p>
+                                <div className="flex flex-wrap gap-2">
+                                    {["PMAY Housing", "MGNREGS", "PM Ujjwala", "Kalaignar Scheme", "ABHA Health"].map(tag => (
+                                        <span key={tag} className="text-[10px] font-semibold bg-white/15 px-2.5 py-1 rounded-full border border-white/20">
+                                            {tag}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                            <div className="flex items-center justify-between mt-6 pt-4 border-t border-white/20">
+                                <span className="text-xs text-indigo-200">Cross-references verified govt. documents with citations</span>
+                                <div className="flex items-center gap-1.5 text-sm font-bold bg-white text-indigo-700 px-4 py-2 rounded-full shadow-sm group-hover:bg-indigo-50 transition-colors">
+                                    Open Advisor <span className="group-hover:translate-x-1 transition-transform duration-200 inline-block">→</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* ── Right column: Quick access cards ──────────────────── */}
+                        <div className="flex flex-col gap-5">
+                            <div
+                                onClick={() => router.push("/councillor/casework")}
+                                className="bg-white rounded-3xl border border-gray-100 shadow-sm p-5 cursor-pointer hover:shadow-md hover:border-indigo-200 transition-all duration-200 group flex-1 flex flex-col"
+                            >
+                                <div className="flex items-center gap-3 mb-3">
+                                    <div className="text-2xl p-2.5 bg-amber-50 rounded-xl group-hover:scale-110 transition-transform duration-300">📂</div>
+                                    <div>
+                                        <p className="text-[10px] font-bold uppercase tracking-widest text-amber-600 mb-0.5">Inbox</p>
+                                        <h4 className="font-bold text-slate-800 text-sm">Casework</h4>
+                                    </div>
+                                    <span className="ml-auto text-gray-300 group-hover:text-indigo-400 transition-colors font-bold">→</span>
+                                </div>
+                                <p className="text-xs text-slate-500 leading-relaxed flex-1">Manage individual constituent requests, complaints, and follow-ups through your ward.</p>
+                            </div>
+
+                            <div
+                                onClick={() => router.push("/councillor/opportunity")}
+                                className="bg-white rounded-3xl border border-gray-100 shadow-sm p-5 cursor-pointer hover:shadow-md hover:border-indigo-200 transition-all duration-200 group flex-1 flex flex-col"
+                            >
+                                <div className="flex items-center gap-3 mb-3">
+                                    <div className="text-2xl p-2.5 bg-emerald-50 rounded-xl group-hover:scale-110 transition-transform duration-300">🗺️</div>
+                                    <div>
+                                        <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-600 mb-0.5">Map</p>
+                                        <h4 className="font-bold text-slate-800 text-sm">Opportunity Map</h4>
+                                    </div>
+                                    <span className="ml-auto text-gray-300 group-hover:text-indigo-400 transition-colors font-bold">→</span>
+                                </div>
+                                <p className="text-xs text-slate-500 leading-relaxed flex-1">Identify underserved zones and infrastructure gaps using data-driven hotspot analysis.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {/* ═══════════════════════════════════════════════════════════════ */}
 
                 {/* ══ AI Intelligence Section ══════════════════════════════════════ */}
                 <div>

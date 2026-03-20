@@ -29,40 +29,38 @@ async def lifespan(app: FastAPI):
 #    await load_priority_model()
 
 
-    # Start Telegram Bot if configured
-    from app.services.telegram_bot import get_bot_application
-    bot_app = get_bot_application()
-    if bot_app:
-        try:
-            await bot_app.initialize()
-            await bot_app.start()
-            import asyncio
-            # Run polling in background task to not block the FastAPI thread
-            asyncio.create_task(bot_app.updater.start_polling())
-            print("Telegram bot started.")
-        except Exception as e:
-            print(f"Failed to start telegram bot: {e}")
-
-    # Start Misinformation Detector background task (Feature 3)
-    try:
-        import asyncio
-        from app.services.misinformation_detector import start_misinformation_detector
-        asyncio.create_task(start_misinformation_detector())
-        print("Misinformation detector started.")
-    except Exception as e:
-        print(f"Failed to start misinformation detector: {e}")
+#    bot_app = get_bot_application()
+#    if bot_app:
+#        try:
+#            await bot_app.initialize()
+#            await bot_app.start()
+#            import asyncio
+#            # Run polling in background task to not block the FastAPI thread
+#            asyncio.create_task(bot_app.updater.start_polling())
+#            print("Telegram bot started.")
+#        except Exception as e:
+#            print(f"Failed to start telegram bot: {e}")
+#
+#    # Start Misinformation Detector background task (Feature 3)
+#    try:
+#        import asyncio
+#        from app.services.misinformation_detector import start_misinformation_detector
+#        asyncio.create_task(start_misinformation_detector())
+#        print("Misinformation detector started.")
+#    except Exception as e:
+#        print(f"Failed to start misinformation detector: {e}")
 
     yield
 
     # ── Shutdown ─────────────────────────────────────────────────────────────
-    bot_app = get_bot_application()
-    if bot_app:
-        try:
-            await bot_app.updater.stop()
-            await bot_app.stop()
-            await bot_app.shutdown()
-        except:
-            pass
+#    bot_app = get_bot_application()
+#    if bot_app:
+#        try:
+#            await bot_app.updater.stop()
+#            await bot_app.stop()
+#            await bot_app.shutdown()
+#        except:
+#            pass
 
     await close_mongodb()
 
@@ -82,7 +80,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-from app.api import cctv, public, auth, officer, webhooks, chat, calendar, councillor, commissioner, documents, social_intel, analytics, public_trust, opportunity, proposals, casework, communications, media_rti
+from app.api import cctv, public, auth, officer, webhooks, chat, calendar, councillor, commissioner, documents, social_intel, analytics, public_trust, opportunity, proposals, casework, communications, media_rti, scheme_advisor
 
 app.include_router(public.router, prefix="/api/public", tags=["public"])
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
@@ -102,6 +100,8 @@ app.include_router(casework.router, prefix="/api/casework", tags=["casework"])
 app.include_router(communications.router, prefix="/api/communications", tags=["communications"])
 app.include_router(media_rti.router, prefix="/api/media-rti", tags=["media-rti"])
 app.include_router(cctv.router, prefix="/api/cctv", tags=["cctv"])
+app.include_router(scheme_advisor.router, prefix="/api/scheme-advisor", tags=["scheme-advisor"])
+
 
 
 @app.get("/api/health")

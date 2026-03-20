@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
 import { useAuth } from "@/context/AuthContext";
-import { commissionerApi, socialIntelApi } from "@/lib/api";
+import { commissionerApi, socialIntelApi, schemeAdvisorApi } from "@/lib/api";
 import { DEPT_NAMES, getWardLabel } from "@/lib/constants";
 
 interface CitySummary {
@@ -209,6 +209,7 @@ export default function CommissionerDashboard() {
     const [sentiment, setSentiment] = useState<SentimentOverview | null>(null);
     const [emerging, setEmerging] = useState<EmergingIssue[]>([]);
     const [platforms, setPlatforms] = useState<PlatformStat[]>([]);
+    const [aiHealth, setAiHealth] = useState<any>(null);
     const [scraping, setScraping] = useState(false);
     
     const [loading, setLoading] = useState(true);
@@ -225,7 +226,8 @@ export default function CommissionerDashboard() {
             socialIntelApi.getSentimentOverview().catch(() => ({ data: { total: 0, positive: 0, neutral: 0, negative: 0, score: 0 }})),
             socialIntelApi.getEmergingIssues(undefined, 24, 5).catch(() => ({ data: [] })),
             socialIntelApi.getPlatformStats().catch(() => ({ data: [] })),
-        ]).then(([s, wp, br, ct, sent, emerg, plats]) => {
+            schemeAdvisorApi.getStats().catch(() => ({ data: null })),
+        ]).then(([s, wp, br, ct, sent, emerg, plats, aiStats]) => {
             setSummary(s.data);
             setWardPerf(wp.data);
             setBurnRate(br.data);
@@ -233,6 +235,7 @@ export default function CommissionerDashboard() {
             setSentiment(sent.data);
             setEmerging(emerg.data);
             setPlatforms(plats.data);
+            setAiHealth(aiStats.data);
         }).catch(() => toast.error("Failed to load city data"))
             .finally(() => setLoading(false));
     }, [user, isCommissioner, router]);
@@ -442,6 +445,34 @@ export default function CommissionerDashboard() {
                                     ))}
                                 </div>
                             )}
+                        </div>
+                    </div>
+                </div>
+
+                {/* ══ AI Health Section (Langfuse Analytics) ══════════════════════════════════ */}
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                    <div className="flex items-center gap-2 mb-6">
+                        <span className="text-2xl">🤖</span>
+                        <h2 className="font-bold text-gray-800 text-lg tracking-tight">AI Health & Utility (Scheme Advisor)</h2>
+                        <span className="ml-auto bg-purple-100 text-purple-700 font-bold px-2 py-1 flex items-center gap-1 rounded text-xs border border-purple-200 shadow-sm"><span className="w-1.5 h-1.5 bg-purple-600 rounded-full animate-pulse"></span> Langfuse Traced</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                        <div className="bg-slate-50 border border-slate-100 rounded-xl p-5 flex flex-col items-center justify-center text-center">
+                            <span className="text-3xl mb-2 text-slate-400">📊</span>
+                            <span className="text-xl font-black text-slate-800">{aiHealth?.total_queries || 0}</span>
+                            <p className="text-xs font-bold uppercase tracking-widest text-slate-500 mt-1">Total Queries</p>
+                        </div>
+                        <div className="bg-slate-50 border border-slate-100 rounded-xl p-5 flex flex-col items-center justify-center text-center">
+                            <span className="text-3xl mb-2 text-indigo-400">🧠</span>
+                            <span className="text-xl font-black text-slate-800">{aiHealth?.total_queries || 0}</span>
+                            <p className="text-xs font-bold uppercase tracking-widest text-slate-500 mt-1">RAG Generations</p>
+                            <p className="text-[10px] text-slate-400 mt-1 border border-slate-200 px-1 rounded bg-white font-mono">Gemini 2.5 Flash</p>
+                        </div>
+                        <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-5 flex flex-col items-center justify-center text-center">
+                            <span className="text-3xl mb-2 text-emerald-400">👍</span>
+                            <span className="text-xl font-black text-emerald-800">{aiHealth?.avg_councillor_feedback !== undefined && aiHealth.avg_councillor_feedback !== 0 ? (aiHealth.avg_councillor_feedback * 100).toFixed(0) + '%' : 'N/A'}</span>
+                            <p className="text-xs font-bold uppercase tracking-widest text-emerald-600 mt-1">Councillor Approval</p>
                         </div>
                     </div>
                 </div>

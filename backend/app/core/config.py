@@ -99,8 +99,21 @@ class Settings(BaseSettings):
     WEBHOOK_URL: str = ""
     WEBHOOK_SECRET: str = ""
 
+    # Langfuse
+    LANGFUSE_HOST: str = "http://localhost:4000"
+    LANGFUSE_PUBLIC_KEY: str = ""
+    LANGFUSE_SECRET_KEY: str = ""
+
+    # RAG Configuration
+    CHROMA_PERSIST_DIR: str = "./chroma_db"
+    CHROMA_SCHEMES_COLLECTION: str = "scheme_documents"
+    RAG_TOP_K: int = 5
+    RAG_RERANKER_TOP_K: int = 3
+    RAG_CITATION_THRESHOLD: float = 0.1
+
     class Config:
         env_file = ".env"
+
         extra = "ignore"
 
 settings = Settings()
