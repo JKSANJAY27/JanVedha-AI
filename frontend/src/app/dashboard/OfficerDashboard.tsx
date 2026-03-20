@@ -770,6 +770,26 @@ function SupervisorDashboard({ user }: { user: { name: string; ward_id?: number;
                 </div>
             )}
 
+            {/* ── Supervisor Intelligence Tools ── */}
+            <div className="pt-2">
+                <p className="text-xs text-gray-500 uppercase tracking-wider mb-3 font-semibold px-1">Supervisor Tools</p>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {[
+                        { href: "/commissioner/departments", icon: "🏢", title: "Dept Command Center", desc: "Health scores & SLA tracking", color: "from-amber-900/40 to-amber-800/20 border-amber-700/40 hover:border-amber-500/60" },
+                        { href: "/commissioner/intelligence", icon: "🧠", title: "Issue Detector", desc: "AI-detected systemic patterns", color: "from-violet-900/40 to-violet-800/20 border-violet-700/40 hover:border-violet-500/60" },
+                        { href: "/commissioner/escalations", icon: "📬", title: "Escalation Manager", desc: "Councillor-raised cases", color: "from-red-900/40 to-red-800/20 border-red-700/40 hover:border-red-500/60" },
+                        { href: "/commissioner/digest", icon: "📋", title: "Weekly Digest", desc: "AI-generated performance report", color: "from-teal-900/40 to-teal-800/20 border-teal-700/40 hover:border-teal-500/60" },
+                    ].map(f => (
+                        <a key={f.href} href={f.href}
+                            className={`text-left bg-gradient-to-br ${f.color} border rounded-xl p-4 transition-all block`}>
+                            <span className="text-2xl">{f.icon}</span>
+                            <p className="text-sm font-semibold text-white mt-2">{f.title}</p>
+                            <p className="text-xs text-gray-400 mt-0.5">{f.desc}</p>
+                        </a>
+                    ))}
+                </div>
+            </div>
+
             {/* ── Resource Health & Optimizer ── */}
             <div className="pt-2">
                 <ResourceHealthCard wardId={user.ward_id} />

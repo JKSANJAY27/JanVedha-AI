@@ -70,9 +70,18 @@ async def init_mongodb() -> None:
         CCTVAlert,
         # Feature: Ward Intelligence Cache (Gemini API result caching)
         WardIntelligenceCache,
+        # Commissioner features
+        DeptConfigMongo,
+        IntelligenceAlertMongo,
+        EscalationMongo,
+        CommissionerDigestMongo,
     )
 
     from app.mongodb.models.scheme_query import SchemeQueryMongo
+    from app.mongodb.models.dept_config import DeptConfigMongo
+    from app.mongodb.models.intelligence_alert import IntelligenceAlertMongo
+    from app.mongodb.models.escalation import EscalationMongo
+    from app.mongodb.models.commissioner_digest import CommissionerDigestMongo
 
     uri = settings.MONGODB_URI
 
@@ -117,8 +126,17 @@ async def init_mongodb() -> None:
             # Feature: Ward Intelligence Cache (Gemini API result caching)
             WardIntelligenceCache,
             SchemeQueryMongo,
+            # Commissioner features
+            DeptConfigMongo,
+            IntelligenceAlertMongo,
+            EscalationMongo,
+            CommissionerDigestMongo,
         ],
     )
+
+    # Seed department config on startup if empty
+    from app.utils.metrics import seed_dept_config
+    await seed_dept_config()
 
 
 async def close_mongodb() -> None:

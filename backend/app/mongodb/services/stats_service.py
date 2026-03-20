@@ -60,7 +60,7 @@ class MongoStatsService:
                 }
             },
         ]
-        collection = TicketMongo.get_motor_collection()
+        collection = TicketMongo.get_pymongo_collection()
         result = await collection.aggregate(pipeline).to_list(length=1)
         if not result:
             return 0.0
@@ -78,7 +78,7 @@ class MongoStatsService:
             {"$group": {"_id": "$ward_id", "count": {"$sum": 1}}},
             {"$sort": {"count": -1}},
         ]
-        collection = TicketMongo.get_motor_collection()
+        collection = TicketMongo.get_pymongo_collection()
         rows = await collection.aggregate(pipeline).to_list(length=200)
         return [{"ward_id": r["_id"], "count": r["count"]} for r in rows]
 

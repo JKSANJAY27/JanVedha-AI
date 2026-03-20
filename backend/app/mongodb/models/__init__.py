@@ -29,6 +29,11 @@ from .camera import Camera
 from .cctv_alert import CCTVAlert
 # Feature: Ward Intelligence Cache (Gemini API result caching)
 from .ward_intelligence_cache import WardIntelligenceCache
+# Feature: Commissioner Dashboard features
+from .dept_config import DeptConfigMongo
+from .intelligence_alert import IntelligenceAlertMongo
+from .escalation import EscalationMongo
+from .commissioner_digest import CommissionerDigestMongo
 
 __all__ = [
     "UserMongo",
@@ -55,4 +60,9 @@ __all__ = [
     "Camera",
     "CCTVAlert",
     "WardIntelligenceCache",
+    # Commissioner features
+    "DeptConfigMongo",
+    "IntelligenceAlertMongo",
+    "EscalationMongo",
+    "CommissionerDigestMongo",
 ]

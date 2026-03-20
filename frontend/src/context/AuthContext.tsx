@@ -78,7 +78,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const isJuniorEngineer = role === "JUNIOR_ENGINEER";
     const isFieldStaff = role === "FIELD_STAFF";
     const isCouncillor = role === "COUNCILLOR";
-    const isCommissioner = role === "COMMISSIONER" || role === "SUPER_ADMIN";
+    const isCommissioner = role === "COMMISSIONER" || role === "SUPER_ADMIN" || role === "SUPERVISOR";
     const isAdmin = role === "SUPER_ADMIN";
 
     return (

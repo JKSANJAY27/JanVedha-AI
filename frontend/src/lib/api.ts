@@ -177,13 +177,43 @@ export const councillorApi = {
   // Cache status — when was each section last refreshed?
   getIntelligenceCacheStatus: (wardId?: number) =>
     api.get("/api/councillor/intelligence/cache-status", { params: wardId ? { ward_id: wardId } : {} }),
+  // Escalation — send to commissioner
+  escalateCase: (data: object) => api.post("/api/commissioner/escalations/submit", data),
 };
 
 export const commissionerApi = {
+  // Legacy endpoints
   getCitySummary: () => api.get("/api/commissioner/city-summary"),
   getWardPerformance: () => api.get("/api/commissioner/ward-performance"),
   getBudgetBurnRate: (weeks: number = 12) => api.get("/api/commissioner/budget-burn-rate", { params: { weeks } }),
   getCriticalOpenTickets: (limit: number = 20) => api.get("/api/commissioner/critical-open-tickets", { params: { limit } }),
+  // Feature 1: Department Command Center
+  getDepartmentHealth: () => api.get("/api/commissioner/department-health"),
+  getDepartmentDetail: (deptId: string, days = 30) => api.get(`/api/commissioner/department/${deptId}/detail`, { params: { days } }),
+  getStaffPerformance: () => api.get("/api/commissioner/staff-performance"),
+  // Feature 2: Intelligence Alerts
+  getIntelligenceAlerts: (status?: string, patternType?: string, page = 1, limit = 20) =>
+    api.get("/api/commissioner/intelligence-alerts", { params: { status, pattern_type: patternType, page, limit } }),
+  getIntelligenceAlertCounts: () => api.get("/api/commissioner/intelligence-alerts/counts"),
+  acknowledgeAlert: (alertId: string, data: { commissioner_id: string; commissioner_name: string; note?: string; action?: string }) =>
+    api.post(`/api/commissioner/intelligence-alerts/${alertId}/acknowledge`, data),
+  runDetection: () => api.post("/api/commissioner/intelligence-alerts/run-detection"),
+  // Feature 3: Escalations
+  submitEscalation: (data: object) => api.post("/api/commissioner/escalations/submit", data),
+  getEscalations: (params?: { status?: string; urgency?: string; ward_id?: string; page?: number; limit?: number }) =>
+    api.get("/api/commissioner/escalations", { params }),
+  getEscalationCounts: () => api.get("/api/commissioner/escalations/counts"),
+  getEscalation: (escalationId: string) => api.get(`/api/commissioner/escalations/${escalationId}`),
+  respondEscalation: (escalationId: string, data: object) =>
+    api.post(`/api/commissioner/escalations/${escalationId}/respond`, data),
+  closeEscalation: (escalationId: string, commissioner_id: string, note?: string) =>
+    api.post(`/api/commissioner/escalations/${escalationId}/close`, { commissioner_id, note }),
+  // Feature 4: Weekly Digest
+  getLatestDigest: () => api.get("/api/commissioner/digest/latest"),
+  getDigestHistory: (page = 1, limit = 12) => api.get("/api/commissioner/digest/history", { params: { page, limit } }),
+  getDigest: (digestId: string) => api.get(`/api/commissioner/digest/${digestId}`),
+  generateDigest: (userId?: string) => api.post("/api/commissioner/digest/generate", { user_id: userId }),
+  getDigestPdfUrl: (digestId: string) => `/api/commissioner/digest/${digestId}/pdf`,
 };
 
 export const socialIntelApi = {

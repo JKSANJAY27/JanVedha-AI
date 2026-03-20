@@ -50,17 +50,34 @@ async def lifespan(app: FastAPI):
 #    except Exception as e:
 #        print(f"Failed to start misinformation detector: {e}")
 
+    # Start background scheduler (weekly digest + daily pattern detection)
+    try:
+        from apscheduler.schedulers.asyncio import AsyncIOScheduler
+        from apscheduler.triggers.cron import CronTrigger
+        from app.api.commissioner import generate_weekly_digest
+        from app.utils.pattern_detector import run_all_detections
+
+        scheduler = AsyncIOScheduler(timezone="Asia/Kolkata")
+        # Weekly digest every Monday at 06:00 IST
+        scheduler.add_job(generate_weekly_digest, CronTrigger(day_of_week="mon", hour=6, minute=0),
+                          id="weekly_digest", replace_existing=True)
+        # Daily intelligence detection at 07:00 IST
+        scheduler.add_job(run_all_detections, CronTrigger(hour=7, minute=0),
+                          id="daily_detection", replace_existing=True)
+        scheduler.start()
+        app.state.scheduler = scheduler
+        print("Scheduler started: weekly digest (Mon 06:00 IST) + daily detection (07:00 IST)")
+    except Exception as e:
+        print(f"Scheduler failed to start (non-fatal): {e}")
+
     yield
 
     # ── Shutdown ─────────────────────────────────────────────────────────────
-#    bot_app = get_bot_application()
-#    if bot_app:
-#        try:
-#            await bot_app.updater.stop()
-#            await bot_app.stop()
-#            await bot_app.shutdown()
-#        except:
-#            pass
+    if hasattr(app.state, "scheduler"):
+        try:
+            app.state.scheduler.shutdown(wait=False)
+        except Exception:
+            pass
 
     await close_mongodb()
 
