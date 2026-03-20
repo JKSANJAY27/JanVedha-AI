@@ -7,6 +7,9 @@ import toast from "react-hot-toast";
 import { useAuth } from "@/context/AuthContext";
 import { councillorApi, socialIntelApi } from "@/lib/api";
 import { DEPT_NAMES } from "@/lib/constants";
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
+
+const PIE_COLORS = ["#DC2626", "#EA580C", "#CA8A04", "#16A34A"];
 import ScenarioPlanner from "@/components/ScenarioPlanner";
 import WardBenchmarkPanel from "@/components/WardBenchmarkPanel";
 import WardTrustScoreCard from "@/components/WardTrustScoreCard";
@@ -271,12 +274,21 @@ export default function CouncillorDashboard() {
     const [sentiment, setSentiment] = useState<SentimentOverview | null>(null);
     const [emerging, setEmerging] = useState<EmergingIssue[]>([]);
     const [socialPosts, setSocialPosts] = useState<SocialPost[]>([]);
+    const [byPriority, setByPriority] = useState<any[]>([]);
     
-    // AI Intelligence state
+    // AI Intelligence state — loaded from cache, not Gemini on every load
     const [briefing, setBriefing] = useState<string | null>(null);
+    const [briefingCachedAt, setBriefingCachedAt] = useState<string | null>(null);
     const [rootCauses, setRootCauses] = useState<any[]>([]);
+    const [rootCausesCachedAt, setRootCausesCachedAt] = useState<string | null>(null);
     const [alerts, setAlerts] = useState<any[]>([]);
+    const [alertsCachedAt, setAlertsCachedAt] = useState<string | null>(null);
     const [intelligenceLoading, setIntelligenceLoading] = useState(true);
+
+    // Per-section refresh loading flags
+    const [briefingRefreshing, setBriefingRefreshing] = useState(false);
+    const [rootCausesRefreshing, setRootCausesRefreshing] = useState(false);
+    const [alertsRefreshing, setAlertsRefreshing] = useState(false);
 
     const [loading, setLoading] = useState(true);
     const [scrapeLoading, setScrapeLoading] = useState(false);
@@ -314,46 +326,107 @@ export default function CouncillorDashboard() {
         }
     }, [scrapeLoading, loadSocialData]);
 
+    // ── Per-section Intelligence Refresh handlers ─────────────────────────────
+    const handleRefreshBriefing = useCallback(async (ward?: number) => {
+        if (briefingRefreshing) return;
+        setBriefingRefreshing(true);
+        try {
+            const resp = await councillorApi.refreshBriefing(ward);
+            setBriefing(resp.data.briefing);
+            setBriefingCachedAt(resp.data.refreshed_at);
+            toast.success("Morning Briefing refreshed!");
+        } catch {
+            toast.error("Failed to refresh briefing");
+        } finally {
+            setBriefingRefreshing(false);
+        }
+    }, [briefingRefreshing]);
+
+    const handleRefreshRootCauses = useCallback(async (ward?: number) => {
+        if (rootCausesRefreshing) return;
+        setRootCausesRefreshing(true);
+        try {
+            const resp = await councillorApi.refreshRootCauses(ward);
+            setRootCauses(resp.data.root_causes || []);
+            setRootCausesCachedAt(resp.data.refreshed_at);
+            toast.success("Root Cause Radar refreshed!");
+        } catch {
+            toast.error("Failed to refresh root causes");
+        } finally {
+            setRootCausesRefreshing(false);
+        }
+    }, [rootCausesRefreshing]);
+
+    const handleRefreshAlerts = useCallback(async (ward?: number) => {
+        if (alertsRefreshing) return;
+        setAlertsRefreshing(true);
+        try {
+            const resp = await councillorApi.refreshPredictions(ward);
+            setAlerts(resp.data.alerts || []);
+            setAlertsCachedAt(resp.data.refreshed_at);
+            toast.success("Predictive Alerts refreshed!");
+        } catch {
+            toast.error("Failed to refresh predictive alerts");
+        } finally {
+            setAlertsRefreshing(false);
+        }
+    }, [alertsRefreshing]);
+
     useEffect(() => {
         const allowed = isCouncillor || isAdmin || isSupervisor;
         if (!user) return;
-        if (!allowed) { router.push("/officer/dashboard"); return; }
+        if (!allowed) { router.push("/dashboard"); return; }
 
         const ward = user.ward_id;
         
-        // Load basic telemetry
+        // Load basic telemetry (no Gemini calls here — just DB queries)
         Promise.all([
             councillorApi.getWardSummary(ward),
             councillorApi.getDeptPerformance(ward),
             councillorApi.getSatisfactionTrend(ward, 8),
             councillorApi.getTopIssues(ward, 8),
             councillorApi.getOverdueTickets(ward),
+            councillorApi.getPriorityInsights(ward).catch(() => ({ data: { by_priority: {} } })),
             socialIntelApi.getSentimentOverview(ward).catch(() => ({ data: { total: 0, positive: 0, neutral: 0, negative: 0, score: 0 } })),
             socialIntelApi.getEmergingIssues(ward, 72, 6).catch(() => ({ data: [] })),
             socialIntelApi.getSocialPosts(ward, undefined, 1, 10).catch(() => ({ data: { results: [] } })),
             socialIntelApi.getStatus(ward).catch(() => ({ data: { last_scraped_at: null } })),
-        ]).then(([s, d, t, issues, ov, sent, emerg, posts, status]) => {
+        ]).then(([s, d, t, issues, ov, pri, sent, emerg, posts, status]) => {
             setSummary(s.data);
             setDeptPerf(d.data);
             setTrend(t.data);
             setTopIssues(issues.data);
             setOverdue(ov.data);
-            setSentiment((sent as { data: SentimentOverview }).data);
+            
+            const prioData = (pri as any).data?.by_priority || {};
+            setByPriority([
+                { name: "Critical", value: prioData["CRITICAL"] || 0 },
+                { name: "High", value: prioData["HIGH"] || 0 },
+                { name: "Medium", value: prioData["MEDIUM"] || 0 },
+                { name: "Low", value: prioData["LOW"] || 0 },
+            ]);
+            setSentiment((sent as any).data);
+
             setEmerging((emerg as { data: EmergingIssue[] }).data);
             setSocialPosts((posts as { data: { results: SocialPost[] } }).data?.results ?? []);
             setLastScrapeTime((status as { data: { last_scraped_at: string | null } }).data.last_scraped_at);
         }).catch(() => toast.error("Failed to load ward data"))
             .finally(() => setLoading(false));
 
-        // Load AI Intelligence separately so it doesn't block the main dashboard
+        // Load AI Intelligence from cache only — NO Gemini calls on page load
         Promise.all([
-            councillorApi.getIntelligenceBriefing(ward).catch(() => ({ data: { briefing: "AI Briefing unavailable." } })),
-            councillorApi.getRootCauses(ward).catch(() => ({ data: { root_causes: [] } })),
-            councillorApi.getPredictiveAlerts(ward).catch(() => ({ data: { alerts: [] } })),
-        ]).then(([briefResp, causesResp, alertsResp]) => {
-            setBriefing(briefResp.data.briefing);
+            councillorApi.getIntelligenceBriefing(ward).catch(() => ({ data: { briefing: null, has_data: false } })),
+            councillorApi.getRootCauses(ward).catch(() => ({ data: { root_causes: [], has_data: false } })),
+            councillorApi.getPredictiveAlerts(ward).catch(() => ({ data: { alerts: [], has_data: false } })),
+            councillorApi.getIntelligenceCacheStatus(ward).catch(() => ({ data: { cache: {} } })),
+        ]).then(([briefResp, causesResp, alertsResp, cacheStatus]) => {
+            setBriefing(briefResp.data.briefing ?? null);
             setRootCauses(causesResp.data.root_causes || []);
             setAlerts(alertsResp.data.alerts || []);
+            const cache = (cacheStatus as any).data?.cache || {};
+            setBriefingCachedAt(cache.briefing?.computed_at ?? null);
+            setRootCausesCachedAt(cache.root_causes?.computed_at ?? null);
+            setAlertsCachedAt(cache.predictions?.computed_at ?? null);
         }).finally(() => setIntelligenceLoading(false));
 
     }, [user]);
@@ -430,6 +503,35 @@ export default function CouncillorDashboard() {
                         />
                     </div>
                 )}
+
+                
+                {/* ══ Charts (Merged from dashboard) ══════════════════════════════════ */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                        <h3 className="font-bold text-gray-900 mb-4">Priority Breakdown</h3>
+                        <ResponsiveContainer width="100%" height={240}>
+                            <PieChart>
+                                <Pie data={byPriority} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={85} label={({ name, value }) => value > 0 ? `${name}: ${value}` : ""}>
+                                    {byPriority.map((_, i) => <Cell key={i} fill={PIE_COLORS[i]} />)}
+                                </Pie>
+                                <Tooltip />
+                            </PieChart>
+                        </ResponsiveContainer>
+                    </div>
+
+                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                        <h3 className="font-bold text-gray-900 mb-4">Issues by Department</h3>
+                        <ResponsiveContainer width="100%" height={240}>
+                            <BarChart data={deptPerf.map(d => ({ name: DEPT_NAMES[d.dept_id] || d.dept_id, count: d.open + d.closed })).sort((a,b) => b.count - a.count).slice(0, 6)} layout="vertical">
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis type="number" tick={{ fontSize: 11 }} />
+                                <YAxis type="category" dataKey="name" tick={{ fontSize: 10 }} width={110} />
+                                <Tooltip />
+                                <Bar dataKey="count" fill="#3b82f6" radius={[0, 4, 4, 0]} />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
 
                 {/* ══ Constituent Services Section ══════════════════════════════════ */}
                 <div>
@@ -516,42 +618,87 @@ export default function CouncillorDashboard() {
                         <span className="text-xl">🧠</span>
                         <h2 className="text-base font-bold text-gray-800">Local Leadership Intelligence</h2>
                         <span className="text-xs bg-indigo-100 text-indigo-700 font-semibold px-2 py-0.5 rounded-full">Gemini AI</span>
+                        <span className="ml-2 text-[10px] text-gray-400 border border-gray-200 rounded px-1.5 py-0.5">
+                            📦 Served from cache · click Refresh to regenerate
+                        </span>
                     </div>
 
                     {intelligenceLoading ? (
                         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 flex flex-col items-center justify-center">
                             <div className="w-8 h-8 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mb-4" />
-                            <p className="text-sm text-gray-500 font-medium">Synthesizing comprehensive ward intelligence...</p>
-                            <p className="text-xs text-gray-400 mt-1">Analyzing cross-department data & geographic patterns</p>
+                            <p className="text-sm text-gray-500 font-medium">Loading cached ward intelligence...</p>
+                            <p className="text-xs text-gray-400 mt-1">Reading from database — no AI calls on page load</p>
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                             {/* 1. Ward Reality Briefing */}
                             <div className="bg-gradient-to-br from-indigo-50 to-white rounded-2xl shadow-sm border border-indigo-100 p-5 col-span-1 lg:col-span-2">
-                                <div className="flex items-center gap-2 mb-3">
+                                <div className="flex items-center gap-2 mb-3 flex-wrap">
                                     <span className="text-lg">🌅</span>
                                     <h3 className="font-bold text-indigo-900 text-sm">Morning Reality Briefing</h3>
+                                    {briefingCachedAt && (
+                                        <span className="text-[9px] text-gray-400 ml-1">
+                                            Updated: {new Date(briefingCachedAt).toLocaleString("en-IN", { dateStyle: "short", timeStyle: "short" })}
+                                        </span>
+                                    )}
+                                    <button
+                                        onClick={() => handleRefreshBriefing(user?.ward_id)}
+                                        disabled={briefingRefreshing}
+                                        className="ml-auto flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1 rounded-full border border-indigo-300 bg-white text-indigo-700 hover:bg-indigo-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                                        title="Calls Gemini AI to regenerate this briefing"
+                                    >
+                                        {briefingRefreshing ? (
+                                            <><span className="w-2.5 h-2.5 border-2 border-indigo-300 border-t-indigo-600 rounded-full animate-spin" /> Generating…</>
+                                        ) : (
+                                            <>🔄 Refresh</>
+                                        )}
+                                    </button>
                                 </div>
                                 <div className="text-sm text-gray-700 leading-relaxed space-y-2">
                                     {briefing ? (
                                         <p>{briefing}</p>
                                     ) : (
-                                        <p className="text-gray-400 italic">Briefing currently unavailable. Check back later.</p>
+                                        <div className="flex flex-col items-center justify-center py-6 text-center">
+                                            <span className="text-3xl mb-2">🌅</span>
+                                            <p className="text-sm font-medium text-gray-500">No briefing cached yet</p>
+                                            <p className="text-xs text-gray-400 mt-1">Click <strong>Refresh</strong> above to generate your AI Morning Briefing with Gemini</p>
+                                        </div>
                                     )}
                                 </div>
                             </div>
 
                             {/* Predictive Alerts */}
                             <div className="bg-gradient-to-br from-amber-50 to-white rounded-2xl shadow-sm border border-amber-100 p-5">
-                                <div className="flex items-center gap-2 mb-3">
+                                <div className="flex items-center gap-2 mb-3 flex-wrap">
                                     <span className="text-lg">🔮</span>
                                     <h3 className="font-bold text-amber-900 text-sm">Predictive Workload Alerts</h3>
+                                    {alertsCachedAt && (
+                                        <span className="text-[9px] text-gray-400 ml-1 hidden sm:inline">
+                                            {new Date(alertsCachedAt).toLocaleDateString("en-IN", { month: "short", day: "numeric" })}
+                                        </span>
+                                    )}
+                                    <button
+                                        onClick={() => handleRefreshAlerts(user?.ward_id)}
+                                        disabled={alertsRefreshing}
+                                        className="ml-auto flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1 rounded-full border border-amber-300 bg-white text-amber-700 hover:bg-amber-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                                        title="Calls Gemini AI to regenerate predictions"
+                                    >
+                                        {alertsRefreshing ? (
+                                            <><span className="w-2.5 h-2.5 border-2 border-amber-300 border-t-amber-600 rounded-full animate-spin" /> Generating…</>
+                                        ) : (
+                                            <>🔄 Refresh</>
+                                        )}
+                                    </button>
                                 </div>
                                 <div className="space-y-3">
                                     {alerts.length === 0 ? (
                                         <div className="text-center py-4">
-                                            <span className="text-2xl opacity-50 block mb-1">🌤️</span>
-                                            <p className="text-xs text-amber-700">No seasonal spikes expected in the next 3 weeks.</p>
+                                            <span className="text-2xl opacity-50 block mb-1">🔮</span>
+                                            <p className="text-xs text-amber-700">
+                                                {alertsCachedAt
+                                                    ? "No seasonal spikes expected in the next 3 weeks."
+                                                    : "Click Refresh to run predictive analysis."}
+                                            </p>
                                         </div>
                                     ) : (
                                         alerts.map((alert, idx) => (
@@ -569,17 +716,40 @@ export default function CouncillorDashboard() {
 
                             {/* 2. Root Cause Radar */}
                             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 col-span-1 lg:col-span-3">
-                                <div className="flex items-center gap-2 mb-4">
+                                <div className="flex items-center gap-2 mb-4 flex-wrap">
                                     <span className="text-lg">🎯</span>
                                     <h3 className="font-bold text-gray-800 text-sm">Root Cause Radar</h3>
-                                    <span className="text-[10px] text-gray-400 ml-auto border border-gray-200 rounded px-1.5 py-0.5">Geospatial Clustering Active</span>
+                                    <span className="text-[10px] text-gray-400 border border-gray-200 rounded px-1.5 py-0.5">Geospatial Clustering Active</span>
+                                    {rootCausesCachedAt && (
+                                        <span className="text-[9px] text-gray-400">
+                                            Updated: {new Date(rootCausesCachedAt).toLocaleString("en-IN", { dateStyle: "short", timeStyle: "short" })}
+                                        </span>
+                                    )}
+                                    <button
+                                        onClick={() => handleRefreshRootCauses(user?.ward_id)}
+                                        disabled={rootCausesRefreshing}
+                                        className="ml-auto flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1 rounded-full border border-rose-300 bg-white text-rose-700 hover:bg-rose-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                                        title="Calls Gemini AI to re-cluster and analyse root causes"
+                                    >
+                                        {rootCausesRefreshing ? (
+                                            <><span className="w-2.5 h-2.5 border-2 border-rose-300 border-t-rose-600 rounded-full animate-spin" /> Analysing…</>
+                                        ) : (
+                                            <>🔄 Refresh</>  
+                                        )}
+                                    </button>
                                 </div>
                                 
                                 {rootCauses.length === 0 ? (
                                     <div className="text-center py-6 text-gray-500 bg-gray-50 rounded-xl border border-dashed border-gray-200">
-                                        <span className="text-2xl mb-2 block opacity-50">✨</span>
-                                        <p className="text-sm font-medium">No systemic clusters detected</p>
-                                        <p className="text-xs mt-1">Issues appear geographically isolated right now.</p>
+                                        <span className="text-2xl mb-2 block opacity-50">🎯</span>
+                                        <p className="text-sm font-medium">
+                                            {rootCausesCachedAt ? "No systemic clusters detected" : "No data cached yet"}
+                                        </p>
+                                        <p className="text-xs mt-1">
+                                            {rootCausesCachedAt
+                                                ? "Issues appear geographically isolated right now."
+                                                : "Click Refresh above to run geospatial clustering analysis with Gemini AI."}
+                                        </p>
                                     </div>
                                 ) : (
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

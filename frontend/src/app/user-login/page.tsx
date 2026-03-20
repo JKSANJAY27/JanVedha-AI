@@ -112,10 +112,10 @@ function LoginContent() {
     }, [topIssues.length]);
 
     const ROLE_REDIRECTS: Record<string, string> = {
-        COUNCILLOR: "/councillor/dashboard",
-        SUPERVISOR: "/officer/dashboard",
-        JUNIOR_ENGINEER: "/officer/dashboard",
-        FIELD_STAFF: "/officer/dashboard",
+        COUNCILLOR: "/dashboard",
+        SUPERVISOR: "/dashboard",
+        JUNIOR_ENGINEER: "/dashboard",
+        FIELD_STAFF: "/dashboard",
         SUPER_ADMIN: "/",
         PUBLIC_USER: "/",
     };

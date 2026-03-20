@@ -1,6 +1,6 @@
 "use client";
 
-import OfficerDashboard from "../dashboard/page";
+import OfficerDashboard from "../../dashboard/OfficerDashboard";
 
 export default function WaterDashboard() {
     const mockUser = {

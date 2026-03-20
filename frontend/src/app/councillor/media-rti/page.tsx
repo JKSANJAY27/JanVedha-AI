@@ -129,7 +129,7 @@ export default function MediaRtiPage() {
 
   useEffect(() => {
     if (!user) return;
-    if (!isCouncillor && !isAdmin && !isSupervisor) { router.push("/councillor"); }
+    if (!isCouncillor && !isAdmin && !isSupervisor) { router.push("/dashboard"); }
   }, [user, isCouncillor, isAdmin, isSupervisor, router]);
 
   const loadHistory = useCallback(async () => {
@@ -359,7 +359,7 @@ export default function MediaRtiPage() {
       <div className="bg-gradient-to-r from-violet-700 to-indigo-800 text-white px-6 py-5">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center gap-3">
-            <a href="/councillor" className="text-violet-300 hover:text-white text-sm">← Dashboard</a>
+            <a href="/dashboard" className="text-violet-300 hover:text-white text-sm">← Dashboard</a>
             <span className="text-violet-400">·</span>
             <span className="text-violet-200 text-sm">Communication</span>
           </div>

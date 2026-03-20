@@ -112,7 +112,7 @@ export default function CommunicationsPage() {
   useEffect(() => {
     if (!user) return;
     const allowed = isCouncillor || isAdmin || isSupervisor;
-    if (!allowed) { router.push("/councillor"); }
+    if (!allowed) { router.push("/dashboard"); }
   }, [user, isCouncillor, isAdmin, isSupervisor, router]);
 
   // ── Load Suggestions ─────────────────────────────────────────────────────────
@@ -271,7 +271,7 @@ export default function CommunicationsPage() {
       <div className="bg-gradient-to-r from-teal-700 to-emerald-800 text-white px-6 py-5">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center gap-3">
-            <a href="/councillor" className="text-teal-300 hover:text-white text-sm">← Dashboard</a>
+            <a href="/dashboard" className="text-teal-300 hover:text-white text-sm">← Dashboard</a>
             <span className="text-teal-400">·</span>
             <span className="text-teal-200 text-sm">Communication</span>
           </div>

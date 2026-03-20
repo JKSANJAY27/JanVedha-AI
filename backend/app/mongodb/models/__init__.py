@@ -27,6 +27,8 @@ from .media_rti_response import MediaRtiResponseMongo
 # Feature: CCTV Civic Issue Detection
 from .camera import Camera
 from .cctv_alert import CCTVAlert
+# Feature: Ward Intelligence Cache (Gemini API result caching)
+from .ward_intelligence_cache import WardIntelligenceCache
 
 __all__ = [
     "UserMongo",
@@ -52,4 +54,5 @@ __all__ = [
     "MediaRtiResponseMongo",
     "Camera",
     "CCTVAlert",
+    "WardIntelligenceCache",
 ]

@@ -147,6 +147,7 @@ export const calendarApi = {
 };
 
 export const councillorApi = {
+  getPriorityInsights: (wardId?: number) => api.get("/api/councillor/priority-insights", { params: wardId ? { ward_id: wardId } : {} }),
   getWardSummary: (wardId?: number) =>
     api.get("/api/councillor/ward-summary", { params: wardId ? { ward_id: wardId } : {} }),
   getDeptPerformance: (wardId?: number) =>
@@ -159,12 +160,23 @@ export const councillorApi = {
     api.get("/api/councillor/overdue-tickets", { params: wardId ? { ward_id: wardId } : {} }),
   getFeed: (wardId?: number) =>
     api.get("/api/councillor/announcement-feed", { params: wardId ? { ward_id: wardId } : {} }),
+  // Intelligence — READ from cache (safe to call on every page load)
   getIntelligenceBriefing: (wardId?: number) =>
     api.get("/api/councillor/intelligence/briefing", { params: wardId ? { ward_id: wardId } : {} }),
   getRootCauses: (wardId?: number) =>
     api.get("/api/councillor/intelligence/root-causes", { params: wardId ? { ward_id: wardId } : {} }),
   getPredictiveAlerts: (wardId?: number) =>
     api.get("/api/councillor/intelligence/predictions", { params: wardId ? { ward_id: wardId } : {} }),
+  // Intelligence — REFRESH (triggers Gemini API call, saves to DB)
+  refreshBriefing: (wardId?: number) =>
+    api.post("/api/councillor/intelligence/briefing/refresh", null, { params: wardId ? { ward_id: wardId } : {} }),
+  refreshRootCauses: (wardId?: number) =>
+    api.post("/api/councillor/intelligence/root-causes/refresh", null, { params: wardId ? { ward_id: wardId } : {} }),
+  refreshPredictions: (wardId?: number) =>
+    api.post("/api/councillor/intelligence/predictions/refresh", null, { params: wardId ? { ward_id: wardId } : {} }),
+  // Cache status — when was each section last refreshed?
+  getIntelligenceCacheStatus: (wardId?: number) =>
+    api.get("/api/councillor/intelligence/cache-status", { params: wardId ? { ward_id: wardId } : {} }),
 };
 
 export const commissionerApi = {

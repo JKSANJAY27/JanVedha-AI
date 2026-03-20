@@ -19,7 +19,7 @@ export default function PublicAuthGuard({ children }: { children: React.ReactNod
             // These paths do not require authentication
             const publicPaths = ["/user-login", "/login", "/signup"];
             // These paths have their own authentications/guards
-            const isOfficerOrAdminRoute = pathname.startsWith("/officer") || pathname.startsWith("/department") || pathname.startsWith("/councillor");
+            const isOfficerOrAdminRoute = pathname.startsWith("/officer") || pathname.startsWith("/department") || pathname.startsWith("/councillor") || pathname === "/dashboard";
 
             if (!user && !publicPaths.includes(pathname) && !isOfficerOrAdminRoute) {
                 router.replace("/user-login");
@@ -36,7 +36,7 @@ export default function PublicAuthGuard({ children }: { children: React.ReactNod
     }
 
     const publicPaths = ["/user-login", "/login", "/signup"];
-    const isOfficerOrAdminRoute = pathname.startsWith("/officer") || pathname.startsWith("/department") || pathname.startsWith("/councillor");
+    const isOfficerOrAdminRoute = pathname.startsWith("/officer") || pathname.startsWith("/department") || pathname.startsWith("/councillor") || pathname === "/dashboard";
 
     // If waiting for redirect, render nothing
     if (!user && !publicPaths.includes(pathname) && !isOfficerOrAdminRoute) {

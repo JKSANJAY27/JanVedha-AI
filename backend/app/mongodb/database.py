@@ -68,6 +68,8 @@ async def init_mongodb() -> None:
         # Feature: CCTV Civic Issue Detection
         Camera,
         CCTVAlert,
+        # Feature: Ward Intelligence Cache (Gemini API result caching)
+        WardIntelligenceCache,
     )
 
     from app.mongodb.models.scheme_query import SchemeQueryMongo
@@ -112,6 +114,8 @@ async def init_mongodb() -> None:
             # Feature: CCTV Civic Issue Detection
             Camera,
             CCTVAlert,
+            # Feature: Ward Intelligence Cache (Gemini API result caching)
+            WardIntelligenceCache,
             SchemeQueryMongo,
         ],
     )

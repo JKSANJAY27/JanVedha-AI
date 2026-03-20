@@ -60,7 +60,7 @@ export default function ProposalsListPage() {
             >
               + New Proposal
             </a>
-            <a href="/councillor" className="text-xs text-emerald-300 hover:text-white underline self-center">
+            <a href="/dashboard" className="text-xs text-emerald-300 hover:text-white underline self-center">
               ← Dashboard
             </a>
           </div>

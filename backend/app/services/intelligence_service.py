@@ -4,6 +4,14 @@ Provides:
 1. Ward Reality Briefing (Daily narrative generation)
 2. Root Cause Radar (Issue clustering & summarization)
 3. Predictive Workload Alerts (Seasonal predictions)
+
+CACHING STRATEGY:
+- Every method checks MongoDB (WardIntelligenceCache) first.
+- If a cached result exists and `refresh=False`, it is returned immediately.
+- If `refresh=True` (or no cache exists), Gemini is called and the result is
+  persisted to MongoDB, overwriting any previous cached entry.
+- This means Gemini is NEVER called automatically on dashboard load — only when
+  the user explicitly clicks "Refresh".
 """
 from __future__ import annotations
 
@@ -38,7 +46,6 @@ def haversine_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> fl
 def _get_tickets_collection():
     """Get the raw Motor tickets collection."""
     client = get_motor_client()
-    # Extract DB name from URI
     uri = settings.MONGODB_URI
     db_name = uri.rsplit("/", 1)[-1].split("?")[0] or "civicai"
     if not db_name or db_name.startswith("mongodb"):
@@ -62,25 +69,74 @@ async def _call_gemini(prompt: str, fallback: str) -> str:
         return fallback
 
 
+# ── Cache helpers ────────────────────────────────────────────────────────────
+
+async def _get_cache(ward_id: int, cache_type: str):
+    """Return the WardIntelligenceCache document or None."""
+    try:
+        from app.mongodb.models.ward_intelligence_cache import WardIntelligenceCache
+        return await WardIntelligenceCache.find_one(
+            WardIntelligenceCache.ward_id == ward_id,
+            WardIntelligenceCache.cache_type == cache_type,
+        )
+    except Exception as e:
+        logger.warning(f"Cache read failed ({cache_type}, ward {ward_id}): {e}")
+        return None
+
+
+async def _save_cache(ward_id: int, cache_type: str, **fields) -> None:
+    """Upsert a WardIntelligenceCache document."""
+    try:
+        from app.mongodb.models.ward_intelligence_cache import WardIntelligenceCache
+        existing = await WardIntelligenceCache.find_one(
+            WardIntelligenceCache.ward_id == ward_id,
+            WardIntelligenceCache.cache_type == cache_type,
+        )
+        if existing:
+            for k, v in fields.items():
+                setattr(existing, k, v)
+            existing.computed_at = datetime.utcnow()
+            existing.is_stale = False
+            await existing.save()
+        else:
+            doc = WardIntelligenceCache(
+                ward_id=ward_id,
+                cache_type=cache_type,
+                computed_at=datetime.utcnow(),
+                **fields,
+            )
+            await doc.insert()
+    except Exception as e:
+        logger.warning(f"Cache save failed ({cache_type}, ward {ward_id}): {e}")
+
+
+# ── IntelligenceService ──────────────────────────────────────────────────────
+
 class IntelligenceService:
 
     @staticmethod
-    async def get_ward_briefing(ward_id: int) -> str:
+    async def get_ward_briefing(ward_id: int, refresh: bool = False) -> str:
         """
-        Synthesizes a 5-sentence daily narrative for the councillor using Gemini.
-        Includes ticket volume, recurring issues, and recommended actions.
+        Returns the AI Morning Briefing for a ward.
+        - Reads from MongoDB cache unless refresh=True.
+        - On refresh, calls Gemini and persists the result.
         """
+        if not refresh:
+            cached = await _get_cache(ward_id, "briefing")
+            if cached and cached.briefing:
+                logger.info(f"Cache HIT: briefing ward={ward_id}")
+                return cached.briefing
+
+        # ── Build data for the prompt ────────────────────────────────────────
         col = _get_tickets_collection()
         now = datetime.utcnow()
         yesterday = now - timedelta(days=1)
         last_week = now - timedelta(days=7)
 
-        # 1. Fetch 24h tickets using raw Motor
         recent_tickets = await col.find(
             {"ward_id": ward_id, "created_at": {"$gte": yesterday}}
         ).to_list(length=1000)
 
-        # 2. Fetch last 7 days for context (recurring issues)
         weekly_tickets = await col.find(
             {"ward_id": ward_id, "created_at": {"$gte": last_week}}
         ).to_list(length=1000)
@@ -88,7 +144,6 @@ class IntelligenceService:
         recent_count = len(recent_tickets)
         weekly_count = len(weekly_tickets)
 
-        # 3. Count issue categories from weekly data
         issue_categories: Counter = Counter()
         open_count = 0
         overdue_count = 0
@@ -103,7 +158,6 @@ class IntelligenceService:
         top_issues = issue_categories.most_common(3)
         top_issues_str = ", ".join([f"{count}x {cat}" for cat, count in top_issues]) or "no issues"
 
-        # 4. Try to get social sentiment
         sentiment_desc = "neutral"
         try:
             from app.services.social_intel_service import get_sentiment_overview
@@ -143,18 +197,30 @@ Guidelines:
             f"There are {overdue_count} overdue tickets — prioritise these for immediate follow-up today."
         )
 
-        return await _call_gemini(prompt, fallback)
+        result = await _call_gemini(prompt, fallback)
+
+        # ── Persist to cache ─────────────────────────────────────────────────
+        await _save_cache(ward_id, "briefing", briefing=result)
+
+        return result
 
     @staticmethod
-    async def get_root_cause_radar(ward_id: int) -> List[Dict[str, Any]]:
+    async def get_root_cause_radar(ward_id: int, refresh: bool = False) -> List[Dict[str, Any]]:
         """
         Clusters recent tickets geographically and by category to find systemic issues.
-        Returns a list of clusters with AI-generated root cause hypotheses.
+        - Reads from MongoDB cache unless refresh=True.
+        - On refresh, calls Gemini (once per cluster, up to 5) and persists.
         """
+        if not refresh:
+            cached = await _get_cache(ward_id, "root_causes")
+            if cached and cached.root_causes is not None:
+                logger.info(f"Cache HIT: root_causes ward={ward_id}")
+                return cached.root_causes
+
+        # ── Build clusters ───────────────────────────────────────────────────
         col = _get_tickets_collection()
         since = datetime.utcnow() - timedelta(days=30)
 
-        # Raw motor query — no Beanie operator issues
         raw_tickets = await col.find(
             {
                 "ward_id": ward_id,
@@ -165,7 +231,6 @@ Guidelines:
         ).to_list(length=500)
 
         if not raw_tickets:
-            # Fallback: get ALL tickets for this ward with location data (ignore date)
             raw_tickets = await col.find(
                 {
                     "ward_id": ward_id,
@@ -175,9 +240,9 @@ Guidelines:
             ).to_list(length=500)
 
         if not raw_tickets:
+            await _save_cache(ward_id, "root_causes", root_causes=[])
             return []
 
-        # Build list of (ticket_dict) with validated coordinates
         loc_tickets = []
         for t in raw_tickets:
             coords = t.get("location", {}).get("coordinates")
@@ -185,12 +250,12 @@ Guidelines:
                 loc_tickets.append(t)
 
         if not loc_tickets:
+            await _save_cache(ward_id, "root_causes", root_causes=[])
             return []
 
-        DISTANCE_THRESHOLD_METERS = 400  # 400m radius
+        DISTANCE_THRESHOLD_METERS = 400
         MIN_CLUSTER_SIZE = 3
 
-        # Cluster by category + geo proximity
         clusters: List[Dict] = []
         visited = set()
 
@@ -225,7 +290,6 @@ Guidelines:
                     ]
                 })
 
-        # Sort by cluster size, keep top 5
         clusters = sorted(clusters, key=lambda c: c["count"], reverse=True)[:5]
 
         results = []
@@ -256,16 +320,26 @@ Keep it punchy and actionable."""
                 "ticket_codes": cluster["tickets"][:10],
             })
 
+        # ── Persist to cache ─────────────────────────────────────────────────
+        await _save_cache(ward_id, "root_causes", root_causes=results)
+
         return results
 
     @staticmethod
-    async def get_predictive_alerts(ward_id: int) -> List[Dict[str, Any]]:
+    async def get_predictive_alerts(ward_id: int, refresh: bool = False) -> List[Dict[str, Any]]:
         """
         Uses historical monthly ticket counts to detect seasonal spikes.
-        Flags any category where the current month historically spikes >50% above the average.
+        - Reads from MongoDB cache unless refresh=True.
+        - On refresh, calls Gemini and persists.
         """
+        if not refresh:
+            cached = await _get_cache(ward_id, "predictions")
+            if cached and cached.alerts is not None:
+                logger.info(f"Cache HIT: predictions ward={ward_id}")
+                return cached.alerts
+
+        # ── Compute predictions ──────────────────────────────────────────────
         col = _get_tickets_collection()
-        # Look back 2 years of historical data
         cutoff = datetime.utcnow() - timedelta(days=365 * 2)
 
         historical = await col.find(
@@ -277,9 +351,9 @@ Keep it punchy and actionable."""
         ).to_list(length=5000)
 
         if not historical:
+            await _save_cache(ward_id, "predictions", alerts=[])
             return []
 
-        # Group by category → month → count
         monthly_by_cat: Dict[str, Dict[int, int]] = defaultdict(lambda: defaultdict(int))
         for t in historical:
             cat = t.get("issue_category")
@@ -298,10 +372,9 @@ Keep it punchy and actionable."""
                 continue
 
             total = sum(monthly_counts.values())
-            avg = total / 12  # annual average per month
+            avg = total / 12
             this_month_count = monthly_counts.get(current_month, 0)
 
-            # Spike = this month's historical count > 150% of average
             if avg > 0 and this_month_count > avg * 1.5:
                 spike_ratio = this_month_count / avg
                 pct_increase = int((spike_ratio - 1) * 100)
@@ -330,7 +403,10 @@ Be concise and actionable."""
                     "month": current_month,
                 })
 
-        # Sort by predicted increase
         alerts.sort(key=lambda a: a["predicted_increase_pct"], reverse=True)
-        return alerts[:5]
+        result = alerts[:5]
 
+        # ── Persist to cache ─────────────────────────────────────────────────
+        await _save_cache(ward_id, "predictions", alerts=result)
+
+        return result

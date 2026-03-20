@@ -665,7 +665,7 @@ function SupervisorDashboard({ user }: { user: { name: string; ward_id?: number;
             <div className="space-y-6">
                 <div>
                     <div className="flex items-center gap-3 mb-2">
-                        <Link href="/officer/dashboard" className="text-sm font-medium text-slate-500 hover:text-indigo-600 transition-colors bg-white hover:bg-indigo-50 border border-slate-200 hover:border-indigo-200 px-4 py-2 rounded-xl inline-flex items-center gap-2 shadow-sm">
+                        <Link href="/dashboard" className="text-sm font-medium text-slate-500 hover:text-indigo-600 transition-colors bg-white hover:bg-indigo-50 border border-slate-200 hover:border-indigo-200 px-4 py-2 rounded-xl inline-flex items-center gap-2 shadow-sm">
                             <span className="text-lg leading-none">←</span> Back to Overview
                         </Link>
                     </div>
@@ -1155,13 +1155,13 @@ export default function OfficerDashboard({ userOverride, forcedRole }: OfficerDa
     const navLinks = () => (
         <div className="flex gap-3 flex-wrap">
             {isCouncillor && (
-                <Link href="/councillor"
+                <Link href="/dashboard"
                     className="text-sm bg-white/10 border border-white/20 text-white px-4 py-2 rounded-lg hover:bg-white/20 transition-colors">
                     🏛️ Ward Insights
                 </Link>
             )}
             {isSupervisor && (
-                <Link href="/councillor"
+                <Link href="/dashboard"
                     className="text-sm bg-white/10 border border-white/20 text-white px-4 py-2 rounded-lg hover:bg-white/20 transition-colors">
                     📊 Analytics
                 </Link>
@@ -1229,7 +1229,7 @@ export default function OfficerDashboard({ userOverride, forcedRole }: OfficerDa
                 {isCouncillor && (
                     <div className="text-center py-10">
                         <p className="text-gray-500 mb-4">As a Councillor, use the dedicated insights dashboard.</p>
-                        <Link href="/councillor" className="inline-block bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-6 py-3 rounded-xl transition-colors">
+                        <Link href="/dashboard" className="inline-block bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-6 py-3 rounded-xl transition-colors">
                             Go to Ward Insights →
                         </Link>
                     </div>

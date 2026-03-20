@@ -445,7 +445,7 @@ async def get_communication(
 @router.post("/{comm_id}/pdf")
 async def download_formal_notice_pdf(
     comm_id: str,
-    language: str = Query("english", regex="^(english|tamil)$"),
+    language: str = Query("english", pattern="^(english|tamil)$"),
     current_user: UserMongo = Depends(_require_councillor),
 ):
     """Generate and return a PDF for the formal notice (English or Tamil)."""

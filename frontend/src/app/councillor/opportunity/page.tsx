@@ -123,7 +123,7 @@ export default function OpportunityPage() {
               </p>
             </div>
             <div className="ml-auto flex items-center gap-2 flex-wrap">
-              <a href="/councillor" className="text-xs text-emerald-300 hover:text-white underline">
+              <a href="/dashboard" className="text-xs text-emerald-300 hover:text-white underline">
                 ← Dashboard
               </a>
               <div className="flex rounded-lg overflow-hidden border border-emerald-500">

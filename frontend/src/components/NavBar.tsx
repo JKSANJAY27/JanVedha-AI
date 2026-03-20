@@ -59,7 +59,7 @@ export default function NavBar() {
                             {/* Officer links */}
                             {isOfficer && user.role !== "SUPER_ADMIN" && (
                                 <>
-                                    {navLink("/officer/dashboard", "Dashboard")}
+                                    {navLink("/dashboard", "Dashboard")}
                                     {user.role === "JUNIOR_ENGINEER" && navLink("/officer/calendar", "Calendar")}
                                     {navLink("/officer/reports", "Reports")}
                                 </>

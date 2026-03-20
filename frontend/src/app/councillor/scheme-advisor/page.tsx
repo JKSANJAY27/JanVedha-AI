@@ -195,7 +195,7 @@ export default function SchemeAdvisorPage() {
             <header className="bg-gradient-to-r from-indigo-700 to-purple-800 text-white px-6 py-5 shadow-sm">
                 <div className="max-w-7xl mx-auto flex items-center gap-3">
                     <button 
-                        onClick={() => router.push("/councillor")}
+                        onClick={() => router.push("/dashboard")}
                         className="p-1.5 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
                     >
                         ←

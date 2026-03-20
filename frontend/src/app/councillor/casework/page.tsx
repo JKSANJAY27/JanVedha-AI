@@ -110,7 +110,7 @@ function LogCaseworkModal({
     audioPath: "",
     transcript: "",
   });
-  const [constituentHistory, setConstituentHistory] = useState<null | { total: number; casework: any[] }>(null);
+  const [constituentHistory, setConstituentHistory] = useState<null | { total_entries: number; casework: any[] }>(null);
   const [historyLoading, setHistoryLoading] = useState(false);
 
   const set = (k: string, v: string) => setForm((f) => ({ ...f, [k]: v }));
@@ -574,7 +574,7 @@ export default function CaseworkInbox() {
         <div className="max-w-4xl mx-auto flex items-start justify-between">
           <div>
             <div className="flex items-center gap-2 mb-0.5">
-              <a href="/councillor" className="text-emerald-300 hover:text-white text-sm transition-colors">← Dashboard</a>
+              <a href="/dashboard" className="text-emerald-300 hover:text-white text-sm transition-colors">← Dashboard</a>
             </div>
             <h1 className="text-2xl font-bold">Constituent casework</h1>
             <p className="text-emerald-200 text-xs mt-1">
@@ -653,7 +653,7 @@ export default function CaseworkInbox() {
         <LogCaseworkModal
           wardId={wardId}
           councillorId={String(user?.id ?? "demo")}
-          councillorName={user?.full_name ?? "Councillor"}
+          councillorName={user?.name ?? "Councillor"}
           onClose={() => setModalOpen(false)}
           onSuccess={fetchCasework}
         />

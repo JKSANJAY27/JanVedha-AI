@@ -102,7 +102,6 @@ async def get_department_performance(
                 dept_map[d]["overdue"] += 1
 
     result = list(dept_map.values())
-    # Sort by overdue count descending
     result.sort(key=lambda x: x["overdue"], reverse=True)
     return result
 
@@ -180,15 +179,20 @@ async def get_overdue_tickets(
     effective_ward = ward_id or current_user.ward_id
     now = datetime.utcnow()
 
+    # Use raw dict filter — Beanie .in_() syntax requires In() operator import
+    open_status_values = [
+        TicketStatus.OPEN.value,
+        TicketStatus.ASSIGNED.value,
+        TicketStatus.IN_PROGRESS.value,
+        TicketStatus.SCHEDULED.value,
+        TicketStatus.REOPENED.value,
+        TicketStatus.PENDING_VERIFICATION.value,
+    ]
     tickets = await TicketMongo.find(
-        TicketMongo.ward_id == effective_ward,
-        TicketMongo.status.in_([
-            TicketStatus.OPEN, TicketStatus.ASSIGNED, TicketStatus.IN_PROGRESS
-        ]),
+        {"ward_id": effective_ward, "status": {"$in": open_status_values}}
     ).to_list()
 
     overdue = [t for t in tickets if t.sla_deadline and t.sla_deadline < now]
-    # Sort by how overdue they are (most overdue first)
     overdue.sort(key=lambda t: t.sla_deadline or now)
 
     return [
@@ -202,7 +206,7 @@ async def get_overdue_tickets(
             "days_overdue": (now - t.sla_deadline).days if t.sla_deadline else 0,
             "status": t.status.value if t.status else "OPEN",
         }
-        for t in overdue[:limit]  # type: ignore
+        for t in overdue[:limit]
     ]
 
 
@@ -240,22 +244,20 @@ async def get_priority_insights(
 ):
     """
     Ward-level priority intelligence panel for the councillor dashboard.
-
-    Returns:
-    - Count of tickets by priority label (CRITICAL / HIGH / MEDIUM / LOW)
-    - Top-5 highest-priority open tickets (sorted by score)
-    - Priority source breakdown (rules vs hybrid vs ml)
-    - Average priority score of open tickets
     """
     effective_ward = ward_id or current_user.ward_id
-    open_statuses = [
-        TicketStatus.OPEN, TicketStatus.ASSIGNED,
-        TicketStatus.IN_PROGRESS, TicketStatus.AWAITING_MATERIAL,
-    ]
 
+    # Use raw dict filter to avoid Beanie .in_() ExpressionField issue
+    open_status_values = [
+        TicketStatus.OPEN.value,
+        TicketStatus.ASSIGNED.value,
+        TicketStatus.IN_PROGRESS.value,
+        TicketStatus.SCHEDULED.value,
+        TicketStatus.REOPENED.value,
+        TicketStatus.PENDING_VERIFICATION.value,
+    ]
     tickets = await TicketMongo.find(
-        TicketMongo.ward_id == effective_ward,
-        TicketMongo.status.in_(open_statuses),
+        {"ward_id": effective_ward, "status": {"$in": open_status_values}}
     ).to_list()
 
     if not tickets:
@@ -268,7 +270,6 @@ async def get_priority_insights(
             "priority_source_breakdown": {},
         }
 
-    # Count by priority label
     by_priority: dict = {"CRITICAL": 0, "HIGH": 0, "MEDIUM": 0, "LOW": 0}
     source_count: dict = {}
     scores = []
@@ -280,10 +281,9 @@ async def get_priority_insights(
         source_count[src] = source_count.get(src, 0) + 1
         scores.append(t.priority_score or 0)
 
-    avg_score = round(sum(scores) / len(scores), 1) if scores else 0  # type: ignore
+    avg_score = round(sum(scores) / len(scores), 1) if scores else 0
 
-    # Top-5 by priority score (descending)
-    top_tickets = sorted(tickets, key=lambda t: t.priority_score or 0, reverse=True)[:5]  # type: ignore
+    top_tickets = sorted(tickets, key=lambda t: t.priority_score or 0, reverse=True)[:5]
 
     now = datetime.utcnow()
     return {
@@ -313,15 +313,26 @@ async def get_priority_insights(
 
 from app.services.intelligence_service import IntelligenceService
 
+# ── Intelligence: Read from cache (or return empty if no cache yet) ───────────
+
 @router.get("/intelligence/briefing")
 async def get_ward_intelligence_briefing(
     ward_id: Optional[int] = Query(None),
     current_user: UserMongo = Depends(_require_councillor),
 ):
-    """Generates the AI Daily Brief for a ward."""
+    """
+    Returns the cached AI Daily Brief for a ward.
+    Does NOT call Gemini on its own — use POST /intelligence/briefing/refresh to regenerate.
+    """
     effective_ward = ward_id or current_user.ward_id
-    brief = await IntelligenceService.get_ward_briefing(effective_ward)
-    return {"ward_id": effective_ward, "briefing": brief}
+    brief = await IntelligenceService.get_ward_briefing(effective_ward, refresh=False)
+    cached = brief is not None and brief != ""
+    return {
+        "ward_id": effective_ward,
+        "briefing": brief,
+        "from_cache": True,
+        "has_data": cached,
+    }
 
 
 @router.get("/intelligence/root-causes")
@@ -329,10 +340,18 @@ async def get_ward_root_causes(
     ward_id: Optional[int] = Query(None),
     current_user: UserMongo = Depends(_require_councillor),
 ):
-    """Uses geolocation clustering and AI to find systemic issue patterns."""
+    """
+    Returns cached root cause radar data for a ward.
+    Does NOT call Gemini on its own — use POST /intelligence/root-causes/refresh to regenerate.
+    """
     effective_ward = ward_id or current_user.ward_id
-    clusters = await IntelligenceService.get_root_cause_radar(effective_ward)
-    return {"ward_id": effective_ward, "root_causes": clusters}
+    clusters = await IntelligenceService.get_root_cause_radar(effective_ward, refresh=False)
+    return {
+        "ward_id": effective_ward,
+        "root_causes": clusters,
+        "from_cache": True,
+        "has_data": len(clusters) > 0,
+    }
 
 
 @router.get("/intelligence/predictions")
@@ -340,7 +359,102 @@ async def get_ward_predictions(
     ward_id: Optional[int] = Query(None),
     current_user: UserMongo = Depends(_require_councillor),
 ):
-    """Uses the seasonal predictor to calculate impending workload spikes."""
+    """
+    Returns cached predictive workload alerts for a ward.
+    Does NOT call Gemini on its own — use POST /intelligence/predictions/refresh to regenerate.
+    """
     effective_ward = ward_id or current_user.ward_id
-    alerts = await IntelligenceService.get_predictive_alerts(effective_ward)
-    return {"ward_id": effective_ward, "alerts": alerts}
+    alerts = await IntelligenceService.get_predictive_alerts(effective_ward, refresh=False)
+    return {
+        "ward_id": effective_ward,
+        "alerts": alerts,
+        "from_cache": True,
+        "has_data": len(alerts) > 0,
+    }
+
+
+# ── Intelligence: Explicit Refresh endpoints (these call Gemini) ──────────────
+
+@router.post("/intelligence/briefing/refresh")
+async def refresh_ward_briefing(
+    ward_id: Optional[int] = Query(None),
+    current_user: UserMongo = Depends(_require_councillor),
+):
+    """
+    Triggers a fresh Gemini API call to regenerate the Morning Briefing.
+    The result is saved to MongoDB and returned immediately.
+    """
+    effective_ward = ward_id or current_user.ward_id
+    brief = await IntelligenceService.get_ward_briefing(effective_ward, refresh=True)
+    return {
+        "ward_id": effective_ward,
+        "briefing": brief,
+        "from_cache": False,
+        "refreshed_at": datetime.utcnow().isoformat(),
+    }
+
+
+@router.post("/intelligence/root-causes/refresh")
+async def refresh_ward_root_causes(
+    ward_id: Optional[int] = Query(None),
+    current_user: UserMongo = Depends(_require_councillor),
+):
+    """
+    Triggers a fresh Gemini API call to regenerate Root Cause Radar.
+    The result is saved to MongoDB and returned immediately.
+    """
+    effective_ward = ward_id or current_user.ward_id
+    clusters = await IntelligenceService.get_root_cause_radar(effective_ward, refresh=True)
+    return {
+        "ward_id": effective_ward,
+        "root_causes": clusters,
+        "from_cache": False,
+        "refreshed_at": datetime.utcnow().isoformat(),
+    }
+
+
+@router.post("/intelligence/predictions/refresh")
+async def refresh_ward_predictions(
+    ward_id: Optional[int] = Query(None),
+    current_user: UserMongo = Depends(_require_councillor),
+):
+    """
+    Triggers a fresh Gemini API call to regenerate Predictive Workload Alerts.
+    The result is saved to MongoDB and returned immediately.
+    """
+    effective_ward = ward_id or current_user.ward_id
+    alerts = await IntelligenceService.get_predictive_alerts(effective_ward, refresh=True)
+    return {
+        "ward_id": effective_ward,
+        "alerts": alerts,
+        "from_cache": False,
+        "refreshed_at": datetime.utcnow().isoformat(),
+    }
+
+
+# ── Intelligence: Cache status ────────────────────────────────────────────────
+
+@router.get("/intelligence/cache-status")
+async def get_intelligence_cache_status(
+    ward_id: Optional[int] = Query(None),
+    current_user: UserMongo = Depends(_require_councillor),
+):
+    """
+    Returns the timestamp of the last successful Gemini refresh for each
+    intelligence section, so the frontend can display "Last updated" info.
+    """
+    effective_ward = ward_id or current_user.ward_id
+    from app.mongodb.models.ward_intelligence_cache import WardIntelligenceCache
+
+    result = {}
+    for cache_type in ("briefing", "root_causes", "predictions"):
+        doc = await WardIntelligenceCache.find_one(
+            WardIntelligenceCache.ward_id == effective_ward,
+            WardIntelligenceCache.cache_type == cache_type,
+        )
+        result[cache_type] = {
+            "has_data": doc is not None and not doc.is_stale,
+            "computed_at": doc.computed_at.isoformat() if doc else None,
+        }
+
+    return {"ward_id": effective_ward, "cache": result}
