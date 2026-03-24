@@ -11,13 +11,16 @@ import asyncio
 import argparse
 import random
 from datetime import datetime, timedelta
+import certifi
 from motor.motor_asyncio import AsyncIOMotorClient
 
 # ── CLI args ──────────────────────────────────────────────────────────────────
 parser = argparse.ArgumentParser(description="Seed demo tickets for Opportunity Spotter")
 parser.add_argument("--ward-id", type=int, default=1, help="Ward ID to seed tickets for")
-parser.add_argument("--mongo-uri", default="mongodb://localhost:27017/civicai", help="MongoDB URI")
+from app.core.config import settings as _settings
+parser.add_argument("--mongo-uri", default=_settings.MONGODB_URI, help="MongoDB URI")
 parser.add_argument("--dry-run", action="store_true", help="Print tickets without inserting")
+parser.add_argument("--force", action="store_true", help="Delete existing DEMO tickets and re-seed")
 args = parser.parse_args()
 
 WARD_ID = args.ward_id
@@ -116,10 +119,10 @@ def make_ticket(i: int, lat: float, lng: float, category: str, ward_id: int) -> 
         "issue_category": category,
         "ward_id": ward_id,
         "location": {
-            "type": "Point",
-            "coordinates": [round(lng, 6), round(lat, 6)],  # GeoJSON: [lng, lat]
+            "lat": round(lat, 6),
+            "lng": round(lng, 6),
+            "address": f"Ward {ward_id}, Chennai",
         },
-        "coordinates": f"{lat},{lng}",
         "status": status,
         "priority_score": round(random.uniform(20, 90), 1),
         "priority_label": random.choice(["LOW", "MEDIUM", "HIGH", "CRITICAL"]),
@@ -134,7 +137,7 @@ def make_ticket(i: int, lat: float, lng: float, category: str, ward_id: int) -> 
 
 async def seed():
     db_name = MONGO_URI.rsplit("/", 1)[-1].split("?")[0] or "civicai"
-    client = AsyncIOMotorClient(MONGO_URI)
+    client = AsyncIOMotorClient(MONGO_URI, tlsCAFile=certifi.where())
     col = client[db_name]["tickets"]
 
     tickets = []
@@ -167,10 +170,14 @@ async def seed():
     # Check existing demo tickets to avoid duplicates
     existing = await col.count_documents({"ward_id": WARD_ID, "ticket_code": {"$regex": "^DEMO-"}})
     if existing > 0:
-        print(f"Found {existing} existing DEMO tickets for ward {WARD_ID}. Skipping seed.")
-        print("Use --force to delete and re-seed (delete manually from mongo first).")
-        client.close()
-        return
+        if args.force:
+            deleted = await col.delete_many({"ward_id": WARD_ID, "ticket_code": {"$regex": "^DEMO-"}})
+            print(f"Deleted {deleted.deleted_count} existing DEMO tickets for ward {WARD_ID}. Re-seeding...")
+        else:
+            print(f"Found {existing} existing DEMO tickets for ward {WARD_ID}. Skipping seed.")
+            print("Use --force to delete and re-seed.")
+            client.close()
+            return
 
     result = await col.insert_many(tickets)
     print(f"Inserted {len(result.inserted_ids)} demo tickets for ward {WARD_ID}")
