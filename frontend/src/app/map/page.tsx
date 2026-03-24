@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import dynamic from "next/dynamic";
 import { publicApi } from "@/lib/api";
-import { PRIORITY_COLORS, PRIORITY_EMOJI, DEPT_NAMES } from "@/lib/constants";
+import { PRIORITY_COLORS, PRIORITY_EMOJI, DEPT_NAMES, CHENNAI_CENTER, PRAYAGRAJ_CENTER } from "@/lib/constants";
 import PriorityBadge from "@/components/PriorityBadge";
 import StatusBadge from "@/components/StatusBadge";
 import { formatRelative } from "@/lib/formatters";
@@ -42,6 +42,8 @@ export default function MapPage() {
     // Default: show all priorities and statuses so every ticket is visible
     const [priorityFilter, setPriorityFilter] = useState<string[]>(["CRITICAL", "HIGH", "MEDIUM", "LOW"]);
     const [statusFilter, setStatusFilter] = useState<string[]>(["OPEN", "IN_PROGRESS", "ASSIGNED", "CLOSED"]);
+    const [mapCenter, setMapCenter] = useState<[number, number]>(CHENNAI_CENTER);
+    const [refreshedAt, setRefreshedAt] = useState(Date.now());
     const [selectedIssue, setSelectedIssue] = useState<MapIssue | null>(null);
     const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -140,6 +142,24 @@ export default function MapPage() {
                         </button>
                     ))}
                 </div>
+                
+                <div className="w-px h-5 bg-gray-200 hidden sm:block" />
+
+                <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">City:</span>
+                    <button
+                        onClick={() => setMapCenter(CHENNAI_CENTER)}
+                        className={`text-xs px-3 py-1.5 rounded-full font-medium transition-all ${JSON.stringify(mapCenter) === JSON.stringify(CHENNAI_CENTER) ? 'bg-blue-600 text-white' : 'border border-gray-200 text-gray-400 bg-gray-50'}`}
+                    >
+                        Chennai
+                    </button>
+                    <button
+                        onClick={() => setMapCenter(PRAYAGRAJ_CENTER)}
+                        className={`text-xs px-3 py-1.5 rounded-full font-medium transition-all ${JSON.stringify(mapCenter) === JSON.stringify(PRAYAGRAJ_CENTER) ? 'bg-blue-600 text-white' : 'border border-gray-200 text-gray-400 bg-gray-50'}`}
+                    >
+                        Prayagraj
+                    </button>
+                </div>
 
                 <div className="ml-auto flex items-center gap-3">
                     {/* Live indicator */}
@@ -178,10 +198,27 @@ export default function MapPage() {
                             </div>
                         </div>
                     ) : (
-                        <MapComponent
-                            issues={filtered}
-                            onIssueClick={(issue) => setSelectedIssue(issue)}
-                        />
+                        <>
+                            <MapComponent
+                                key={refreshedAt}
+                                issues={filtered}
+                                center={mapCenter}
+                                onIssueClick={(issue) => setSelectedIssue(issue)}
+                            />
+                            <button 
+                                onClick={() => {
+                                    setRefreshedAt(Date.now());
+                                    fetchIssues(false);
+                                }}
+                                className="absolute top-4 right-4 bg-white shadow-md rounded-full p-2 z-[400] hover:bg-gray-100 border border-gray-200"
+                                title="Recenter & Fit All"
+                            >
+                                <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                            </button>
+                        </>
                     )}
                 </div>
 

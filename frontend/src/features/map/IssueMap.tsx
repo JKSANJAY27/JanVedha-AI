@@ -19,6 +19,7 @@ interface MapIssue {
 
 interface IssueMapProps {
     issues: MapIssue[];
+    center?: [number, number];
     onIssueClick: (issue: MapIssue) => void;
 }
 
@@ -37,7 +38,7 @@ function getMarkerIcon(priority: string) {
     });
 }
 
-export default function IssueMap({ issues, onIssueClick }: IssueMapProps) {
+export default function IssueMap({ issues, center, onIssueClick }: IssueMapProps) {
     const mapContainerRef = useRef<HTMLDivElement>(null);
     const mapRef = useRef<L.Map | null>(null);
     const markersRef = useRef<L.Marker[]>([]);
@@ -48,7 +49,7 @@ export default function IssueMap({ issues, onIssueClick }: IssueMapProps) {
         if (!mapContainerRef.current || mapRef.current) return;
 
         const map = L.map(mapContainerRef.current, {
-            center: CHENNAI_CENTER,
+            center: center || CHENNAI_CENTER,
             zoom: 12,
         });
 
@@ -63,6 +64,13 @@ export default function IssueMap({ issues, onIssueClick }: IssueMapProps) {
             mapRef.current = null;
         };
     }, []);
+
+    // Panning when center changes
+    useEffect(() => {
+        if (mapRef.current && center) {
+            mapRef.current.setView(center, 12, { animate: true });
+        }
+    }, [center]);
 
     // Update markers when issues change
     useEffect(() => {
