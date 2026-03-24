@@ -10,8 +10,9 @@ import cv2
 
 from app.mongodb.models.camera import Camera
 from app.mongodb.models.cctv_alert import CCTVAlert, SourceMedia, AIAnalysis, Verification
-from app.mongodb.models.ticket import TicketMongo
+from app.mongodb.models.ticket import TicketMongo, GeoPoint
 from app.mongodb.models.notification import NotificationMongo
+from app.enums import TicketSource, TicketStatus, PriorityLabel
 
 # AI Helpers
 from langchain_core.messages import HumanMessage, SystemMessage
@@ -279,6 +280,23 @@ async def get_alerts(ward_id: str, status: Optional[str] = None, severity: Optio
         res.append(d)
     return res
 
+@router.get("/alerts/counts")
+async def get_alert_counts(ward_id: str):
+    if ward_id == "1" or str(ward_id) == "1":
+        ward_id = "demo_ward_1"
+    pending = await CCTVAlert.find({"ward_id": ward_id, "status": "pending_verification"}).count()
+    flagged = await CCTVAlert.find({"ward_id": ward_id, "status": "flagged_for_discussion"}).count()
+    # Mock date filter since this is prototype
+    tickets_today = await CCTVAlert.find({"ward_id": ward_id, "status": "ticket_raised"}).count()
+    total = await CCTVAlert.find({"ward_id": ward_id}).count()
+    
+    return {
+        "pending_verification": pending,
+        "flagged_for_discussion": flagged,
+        "ticket_raised_today": tickets_today,
+        "total_alerts_this_week": total
+    }
+
 @router.get("/alerts/{alert_id}")
 async def get_alert(alert_id: str):
     alert = await CCTVAlert.find_one({"alert_id": alert_id})
@@ -363,19 +381,46 @@ async def verify_alert(alert_id: str, req: VerifyRequest):
     )
     
     if req.action == "raise_ticket":
+        # Map category to dept_id
+        dept_map = {
+            "roads": "roads_dept",
+            "water": "water_supply_dept",
+            "drainage": "drainage_dept",
+            "waste": "solid_waste_dept",
+            "other": "other_dept"
+        }
+        dept_id = dept_map.get(req.ticket_category or "other", "other_dept")
+        
+        # Format ward_id
+        ward_int = None
+        if req.ward_id and str(req.ward_id).isdigit():
+            ward_int = int(str(req.ward_id))
+        elif req.ward_id == "demo_ward_1":
+            ward_int = 1
+            
+        # Format priority
+        pri_map = {
+            "low": PriorityLabel.LOW,
+            "medium": PriorityLabel.MEDIUM,
+            "high": PriorityLabel.HIGH,
+            "critical": PriorityLabel.CRITICAL
+        }
+        priority_enum = pri_map.get((req.ticket_priority or "medium").lower(), PriorityLabel.MEDIUM)
+        
         ticket = TicketMongo(
-            title=req.ticket_title,
-            description=f"{req.ticket_description}\n\n[Source: CCTV Detection — {alert.camera_location_description} | Camera: {alert.camera_id}]",
-            category=req.ticket_category,
-            priority=req.ticket_priority,
-            status="open",
-            ward_id=req.ward_id,
-            location={"lat": alert.camera_lat, "lng": alert.camera_lng, "description": alert.camera_location_description}, # Based on typical TicketMongo format
-            created_by=req.verifier_id,
-            source="cctv_detection", # Adjust field name to typical ticket format, generally 'source' or 'channel'
+            ticket_code=f"CCTV-{alert_id[:6].upper()}",
+            dept_id=dept_id,
+            issue_category=req.ticket_category,
+            description=f"{req.ticket_title}\n\n{req.ticket_description}\n\n[Source: CCTV Detection — {alert.camera_location_description} | Camera: {alert.camera_id}]",
+            source=TicketSource.CCTV_DETECTION,
+            priority_label=priority_enum,
+            ward_id=ward_int,
+            location_text=alert.camera_location_description,
+            location=GeoPoint.from_coords(lat=alert.camera_lat, lng=alert.camera_lng),
+            status=TicketStatus.OPEN,
+            reporter_name=req.verifier_name,
+            reporter_user_id=req.verifier_id
         )
-        if hasattr(ticket, "created_via"):
-            ticket.created_via = "cctv_detection"
         await ticket.insert()
         
         alert.status = "ticket_raised"
@@ -385,7 +430,7 @@ async def verify_alert(alert_id: str, req: VerifyRequest):
         alert.updated_at = datetime.utcnow()
         await alert.save()
         
-        return {"success": True, "action": "raise_ticket", "ticket_id": str(ticket.id), "ticket_title": ticket.title}
+        return {"success": True, "action": "raise_ticket", "ticket_id": str(ticket.id), "ticket_title": req.ticket_title}
         
     elif req.action == "dismiss":
         alert.status = "dismissed"
@@ -401,22 +446,7 @@ async def verify_alert(alert_id: str, req: VerifyRequest):
         await alert.save()
         return {"success": True, "action": "flag_for_discussion"}
 
-@router.get("/alerts/counts")
-async def get_alert_counts(ward_id: str):
-    if ward_id == "1" or str(ward_id) == "1":
-        ward_id = "demo_ward_1"
-    pending = await CCTVAlert.find({"ward_id": ward_id, "status": "pending_verification"}).count()
-    flagged = await CCTVAlert.find({"ward_id": ward_id, "status": "flagged_for_discussion"}).count()
-    # Mock date filter since this is prototype
-    tickets_today = await CCTVAlert.find({"ward_id": ward_id, "status": "ticket_raised"}).count()
-    total = await CCTVAlert.find({"ward_id": ward_id}).count()
-    
-    return {
-        "pending_verification": pending,
-        "flagged_for_discussion": flagged,
-        "ticket_raised_today": tickets_today,
-        "total_alerts_this_week": total
-    }
+
 
 @router.get("/cameras")
 async def get_cameras(ward_id: str):
@@ -424,3 +454,46 @@ async def get_cameras(ward_id: str):
         ward_id = "demo_ward_1"
     cameras = await Camera.find({"ward_id": ward_id}).to_list()
     return [c.dict() for c in cameras]
+
+@router.post("/alerts/{alert_id}/mark-resolved")
+async def mark_alert_resolved(alert_id: str):
+    alert = await CCTVAlert.find_one({"alert_id": alert_id})
+    if not alert:
+        raise HTTPException(status_code=404, detail="Alert not found")
+        
+    if alert.status != "ticket_raised":
+        # Maybe it was already dismissed
+        if alert.status == "dismissed":
+             return {"success": True, "action": "already_dismissed"}
+        raise HTTPException(status_code=400, detail="Alert is not in ticket_raised status")
+        
+    alert.status = "dismissed"
+    if alert.verification:
+        alert.verification.verifier_note = (alert.verification.verifier_note or "") + " [System: Ticket marked as resolved, alert dismissed]"
+    alert.updated_at = datetime.utcnow()
+    await alert.save()
+    
+    return {"success": True, "action": "mark_resolved"}
+
+@router.get("/alerts/{alert_id}/ticket-status")
+async def check_ticket_status(alert_id: str):
+    alert = await CCTVAlert.find_one({"alert_id": alert_id})
+    if not alert or not alert.raised_ticket_id:
+        raise HTTPException(status_code=404, detail="Alert or linked ticket not found")
+        
+    from bson import ObjectId
+    ticket = await TicketMongo.get(ObjectId(alert.raised_ticket_id))
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Ticket not found in DB")
+        
+    if ticket.status in [TicketStatus.CLOSED, TicketStatus.CLOSED_UNVERIFIED, TicketStatus.REJECTED, TicketStatus.WITHDRAWN]:
+        if alert.status != "dismissed":
+            alert.status = "dismissed"
+            if alert.verification:
+                alert.verification.verifier_note = (alert.verification.verifier_note or "") + f" [System: Auto-dismissed because ticket is now {ticket.status}]"
+            alert.updated_at = datetime.utcnow()
+            await alert.save()
+            return {"status": "dismissed", "ticket_status": ticket.status, "updated": True}
+            
+    return {"status": alert.status, "ticket_status": ticket.status, "updated": False}
+

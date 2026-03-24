@@ -187,7 +187,7 @@ export default function TrackTicketPage() {
                                         </p>
                                     </div>
                                     <button
-                                        onClick={() => window.open(`http://localhost:8001/api/v1/public/track/${ticket.ticket_code}/apr`, '_blank')}
+                                        onClick={() => window.open(`http://localhost:8000/api/v1/public/track/${ticket.ticket_code}/apr`, '_blank')}
                                         className="whitespace-nowrap px-6 py-3 bg-emerald-600 text-white font-semibold rounded-xl hover:bg-emerald-700 transition-colors shadow-sm flex items-center gap-2"
                                     >
                                         📄 Download Final Report

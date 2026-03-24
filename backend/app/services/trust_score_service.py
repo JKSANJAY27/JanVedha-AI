@@ -81,13 +81,13 @@ async def compute_trust_score(ward_id: int, month: str) -> Dict[str, Any]:
     # citizen_satisfaction: positive social sentiment
     social_posts = await SocialPostMongo.find(
         SocialPostMongo.ward_id == ward_id,
-        SocialPostMongo.timestamp >= month_start,
-        SocialPostMongo.timestamp <= month_end,
+        SocialPostMongo.post_timestamp >= month_start,
+        SocialPostMongo.post_timestamp <= month_end,
     ).to_list()
     total_sentiment_posts = len(social_posts)
     positive_sentiment_posts = sum(
         1 for p in social_posts
-        if hasattr(p, "sentiment_score") and p.sentiment_score is not None and p.sentiment_score > 0
+        if p.sentiment == "positive"
     )
     citizen_satisfaction = (
         positive_sentiment_posts / total_sentiment_posts

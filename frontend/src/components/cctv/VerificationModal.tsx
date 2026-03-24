@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { format } from 'date-fns';
+import { useAuth } from '@/context/AuthContext';
 
 interface VerificationModalProps {
   isOpen: boolean;
@@ -9,6 +10,7 @@ interface VerificationModalProps {
 }
 
 export default function VerificationModal({ isOpen, onClose, alert, onVerify }: VerificationModalProps) {
+  const { user } = useAuth();
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<{msg: string, color: string} | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -32,9 +34,9 @@ export default function VerificationModal({ isOpen, onClose, alert, onVerify }: 
     try {
       const data = {
         action,
-        verifier_id: 'demo_user_1', // Provided by context typically
-        verifier_name: 'Demo User',
-        verifier_role: 'councillor',
+        verifier_id: user?.id?.toString() || 'demo_user_1',
+        verifier_name: user?.name || 'Demo User',
+        verifier_role: user?.role || 'councillor',
         verifier_note: note,
         ...(action === 'raise_ticket' && {
           ticket_title: title,

@@ -29,9 +29,9 @@ export default function CommissionerCCTVPage() {
     const loadData = useCallback(async () => {
         try {
             const [alertsRes, camerasRes, countsRes] = await Promise.all([
-                fetch(`http://localhost:8001/api/cctv/alerts?ward_id=${wardId}&limit=50`),
-                fetch(`http://localhost:8001/api/cctv/cameras?ward_id=${wardId}`),
-                fetch(`http://localhost:8001/api/cctv/alerts/counts?ward_id=${wardId}`)
+                fetch(`http://localhost:8000/api/cctv/alerts?ward_id=${wardId}&limit=50`),
+                fetch(`http://localhost:8000/api/cctv/cameras?ward_id=${wardId}`),
+                fetch(`http://localhost:8000/api/cctv/alerts/counts?ward_id=${wardId}`)
             ]);
 
             const alertsData = await alertsRes.json();
@@ -61,7 +61,7 @@ export default function CommissionerCCTVPage() {
     const handleVerify = async (action: string, data: any) => {
         if (!selectedAlert) return false;
         try {
-            const res = await fetch(`http://localhost:8001/api/cctv/alerts/${selectedAlert.alert_id}/verify`, {
+            const res = await fetch(`http://localhost:8000/api/cctv/alerts/${selectedAlert.alert_id}/verify`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 

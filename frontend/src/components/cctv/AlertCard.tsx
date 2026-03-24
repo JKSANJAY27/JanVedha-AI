@@ -4,9 +4,10 @@ import { formatDistanceToNow } from 'date-fns';
 interface AlertCardProps {
   alert: any;
   onReview: () => void;
+  onMarkResolved?: () => void;
 }
 
-export default function AlertCard({ alert, onReview }: AlertCardProps) {
+export default function AlertCard({ alert, onReview, onMarkResolved }: AlertCardProps) {
   const { status, ai_analysis, created_at, verification, camera_id, camera_location_description, area_label } = alert;
   
   const getSeverityColor = (severity: string) => {
@@ -105,7 +106,17 @@ export default function AlertCard({ alert, onReview }: AlertCardProps) {
             Review & decide
           </button>
         ) : status === 'ticket_raised' ? (
-           <a href={`/councillor/track?ticketId=${alert.raised_ticket_id}`} className="text-blue-600 hover:text-blue-800 text-sm font-medium">View ticket &rarr;</a>
+          <div className="flex w-full justify-between items-center gap-2">
+            <a href={`/councillor/track?ticketId=${alert.raised_ticket_id}`} className="text-blue-600 hover:text-blue-800 text-sm font-medium">View ticket &rarr;</a>
+            {onMarkResolved && (
+              <button 
+                onClick={onMarkResolved} 
+                className="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 py-1.5 px-3 rounded text-sm font-medium transition-colors shadow-sm"
+              >
+                Mark Resolved
+              </button>
+            )}
+          </div>
         ) : (
           <button onClick={onReview} className="text-gray-500 hover:text-gray-700 text-sm font-medium underline">
             Re-examine

@@ -10,7 +10,7 @@ from typing import List, Dict, Any, Optional
 import google.generativeai as genai
 
 # Import Langfuse observability decorator
-from langfuse import observe
+from langfuse.decorators import observe
 
 from app.core.config import settings
 from app.services.rag.hybrid_retriever import get_hybrid_retriever

@@ -13,6 +13,7 @@ class TicketSource(str, enum.Enum):
     NEWS = "NEWS"
     CPGRAMS = "CPGRAMS"
     TELEGRAM = "TELEGRAM"
+    CCTV_DETECTION = "CCTV_DETECTION"
 
 
 class TicketStatus(str, enum.Enum):
