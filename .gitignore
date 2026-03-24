@@ -20,3 +20,4 @@ backend/server_out.txt
 
 # RAG / Vector DB (local data, not to be committed)
 backend/chroma_db/
+backend/app/services/rag/chroma_db/

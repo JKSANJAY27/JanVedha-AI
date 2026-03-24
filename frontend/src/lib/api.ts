@@ -381,3 +381,15 @@ export const schemeAdvisorApi = {
   getStats: () =>
     api.get("/api/scheme-advisor/stats"),
 };
+
+export const voiceAgentApi = {
+  ask: (formData: FormData) =>
+    api.post("/api/voice-agent/ask", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+      timeout: 60000,
+    }),
+  briefing: (language: string = "en-IN", wardId?: number) =>
+    api.post("/api/voice-agent/briefing", { language, ward_id: wardId }, { timeout: 60000 }),
+  getLanguages: () =>
+    api.get("/api/voice-agent/languages"),
+};

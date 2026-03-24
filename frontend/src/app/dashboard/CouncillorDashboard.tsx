@@ -16,6 +16,7 @@ import WardTrustScoreCard from "@/components/WardTrustScoreCard";
 import VerifiedResolutionsTable from "@/components/VerifiedResolutionsTable";
 import CommunicationLogPanel from "@/components/CommunicationLogPanel";
 import MisinfoFlagsPanel from "@/components/MisinfoFlagsPanel";
+import VoiceAgent from "@/components/voice-agent/VoiceAgent";
 
 interface WardSummary {
     total: number;
@@ -1165,6 +1166,7 @@ export default function CouncillorDashboard() {
                 {/* ═══════════════════════════════════════════════════════════════ */}
 
             </div>
+            <VoiceAgent />
         </div>
     );
 }
