@@ -918,10 +918,10 @@ async def verify_work_completion(
     if not ticket:
         raise HTTPException(status_code=404, detail="Ticket not found")
 
-    # Only field staff or ward officers can submit completion
+    # Only specific roles can submit completion
     allowed = {UserRole.FIELD_STAFF, UserRole.JUNIOR_ENGINEER, UserRole.WARD_OFFICER,
-               UserRole.COMMISSIONER, UserRole.SUPER_ADMIN}
-    if current_user.role not in allowed:
+               UserRole.COMMISSIONER, UserRole.SUPER_ADMIN, UserRole.SUPERVISOR, UserRole.COUNCILLOR}
+    if str(current_user.role.value if hasattr(current_user.role, 'value') else current_user.role) not in [r.value for r in allowed]:
         raise HTTPException(status_code=403, detail="Only technicians/officers can verify completion")
 
     # Read and encode the photo
