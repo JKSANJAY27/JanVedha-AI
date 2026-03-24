@@ -537,8 +537,36 @@ export default function CaseworkInbox() {
   const [filter, setFilter] = useState<"all" | "needs_action" | "escalated" | "resolved">("all");
   const [search, setSearch] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(false);
 
   const wardId = user?.ward_id ?? 1;
+
+  const handleDownloadReport = async () => {
+    setPdfLoading(true);
+    try {
+      const token = localStorage.getItem("access_token") ?? sessionStorage.getItem("access_token") ?? "";
+      const res = await fetch(`/api/documents/councillor-report`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail ?? "Failed to generate report");
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      const now = new Date();
+      a.download = `Councillor-Ward${wardId}-Report-${now.toISOString().slice(0, 7)}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e: any) {
+      alert(e?.message ?? "Download failed");
+    } finally {
+      setPdfLoading(false);
+    }
+  };
+
 
   const fetchCasework = useCallback(async () => {
     setLoading(true);
@@ -581,12 +609,25 @@ export default function CaseworkInbox() {
               {counts.total} entries · {counts.escalated > 0 && <span className="text-red-300 font-semibold">{counts.escalated} escalations · </span>}{counts.needs_action} need action
             </p>
           </div>
-          <button
-            onClick={() => setModalOpen(true)}
-            className="bg-white text-emerald-700 font-bold text-sm px-4 py-2.5 rounded-xl hover:bg-emerald-50 transition-colors shadow-sm shrink-0 mt-1"
-          >
-            + Log new case
-          </button>
+          {/* Header buttons */}
+          <div className="flex items-center gap-2 shrink-0 mt-1">
+            <button
+              onClick={handleDownloadReport}
+              disabled={pdfLoading}
+              className="bg-white/10 border border-white/30 text-white font-semibold text-sm px-3 py-2 rounded-xl hover:bg-white/20 transition-colors shadow-sm flex items-center gap-1.5 disabled:opacity-60"
+            >
+              {pdfLoading ? (
+                <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+              ) : "📄"}
+              {pdfLoading ? "Generating…" : "Download Ward Report"}
+            </button>
+            <button
+              onClick={() => setModalOpen(true)}
+              className="bg-white text-emerald-700 font-bold text-sm px-4 py-2.5 rounded-xl hover:bg-emerald-50 transition-colors shadow-sm"
+            >
+              + Log new case
+            </button>
+          </div>
         </div>
       </div>
 

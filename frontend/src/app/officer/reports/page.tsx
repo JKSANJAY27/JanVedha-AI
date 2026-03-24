@@ -106,44 +106,55 @@ export default function ReportsPage() {
 
     // ─── Download handler ─────────────────────────────────────────────────────
 
-    const handleDownload = () => {
-        let content = "";
-        if (isJuniorEngineer && deptSummary) {
-            content =
-                `JanVedha AI — ${deptName} Department Report\n` +
-                `Generated: ${now.toLocaleString()}\n\n` +
-                `DEPARTMENT: ${deptName}\n` +
-                `Period: ${monthName}\n\n` +
-                `SUMMARY\n` +
-                `Total Tickets: ${deptSummary.total}\n` +
-                `Open: ${deptSummary.open}\n` +
-                `Closed: ${deptSummary.closed}\n` +
-                `Overdue: ${deptSummary.overdue}\n` +
-                `Critical: ${deptSummary.critical}\n` +
-                `Resolution Rate: ${resolutionRate}%\n\n` +
-                `PRIORITY BREAKDOWN\n` +
-                Object.entries(priorityGroups).map(([p, c]) => `  ${p}: ${c}`).join("\n") + "\n\n" +
-                `OVERDUE TICKETS (${overdue.length})\n` +
-                overdue.map(t => `  ${t.ticket_code} — ${t.issue_category ?? "General"} [${t.priority_label}]`).join("\n");
-        } else {
-            content =
-                `JanVedha AI — ${monthName} Report\n` +
-                `Generated: ${now.toLocaleString()}\n\n` +
-                `CITY OVERVIEW\n` +
-                `Total Tickets: ${stats?.total_tickets ?? "N/A"}\n` +
-                `Resolution Rate: ${stats?.resolved_pct ?? "N/A"}%\n` +
-                `Active Critical: ${stats?.active_critical ?? "N/A"}\n\n` +
-                `WARD LEADERBOARD\n` +
-                wards.map((w, i) => `  ${i + 1}. ${getWardLabel(w.ward_id)}: ${w.resolution_rate}% (${w.resolved_tickets}/${w.total_tickets})`).join("\n");
-        }
+    const handleDownload = async () => {
+        try {
+            const token = localStorage.getItem("access_token") ?? sessionStorage.getItem("access_token") ?? "";
 
-        const blob = new Blob([content], { type: "text/plain" });
-        const a = document.createElement("a");
-        a.href = URL.createObjectURL(blob);
-        a.download = `JanVedha-${isJuniorEngineer ? deptName.replace(/\s+/g, "-") : "City"}-Report-${now.toISOString().slice(0, 7)}.txt`;
-        a.click();
-        toast.success("Report downloaded!");
+            if (isJuniorEngineer) {
+                // Plain-text report for JE (unchanged behaviour)
+                const content =
+                    `JanVedha AI — ${deptName} Department Report\n` +
+                    `Generated: ${now.toLocaleString()}\n\n` +
+                    `DEPARTMENT: ${deptName}\nPeriod: ${monthName}\n\n` +
+                    `SUMMARY\n` +
+                    `Total Tickets: ${deptSummary!.total}\nOpen: ${deptSummary!.open}\n` +
+                    `Closed: ${deptSummary!.closed}\nOverdue: ${deptSummary!.overdue}\n` +
+                    `Critical: ${deptSummary!.critical}\nResolution Rate: ${resolutionRate}%\n\n` +
+                    `PRIORITY BREAKDOWN\n` +
+                    Object.entries(priorityGroups).map(([p, c]) => `  ${p}: ${c}`).join("\n") + "\n\n" +
+                    `OVERDUE TICKETS (${overdue.length})\n` +
+                    overdue.map(t => `  ${t.ticket_code} — ${t.issue_category ?? "General"} [${t.priority_label}]`).join("\n");
+                const blob = new Blob([content], { type: "text/plain" });
+                const a = document.createElement("a");
+                a.href = URL.createObjectURL(blob);
+                a.download = `JanVedha-${deptName.replace(/\s+/g, "-")}-Report-${now.toISOString().slice(0, 7)}.txt`;
+                a.click();
+                toast.success("Report downloaded!");
+                return;
+            }
+
+            // Supervisor: fetch PDF from backend
+            toast.loading("Generating PDF report…", { id: "pdf-download" });
+            const res = await fetch(`/api/documents/supervisor-report`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.detail ?? "Failed to generate report");
+            }
+            const blob = await res.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `Supervisor-Ward${user?.ward_id ?? ""}-Report-${now.toISOString().slice(0, 7)}.pdf`;
+            a.click();
+            URL.revokeObjectURL(url);
+            toast.success("PDF report downloaded!", { id: "pdf-download" });
+        } catch (e: any) {
+            toast.error(e?.message ?? "Download failed", { id: "pdf-download" });
+        }
     };
+
 
     if (loading) {
         return (
