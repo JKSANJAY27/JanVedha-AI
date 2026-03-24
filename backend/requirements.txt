@@ -34,8 +34,8 @@ prophet>=1.1.5               # Seasonal spike forecasting (requires pystan)
 
 # ── NLP / Multilingual Sentiment (IndicBERT) ─────────────────────────────────
 transformers>=4.41.0         # HuggingFace model hub
-# torch: install CPU-only build to save ~1.5GB:
-# pip install torch --index-url https://download.pytorch.org/whl/cpu
+# CPU-only torch (saves ~3GB vs CUDA build — required for Render free tier)
+--extra-index-url https://download.pytorch.org/whl/cpu
 torch>=2.3.0
 
 # ── Social Media Scraping ─────────────────────────────────────────────────────
