@@ -87,16 +87,46 @@ async def init_mongodb() -> None:
     from app.mongodb.models.commissioner_digest import CommissionerDigestMongo
 
     uri = settings.MONGODB_URI
+    local_fallback_uri = "mongodb://localhost:27017/civicai"
 
     import certifi
-    kwargs = {}
-    if "mongodb+srv://" in uri:
-        kwargs["tlsCAFile"] = certifi.where()
+    import logging
+    logger = logging.getLogger(__name__)
 
-    _motor_client = AsyncIOMotorClient(uri, **kwargs)
+    async def _try_connect(try_uri: str) -> AsyncIOMotorClient:
+        kwargs = {}
+        if "mongodb+srv://" in try_uri:
+            kwargs["tlsCAFile"] = certifi.where()
+        client = AsyncIOMotorClient(
+            try_uri,
+            serverSelectionTimeoutMS=5000,   # 5s probe — fail fast
+            connectTimeoutMS=5000,
+            **kwargs,
+        )
+        # Force an actual connection attempt to detect failure immediately
+        await client.admin.command("ping")
+        return client
 
-    # Extract DB name from URI (e.g. "mongodb://localhost:27017/civicai" → "civicai")
-    db_name = settings.MONGODB_URI.rsplit("/", 1)[-1].split("?")[0] or "civicai"
+    # ── Try primary URI (Atlas or whatever is configured) ────────────────────
+    if uri != local_fallback_uri:
+        try:
+            logger.info("Connecting to MongoDB: %s", uri.split("@")[-1])
+            _motor_client = await _try_connect(uri)
+            logger.info("MongoDB connected (primary).")
+        except Exception as e:
+            logger.warning(
+                "Primary MongoDB (%s) unreachable (%s). Falling back to local.",
+                uri.split("@")[-1], e,
+            )
+            _motor_client = await _try_connect(local_fallback_uri)
+            logger.info("MongoDB connected (local fallback: %s).", local_fallback_uri)
+            uri = local_fallback_uri   # update uri so db_name extraction works
+    else:
+        _motor_client = await _try_connect(uri)
+        logger.info("MongoDB connected (local).")
+
+    # Extract DB name from URI
+    db_name = uri.rsplit("/", 1)[-1].split("?")[0] or "civicai"
     database = _motor_client[db_name]
 
     await init_beanie(
