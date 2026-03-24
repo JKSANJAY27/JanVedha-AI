@@ -15,23 +15,39 @@ from typing import Optional
 import httpx
 
 
-async def geocode_location_text(location_text: str) -> Optional[dict]:
+async def geocode_location_text(location_text: str, ward_id: Optional[int] = None) -> Optional[dict]:
     """
     Geocode a free-text address using Nominatim (OpenStreetMap, no API key required).
     Returns {"lat": float, "lng": float, "address": str} or None on failure.
     """
     try:
+        query = location_text
+        # Refine query for Prayagraj wards to avoid ambiguity (e.g., Salori in Rajasthan)
+        if ward_id and 1000 <= ward_id <= 1100:
+            if "prayagraj" not in query.lower() and "allahabad" not in query.lower():
+                query += ", Prayagraj, Uttar Pradesh, India"
+
         async with httpx.AsyncClient(timeout=5.0) as client:
             resp = await client.get(
                 "https://nominatim.openstreetmap.org/search",
-                params={"q": location_text, "format": "json", "limit": 1},
+                params={"q": query, "format": "json", "limit": 1},
                 headers={"User-Agent": "JanVedha-AI/2.0 (civic-platform)"},
             )
             results = resp.json()
             if results:
+                lat = float(results[0]["lat"])
+                lng = float(results[0]["lon"])
+
+                # Sanity Check: If we wanted Prayagraj but got something else (like Rajasthan)
+                if ward_id and 1000 <= ward_id <= 1100:
+                    # Prayagraj is roughly within [25.0 to 26.0, 81.0 to 82.5]
+                    if not (24.5 <= lat <= 26.5 and 81.0 <= lng <= 82.5):
+                         logger.warning("Geocoding returned coordinates outside Prayagraj bounds: (%s, %s). Discarding.", lat, lng)
+                         return None
+
                 return {
-                    "lat": float(results[0]["lat"]),
-                    "lng": float(results[0]["lon"]),
+                    "lat": lat,
+                    "lng": lng,
                     "address": results[0].get("display_name", location_text),
                 }
     except Exception as exc:
@@ -127,12 +143,25 @@ class TicketService:
                 "address": location_text,
             }
         else:
-            resolved_location = await geocode_location_text(location_text)
+            resolved_ward = auto_detected_ward or ward_id
+            resolved_location = await geocode_location_text(location_text, ward_id=resolved_ward)
             if resolved_location is None:
                 logger.warning(
-                    "Could not geocode '%s' — ticket will not appear on heatmap",
+                    "Could not geocode '%s' — falling back to city center",
                     location_text,
                 )
+                if resolved_ward and 1000 < resolved_ward <= 1100:
+                    resolved_location = {
+                        "lat": 25.4358 + (resolved_ward - 1050) * 0.001, # slight variance
+                        "lng": 81.8463 + (resolved_ward - 1050) * 0.001,
+                        "address": f"{location_text} (Approximate Prayagraj)",
+                    }
+                else:
+                    resolved_location = {
+                        "lat": 13.0827,
+                        "lng": 80.2707,
+                        "address": f"{location_text} (Approximate Chennai)",
+                    }
 
         # 7. Build and persist the ticket
         ticket = TicketMongo(

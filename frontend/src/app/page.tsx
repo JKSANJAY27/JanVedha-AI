@@ -11,7 +11,7 @@ import { publicApi } from "@/lib/api";
 import { formatDate } from "@/lib/formatters";
 import LoadingOverlay from "@/components/LoadingOverlay";
 import Link from "next/link";
-import { DEPT_NAMES, getWardLabel } from "@/lib/constants";
+import { DEPT_NAMES, getWardLabel, WARD_NAMES } from "@/lib/constants";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 
@@ -95,6 +95,7 @@ export default function SubmitComplaintPage() {
 
   const [wardDetection, setWardDetection] = useState<WardDetectionState>({ status: "idle" });
   const [manualWardId, setManualWardId] = useState("");
+  const [wardSearchQuery, setWardSearchQuery] = useState("");
   const wardDetectTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { ref: locationFormRef, ...locationRegister } = register("location_text");
@@ -492,21 +493,34 @@ export default function SubmitComplaintPage() {
                         <p className="text-sm text-amber-800 font-medium mb-2">
                           ⚠️ Unable to detect ward automatically — please select manually:
                         </p>
-                        <select
-                          value={manualWardId}
-                          onChange={(e) => {
-                            setManualWardId(e.target.value);
-                            if (e.target.value) {
-                              setWardDetection({ status: "override", wardId: parseInt(e.target.value, 10) });
-                            }
-                          }}
-                          className="w-full border border-amber-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-white"
-                        >
-                          <option value="">Select your ward…</option>
-                          {Array.from({ length: 200 }, (_, i) => i + 1).map((w) => (
-                            <option key={w} value={w}>{getWardLabel(w)}</option>
-                          ))}
-                        </select>
+                        <div className="relative">
+                          <input 
+                            type="text"
+                            placeholder="🔍 Search your ward (e.g. 'Teliarganj' or '55')..."
+                            value={wardSearchQuery}
+                            onChange={(e) => setWardSearchQuery(e.target.value)}
+                            className="w-full border border-amber-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-white mb-2"
+                          />
+                          <div className="max-h-48 overflow-y-auto border border-amber-200 rounded-lg bg-white shadow-inner">
+                            {[...Array.from({length: 200}, (_, i) => i + 1), ...Array.from({length: 100}, (_, i) => i + 1001)]
+                              .map(w => ({ id: w, label: getWardLabel(w) }))
+                              .filter(w => w.label.toLowerCase().includes(wardSearchQuery.toLowerCase()))
+                              .map(w => (
+                                <button
+                                  key={w.id}
+                                  type="button"
+                                  onClick={() => {
+                                    setManualWardId(w.id.toString());
+                                    setWardDetection({ status: "override", wardId: w.id });
+                                    setWardSearchQuery("");
+                                  }}
+                                  className="w-full text-left px-3 py-2 text-sm hover:bg-amber-100 focus:bg-amber-100 outline-none transition-colors border-b border-gray-50 last:border-0 text-gray-700"
+                                >
+                                  {w.label}
+                                </button>
+                              ))}
+                          </div>
+                        </div>
                       </motion.div>
                     )}
                   </div>

@@ -16,6 +16,8 @@ backend/logs.txt
 backend/logs_utf8.txt
 backend/seed_out.txt
 backend/server_out.txt
+backend/server_out_new.txt
+frontend/frontend_log.txt
 *.log
 
 # RAG / Vector DB (local data, not to be committed)
