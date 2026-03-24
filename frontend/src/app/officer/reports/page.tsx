@@ -133,9 +133,15 @@ export default function ReportsPage() {
                 return;
             }
 
-            // Supervisor: fetch PDF from backend
+            // Supervisor or Councillor: fetch PDF from backend
+            const isCouncillorUser = user?.role === "COUNCILLOR";
+            const endpoint = isCouncillorUser
+                ? `/api/documents/councillor-report`
+                : `/api/documents/supervisor-report`;
+            const filePrefix = isCouncillorUser ? "Councillor" : "Supervisor";
+
             toast.loading("Generating PDF report…", { id: "pdf-download" });
-            const res = await fetch(`/api/documents/supervisor-report`, {
+            const res = await fetch(endpoint, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             if (!res.ok) {
@@ -146,7 +152,7 @@ export default function ReportsPage() {
             const url = URL.createObjectURL(blob);
             const a = document.createElement("a");
             a.href = url;
-            a.download = `Supervisor-Ward${user?.ward_id ?? ""}-Report-${now.toISOString().slice(0, 7)}.pdf`;
+            a.download = `${filePrefix}-Ward${user?.ward_id ?? ""}-Report-${now.toISOString().slice(0, 7)}.pdf`;
             a.click();
             URL.revokeObjectURL(url);
             toast.success("PDF report downloaded!", { id: "pdf-download" });

@@ -55,7 +55,7 @@ DEPT_NAMES: Dict[str, str] = {
 
 def _safe(text: object) -> str:
     if text is None:
-        return "—"
+        return "-"
     s = str(text)
     if s.startswith("data:"):
         return "[image data]"
@@ -128,7 +128,7 @@ class CouncillorPDF(FPDF):
         self.set_font("Helvetica", "I", 7)
         self.set_text_color(150, 150, 150)
         self.cell(CONTENT_W, 5,
-                  "OFFICIAL USE ONLY — JanVedha AI Civic Platform   |   Page " + str(self.page_no()),
+                  "OFFICIAL USE ONLY - JanVedha AI Civic Platform   |   Page " + str(self.page_no()),
                   align="C")
 
 
@@ -170,7 +170,7 @@ def generate_councillor_report_pdf(
     pdf.set_x(L_MARGIN)
     pdf.set_font("Helvetica", "B", 12)
     pdf.set_text_color(*NAVY)
-    pdf.cell(CONTENT_W, 9, f"Ward {ward_id} — {_safe(ward_label)}", fill=True,
+    pdf.cell(CONTENT_W, 9, f"Ward {ward_id} - {_safe(ward_label)}", fill=True,
              new_x="LMARGIN", new_y="NEXT")
     pdf.set_x(L_MARGIN)
     pdf.set_font("Helvetica", "", 9)
@@ -299,7 +299,7 @@ def generate_councillor_report_pdf(
 
     # ── SECTION 5: SLA BREACH ESCALATION LIST ────────────────────────────────
     if overdue_list:
-        _section(pdf, f"5. SLA Breach Escalation — {len(overdue_list)} Unresolved Critical Cases")
+        _section(pdf, f"5. SLA Breach Escalation - {len(overdue_list)} Unresolved Critical Cases")
         pdf.set_x(L_MARGIN)
         pdf.set_font("Helvetica", "", 8)
         pdf.set_text_color(*GRAY_TEXT)
@@ -326,17 +326,17 @@ def generate_councillor_report_pdf(
             pdf.set_x(L_MARGIN)
             pdf.set_font("Helvetica", "B", 8)
             pdf.set_text_color(*RED_ALERT)
-            pdf.cell(col_w2[0], 6, _safe(t.get("ticket_code", "—")), fill=True, new_x="RIGHT", new_y="LAST")
+            pdf.cell(col_w2[0], 6, _safe(t.get("ticket_code", "-")), fill=True, new_x="RIGHT", new_y="LAST")
             pdf.set_font("Helvetica", "", 8)
             pdf.set_text_color(*GRAY_TEXT)
             pdf.cell(col_w2[1], 6, _safe(t.get("issue_category", "General")), fill=True, new_x="RIGHT", new_y="LAST")
-            pdf.cell(col_w2[2], 6, _safe(t.get("priority_label", "—")), fill=True, align="C", new_x="RIGHT", new_y="LAST")
+            pdf.cell(col_w2[2], 6, _safe(t.get("priority_label", "-")), fill=True, align="C", new_x="RIGHT", new_y="LAST")
             pdf.set_text_color(*RED_ALERT)
             pdf.set_font("Helvetica", "B", 8)
-            pdf.cell(col_w2[3], 6, str(t.get("days_overdue", "—")), fill=True, align="C", new_x="RIGHT", new_y="LAST")
+            pdf.cell(col_w2[3], 6, str(t.get("days_overdue", "-")), fill=True, align="C", new_x="RIGHT", new_y="LAST")
             pdf.set_font("Helvetica", "", 8)
             pdf.set_text_color(*GRAY_TEXT)
-            dept_short = DEPT_NAMES.get(str(t.get("dept_id", "")), str(t.get("dept_id", "—")))
+            dept_short = DEPT_NAMES.get(str(t.get("dept_id", "")), str(t.get("dept_id", "-")))
             pdf.cell(col_w2[4], 6, _safe(dept_short[:12]), fill=True, align="C", new_x="LMARGIN", new_y="NEXT")
         pdf.ln(6)
 

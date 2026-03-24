@@ -59,7 +59,7 @@ DEPT_NAMES: Dict[str, str] = {
 
 def _safe(text: object) -> str:
     if text is None:
-        return "—"
+        return "-"
     s = str(text)
     if s.startswith("data:"):
         return "[image data]"
@@ -83,7 +83,7 @@ class SupervisorPDF(FPDF):
         self.set_x(L_MARGIN)
         self.set_font("Helvetica", "", 8)
         self.set_text_color(160, 195, 230)
-        self.cell(CONTENT_W, 5, "Ward Statistics & Operational Overview — Confidential", align="L", new_x="LMARGIN", new_y="NEXT")
+        self.cell(CONTENT_W, 5, "Ward Statistics & Operational Overview - Confidential", align="L", new_x="LMARGIN", new_y="NEXT")
         self.set_text_color(0, 0, 0)
         self.ln(4)
 
@@ -92,7 +92,7 @@ class SupervisorPDF(FPDF):
         self.set_font("Helvetica", "I", 7)
         self.set_text_color(150, 150, 150)
         self.cell(CONTENT_W, 5,
-                  "JanVedha AI — Confidential Operational Document   |   Page " + str(self.page_no()),
+                  "JanVedha AI - Confidential Operational Document   |   Page " + str(self.page_no()),
                   align="C")
 
 
@@ -224,7 +224,7 @@ def generate_supervisor_report_pdf(
     pdf.set_x(L_MARGIN)
     pdf.set_font("Helvetica", "B", 14)
     pdf.set_text_color(*BRAND_DARK)
-    pdf.cell(CONTENT_W, 10, f"Ward {ward_id} — {_safe(ward_label)}", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(CONTENT_W, 10, f"Ward {ward_id} - {_safe(ward_label)}", new_x="LMARGIN", new_y="NEXT")
     pdf.set_x(L_MARGIN)
     pdf.set_font("Helvetica", "", 9)
     pdf.set_text_color(*GRAY_TEXT)
@@ -252,7 +252,7 @@ def generate_supervisor_report_pdf(
     sub_text = (
         f"Avg. Resolution Time: {avg_resolution_days} days    |    "
         f"Citizen Satisfaction: {f'{avg_satisfaction}/5' if avg_satisfaction else 'No data yet'}    |    "
-        f"SLA Target: 70% — {'MET ✓' if resolution_rate >= 70 else 'NOT MET ✗'}"
+        f"SLA Target: 70% - {'MET' if resolution_rate >= 70 else 'NOT MET'}"
     )
     pdf.multi_cell(CONTENT_W, 7, _safe(sub_text), fill=True, align="C")
     pdf.ln(6)
@@ -310,7 +310,7 @@ def generate_supervisor_report_pdf(
 
     # ── SECTION 5: SLA BREACH ESCALATION TABLE ────────────────────────────────
     if overdue_list:
-        _section_header(pdf, f"SLA BREACH ESCALATION — {len(overdue_list)} TICKETS REQUIRING ATTENTION")
+        _section_header(pdf, f"SLA BREACH ESCALATION - {len(overdue_list)} TICKETS REQUIRING ATTENTION")
         col_w2 = [45, 55, 28, 26, 28]
         pdf.set_fill_color(*ACCENT_RED)
         pdf.set_font("Helvetica", "B", 8)
@@ -326,17 +326,17 @@ def generate_supervisor_report_pdf(
             pdf.set_x(L_MARGIN)
             pdf.set_font("Helvetica", "B", 8)
             pdf.set_text_color(*ACCENT_RED)
-            pdf.cell(45, 6, _safe(t.get("ticket_code", "—")), fill=True, new_x="RIGHT", new_y="LAST")
+            pdf.cell(45, 6, _safe(t.get("ticket_code", "-")), fill=True, new_x="RIGHT", new_y="LAST")
             pdf.set_font("Helvetica", "", 8)
             pdf.set_text_color(*GRAY_TEXT)
             pdf.cell(55, 6, _safe(t.get("issue_category", "General")), fill=True, new_x="RIGHT", new_y="LAST")
-            pdf.cell(28, 6, _safe(t.get("priority_label", "—")), fill=True, align="C", new_x="RIGHT", new_y="LAST")
+            pdf.cell(28, 6, _safe(t.get("priority_label", "-")), fill=True, align="C", new_x="RIGHT", new_y="LAST")
             pdf.set_font("Helvetica", "B", 8)
             pdf.set_text_color(*ACCENT_RED)
-            pdf.cell(26, 6, str(t.get("days_overdue", "—")), fill=True, align="C", new_x="RIGHT", new_y="LAST")
+            pdf.cell(26, 6, str(t.get("days_overdue", "-")), fill=True, align="C", new_x="RIGHT", new_y="LAST")
             pdf.set_font("Helvetica", "", 8)
             pdf.set_text_color(*GRAY_TEXT)
-            dept_short = DEPT_NAMES.get(str(t.get("dept_id", "")), str(t.get("dept_id", "—")))
+            dept_short = DEPT_NAMES.get(str(t.get("dept_id", "")), str(t.get("dept_id", "-")))
             pdf.cell(28, 6, _safe(dept_short[:18]), fill=True, align="C", new_x="LMARGIN", new_y="NEXT")
         pdf.ln(6)
 
