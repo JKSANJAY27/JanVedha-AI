@@ -87,15 +87,22 @@ def _row(pdf: APRPDF, label: str, value: object, shade: bool = False) -> None:
     """Render a label-value row. Both cells are explicit-width so no overflow."""
     col1 = 52   # label column width mm
     col2 = CONTENT_W - col1  # value column (130 mm)
+    # Guard: ensure col2 is always positive
+    if col2 <= 0:
+        col2 = 80
     fill = (248, 249, 252) if shade else (255, 255, 255)
 
     # Capture starting Y so we can align both columns
     y_start = pdf.get_y()
     pdf.set_x(L_MARGIN)
 
-    # Measure how many lines the value needs
+    # Measure how many lines the value needs (safe value already stripped)
+    safe_value = _safe(value)
     pdf.set_font("Helvetica", "", 9)
-    n_lines = max(1, len(pdf.multi_cell(col2, 6, _safe(value), dry_run=True, output="LINES")))
+    try:
+        n_lines = max(1, len(pdf.multi_cell(col2, 6, safe_value, dry_run=True, output="LINES")))
+    except Exception:
+        n_lines = 1
     row_h = n_lines * 6
 
     pdf.set_fill_color(*fill)
@@ -110,7 +117,10 @@ def _row(pdf: APRPDF, label: str, value: object, shade: bool = False) -> None:
     pdf.set_xy(L_MARGIN + col1, y_start)
     pdf.set_font("Helvetica", "", 9)
     pdf.set_text_color(30, 30, 30)
-    pdf.multi_cell(col2, 6, _safe(value), fill=True)
+    try:
+        pdf.multi_cell(col2, 6, safe_value, fill=True)
+    except Exception:
+        pdf.multi_cell(col2, 6, safe_value[:200] if safe_value else "-", fill=True)
 
     # Ensure Y is past the row
     if pdf.get_y() < y_start + row_h:
