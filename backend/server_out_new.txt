@@ -675,3 +675,396 @@ Gemini narration failed: Error calling model 'gemini-2.5-flash' (PERMISSION_DENI
 INFO:     127.0.0.1:48872 - "GET /api/analytics/benchmarks?ward_id=1 HTTP/1.1" 200 OK
 Gemini narration failed: Error calling model 'gemini-2.5-flash' (PERMISSION_DENIED): 403 PERMISSION_DENIED. {'error': {'code': 403, 'message': 'Your API key was reported as leaked. Please use another API key.', 'status': 'PERMISSION_DENIED'}}
 INFO:     127.0.0.1:49032 - "GET /api/analytics/benchmarks?ward_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:35978 - "POST /api/auth/logout HTTP/1.1" 200 OK
+INFO:     connection closed
+INFO:     127.0.0.1:35970 - "GET /api/public/heatmap HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56242 - "GET /api/public/heatmap HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56246 - "GET /api/public/heatmap HTTP/1.1" 200 OK
+/home/devanshverma/Downloads/JanVedha/backend/app/services/auth_service.py:37: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  expire = datetime.utcnow() + timedelta(minutes=settings.JWT_EXPIRE_MINUTES)
+INFO:     127.0.0.1:49128 - "POST /api/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50038 - "WebSocket /api/chat/ws?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OWE4MjYxNGRlMjE0ODgzYjI4Y2U3OGUiLCJyb2xlIjoiQ09VTkNJTExPUiIsImV4cCI6MTc3NDM4MjQ0N30.3jJ0S0SPXeUAjerKIjr6OvMWQW3wbyG_awVdAS2essM" [accepted]
+INFO:     connection open
+INFO:     127.0.0.1:50042 - "GET /api/councillor/ward-summary?ward_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50052 - "GET /api/councillor/department-performance?ward_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50086 - "GET /api/councillor/overdue-tickets?ward_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50094 - "GET /api/councillor/priority-insights?ward_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50112 - "GET /api/social-intel/emerging-issues?ward_id=1&hours=72&limit=6 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50130 - "GET /api/social-intel/status?ward_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50124 - "GET /api/social-intel/social-posts?ward_id=1&page=1&page_size=10 HTTP/1.1" 200 OK
+Gemini API call failed: Client error '403 Forbidden' for url 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=AIzaSyCgGZmbTRh-23wvjACc--73LDWKmqXyUqA'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/403
+INFO:     127.0.0.1:50096 - "GET /api/social-intel/sentiment-overview?ward_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50136 - "GET /api/councillor/intelligence/briefing?ward_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50142 - "GET /api/councillor/intelligence/root-causes?ward_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50064 - "GET /api/councillor/satisfaction-trend?ward_id=1&weeks=8 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50154 - "GET /api/councillor/intelligence/predictions?ward_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50176 - "GET /api/councillor/ward-summary?ward_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50180 - "GET /api/councillor/department-performance?ward_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50160 - "GET /api/councillor/intelligence/cache-status?ward_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50204 - "GET /api/councillor/priority-insights?ward_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50190 - "GET /api/councillor/overdue-tickets?ward_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50220 - "GET /api/social-intel/emerging-issues?ward_id=1&hours=72&limit=6 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50222 - "GET /api/social-intel/status?ward_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44138 - "GET /api/councillor/intelligence/briefing?ward_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44146 - "GET /api/councillor/intelligence/root-causes?ward_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44114 - "GET /api/social-intel/social-posts?ward_id=1&page=1&page_size=10 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44168 - "GET /api/councillor/intelligence/predictions?ward_id=1 HTTP/1.1" 200 OK
+Gemini API call failed: Client error '403 Forbidden' for url 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=AIzaSyCgGZmbTRh-23wvjACc--73LDWKmqXyUqA'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/403
+INFO:     127.0.0.1:44130 - "GET /api/social-intel/sentiment-overview?ward_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44174 - "GET /api/councillor/intelligence/cache-status?ward_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44160 - "GET /api/councillor/satisfaction-trend?ward_id=1&weeks=8 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56234 - "GET /api/public/heatmap HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44056 - "GET /api/councillor/top-issues?ward_id=1&limit=8 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44084 - "GET /api/v1/trust/wards/1/trust-score/history?months=6 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50080 - "GET /api/councillor/top-issues?ward_id=1&limit=8 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44108 - "GET /api/v1/trust/tickets/verified-resolutions?ward_id=1&limit=100 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44116 - "GET /api/v1/trust/notifications/log?ward_id=1&limit=200 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44070 - "GET /api/v1/trust/wards/1/trust-score HTTP/1.1" 500 Internal Server Error
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/uvicorn/protocols/http/httptools_impl.py", line 416, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        self.scope, self.receive, self.send
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/uvicorn/middleware/proxy_headers.py", line 60, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/fastapi/applications.py", line 1160, in __call__
+    await super().__call__(scope, receive, send)
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/starlette/applications.py", line 107, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/starlette/middleware/errors.py", line 186, in __call__
+    raise exc
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/starlette/middleware/errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/starlette/middleware/cors.py", line 87, in __call__
+    await self.app(scope, receive, send)
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/starlette/routing.py", line 716, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/starlette/routing.py", line 736, in app
+    await route.handle(scope, receive, send)
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/starlette/routing.py", line 290, in handle
+    await self.app(scope, receive, send)
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/fastapi/routing.py", line 130, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/fastapi/routing.py", line 116, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/fastapi/routing.py", line 670, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+    )
+    ^
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/fastapi/routing.py", line 324, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/devanshverma/Downloads/JanVedha/backend/app/api/public_trust.py", line 486, in get_trust_score
+    return await compute_trust_score(ward_id, month)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/devanshverma/Downloads/JanVedha/backend/app/services/trust_score_service.py", line 84, in compute_trust_score
+    SocialPostMongo.timestamp >= month_start,
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/pydantic/_internal/_model_construction.py", line 289, in __getattr__
+    raise AttributeError(item)
+AttributeError: timestamp
+INFO:     127.0.0.1:44134 - "GET /api/v1/trust/wards/1/trust-score/history?months=6 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44128 - "GET /api/v1/trust/ward-config/1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44148 - "GET /api/v1/trust/tickets/verified-resolutions?ward_id=1&limit=100 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44152 - "GET /api/v1/trust/notifications/log?ward_id=1&limit=200 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44150 - "GET /api/v1/trust/wards/1/trust-score HTTP/1.1" 500 Internal Server Error
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/uvicorn/protocols/http/httptools_impl.py", line 416, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        self.scope, self.receive, self.send
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/uvicorn/middleware/proxy_headers.py", line 60, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/fastapi/applications.py", line 1160, in __call__
+    await super().__call__(scope, receive, send)
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/starlette/applications.py", line 107, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/starlette/middleware/errors.py", line 186, in __call__
+    raise exc
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/starlette/middleware/errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/starlette/middleware/cors.py", line 87, in __call__
+    await self.app(scope, receive, send)
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/starlette/routing.py", line 716, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/starlette/routing.py", line 736, in app
+    await route.handle(scope, receive, send)
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/starlette/routing.py", line 290, in handle
+    await self.app(scope, receive, send)
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/fastapi/routing.py", line 130, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/fastapi/routing.py", line 116, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/fastapi/routing.py", line 670, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+    )
+    ^
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/fastapi/routing.py", line 324, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/devanshverma/Downloads/JanVedha/backend/app/api/public_trust.py", line 486, in get_trust_score
+    return await compute_trust_score(ward_id, month)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/devanshverma/Downloads/JanVedha/backend/app/services/trust_score_service.py", line 84, in compute_trust_score
+    SocialPostMongo.timestamp >= month_start,
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/pydantic/_internal/_model_construction.py", line 289, in __getattr__
+    raise AttributeError(item)
+AttributeError: timestamp
+INFO:     127.0.0.1:44156 - "GET /api/v1/trust/ward-config/1 HTTP/1.1" 200 OK
+Gemini narration failed: Error calling model 'gemini-2.5-flash' (PERMISSION_DENIED): 403 PERMISSION_DENIED. {'error': {'code': 403, 'message': 'Your API key was reported as leaked. Please use another API key.', 'status': 'PERMISSION_DENIED'}}
+INFO:     127.0.0.1:44066 - "GET /api/analytics/benchmarks?ward_id=1 HTTP/1.1" 200 OK
+Gemini narration failed: Error calling model 'gemini-2.5-flash' (PERMISSION_DENIED): 403 PERMISSION_DENIED. {'error': {'code': 403, 'message': 'Your API key was reported as leaked. Please use another API key.', 'status': 'PERMISSION_DENIED'}}
+INFO:     127.0.0.1:44164 - "GET /api/analytics/benchmarks?ward_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55152 - "GET /api/blockchain/anchors?limit=10&skip=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55144 - "GET /api/v1/trust/misinformation/flags?ward_id=1&status=pending&limit=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44096 - "GET /api/blockchain/anchors?limit=10&skip=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44092 - "GET /api/v1/trust/misinformation/flags?ward_id=1&status=pending&limit=50 HTTP/1.1" 200 OK
+BS4 scraper error for Smart Cities India: 
+BS4 scraper error for Smart Cities India: 
+BS4 scraper error for Smart Cities India: All connection attempts failed
+INFO:     connection closed
+INFO:     127.0.0.1:33354 - "WebSocket /api/chat/ws?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OWE4MjYxNGRlMjE0ODgzYjI4Y2U3OGUiLCJyb2xlIjoiQ09VTkNJTExPUiIsImV4cCI6MTc3NDM4MjQ0N30.3jJ0S0SPXeUAjerKIjr6OvMWQW3wbyG_awVdAS2essM" [accepted]
+INFO:     connection open
+INFO:     127.0.0.1:33294 - "GET /api/councillor/department-performance?ward_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33340 - "GET /api/councillor/priority-insights?ward_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33328 - "GET /api/councillor/overdue-tickets?ward_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33292 - "GET /api/councillor/ward-summary?ward_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33320 - "GET /api/councillor/top-issues?ward_id=1&limit=8 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33376 - "GET /api/social-intel/emerging-issues?ward_id=1&hours=72&limit=6 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33408 - "GET /api/councillor/intelligence/briefing?ward_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33386 - "GET /api/social-intel/social-posts?ward_id=1&page=1&page_size=10 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33414 - "GET /api/councillor/intelligence/root-causes?ward_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33402 - "GET /api/social-intel/status?ward_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33416 - "GET /api/councillor/intelligence/predictions?ward_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33304 - "GET /api/councillor/satisfaction-trend?ward_id=1&weeks=8 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33436 - "GET /api/councillor/department-performance?ward_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33440 - "GET /api/councillor/priority-insights?ward_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33448 - "GET /api/councillor/overdue-tickets?ward_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33430 - "GET /api/councillor/intelligence/cache-status?ward_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33454 - "GET /api/councillor/ward-summary?ward_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33460 - "GET /api/social-intel/emerging-issues?ward_id=1&hours=72&limit=6 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33472 - "GET /api/councillor/intelligence/briefing?ward_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33492 - "GET /api/councillor/intelligence/root-causes?ward_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33488 - "GET /api/social-intel/social-posts?ward_id=1&page=1&page_size=10 HTTP/1.1" 200 OK
+Gemini API call failed: Client error '403 Forbidden' for url 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=AIzaSyCgGZmbTRh-23wvjACc--73LDWKmqXyUqA'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/403
+INFO:     127.0.0.1:33368 - "GET /api/social-intel/sentiment-overview?ward_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33506 - "GET /api/councillor/intelligence/predictions?ward_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33498 - "GET /api/social-intel/status?ward_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33458 - "GET /api/councillor/top-issues?ward_id=1&limit=8 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33520 - "GET /api/councillor/intelligence/cache-status?ward_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33556 - "GET /api/v1/trust/wards/1/trust-score/history?months=6 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33558 - "GET /api/v1/trust/misinformation/flags?ward_id=1&status=pending&limit=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33568 - "GET /api/blockchain/anchors?limit=10&skip=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33542 - "GET /api/v1/trust/wards/1/trust-score HTTP/1.1" 500 Internal Server Error
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/uvicorn/protocols/http/httptools_impl.py", line 416, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        self.scope, self.receive, self.send
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/uvicorn/middleware/proxy_headers.py", line 60, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/fastapi/applications.py", line 1160, in __call__
+    await super().__call__(scope, receive, send)
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/starlette/applications.py", line 107, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/starlette/middleware/errors.py", line 186, in __call__
+    raise exc
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/starlette/middleware/errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/starlette/middleware/cors.py", line 87, in __call__
+    await self.app(scope, receive, send)
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/starlette/routing.py", line 716, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/starlette/routing.py", line 736, in app
+    await route.handle(scope, receive, send)
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/starlette/routing.py", line 290, in handle
+    await self.app(scope, receive, send)
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/fastapi/routing.py", line 130, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/fastapi/routing.py", line 116, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/fastapi/routing.py", line 670, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+    )
+    ^
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/fastapi/routing.py", line 324, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/devanshverma/Downloads/JanVedha/backend/app/api/public_trust.py", line 486, in get_trust_score
+    return await compute_trust_score(ward_id, month)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/devanshverma/Downloads/JanVedha/backend/app/services/trust_score_service.py", line 84, in compute_trust_score
+    SocialPostMongo.timestamp >= month_start,
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/pydantic/_internal/_model_construction.py", line 289, in __getattr__
+    raise AttributeError(item)
+AttributeError: timestamp
+INFO:     127.0.0.1:33514 - "GET /api/councillor/satisfaction-trend?ward_id=1&weeks=8 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33582 - "GET /api/v1/trust/tickets/verified-resolutions?ward_id=1&limit=100 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33598 - "GET /api/v1/trust/notifications/log?ward_id=1&limit=200 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33608 - "GET /api/v1/trust/wards/1/trust-score/history?months=6 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33602 - "GET /api/v1/trust/ward-config/1 HTTP/1.1" 200 OK
+Gemini API call failed: Client error '403 Forbidden' for url 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=AIzaSyCgGZmbTRh-23wvjACc--73LDWKmqXyUqA'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/403
+INFO:     127.0.0.1:33524 - "GET /api/social-intel/sentiment-overview?ward_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33622 - "GET /api/v1/trust/misinformation/flags?ward_id=1&status=pending&limit=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33632 - "GET /api/blockchain/anchors?limit=10&skip=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33652 - "GET /api/v1/trust/tickets/verified-resolutions?ward_id=1&limit=100 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33636 - "GET /api/v1/trust/wards/1/trust-score HTTP/1.1" 500 Internal Server Error
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/uvicorn/protocols/http/httptools_impl.py", line 416, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        self.scope, self.receive, self.send
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/uvicorn/middleware/proxy_headers.py", line 60, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/fastapi/applications.py", line 1160, in __call__
+    await super().__call__(scope, receive, send)
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/starlette/applications.py", line 107, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/starlette/middleware/errors.py", line 186, in __call__
+    raise exc
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/starlette/middleware/errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/starlette/middleware/cors.py", line 87, in __call__
+    await self.app(scope, receive, send)
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/starlette/routing.py", line 716, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/starlette/routing.py", line 736, in app
+    await route.handle(scope, receive, send)
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/starlette/routing.py", line 290, in handle
+    await self.app(scope, receive, send)
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/fastapi/routing.py", line 130, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/fastapi/routing.py", line 116, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/fastapi/routing.py", line 670, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+    )
+    ^
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/fastapi/routing.py", line 324, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/devanshverma/Downloads/JanVedha/backend/app/api/public_trust.py", line 486, in get_trust_score
+    return await compute_trust_score(ward_id, month)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/devanshverma/Downloads/JanVedha/backend/app/services/trust_score_service.py", line 84, in compute_trust_score
+    SocialPostMongo.timestamp >= month_start,
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/devanshverma/Downloads/JanVedha/.venv/lib64/python3.13/site-packages/pydantic/_internal/_model_construction.py", line 289, in __getattr__
+    raise AttributeError(item)
+AttributeError: timestamp
+INFO:     127.0.0.1:33662 - "GET /api/v1/trust/ward-config/1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33654 - "GET /api/v1/trust/notifications/log?ward_id=1&limit=200 HTTP/1.1" 200 OK
+Gemini narration failed: Error calling model 'gemini-2.5-flash' (PERMISSION_DENIED): 403 PERMISSION_DENIED. {'error': {'code': 403, 'message': 'Your API key was reported as leaked. Please use another API key.', 'status': 'PERMISSION_DENIED'}}
+INFO:     127.0.0.1:33538 - "GET /api/analytics/benchmarks?ward_id=1 HTTP/1.1" 200 OK
+Gemini narration failed: Error calling model 'gemini-2.5-flash' (PERMISSION_DENIED): 403 PERMISSION_DENIED. {'error': {'code': 403, 'message': 'Your API key was reported as leaked. Please use another API key.', 'status': 'PERMISSION_DENIED'}}
+INFO:     127.0.0.1:33666 - "GET /api/analytics/benchmarks?ward_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50382 - "POST /api/auth/logout HTTP/1.1" 200 OK
+INFO:     connection closed
+INFO:     127.0.0.1:50386 - "GET /api/public/heatmap HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50402 - "GET /api/public/heatmap HTTP/1.1" 200 OK
+BS4 scraper error for Smart Cities India: 
+BS4 scraper error for Smart Cities India: 
+Gemini structuring failed: Client error '403 Forbidden' for url 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyCgGZmbTRh-23wvjACc--73LDWKmqXyUqA'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/403
+Gemini structuring failed: Client error '403 Forbidden' for url 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyCgGZmbTRh-23wvjACc--73LDWKmqXyUqA'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/403
+Gemini structuring failed: Client error '403 Forbidden' for url 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyCgGZmbTRh-23wvjACc--73LDWKmqXyUqA'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/403
+RoutingAgent failed (Error calling model 'gemini-2.5-flash' (PERMISSION_DENIED): 403 PERMISSION_DENIED. {'error': {'code': 403, 'message': 'Your API key was reported as leaked. Please use another API key.', 'status': 'PERMISSION_DENIED'}}). Accepting classifier result.
+SuggestionAgent failed (Error calling model 'gemini-2.5-flash' (PERMISSION_DENIED): 403 PERMISSION_DENIED. {'error': {'code': 403, 'message': 'Your API key was reported as leaked. Please use another API key.', 'status': 'PERMISSION_DENIED'}}). Using generic suggestions.
+Gemini structuring failed: Client error '403 Forbidden' for url 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyCgGZmbTRh-23wvjACc--73LDWKmqXyUqA'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/403
+Gemini structuring failed: Client error '403 Forbidden' for url 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyCgGZmbTRh-23wvjACc--73LDWKmqXyUqA'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/403
+RoutingAgent failed (Error calling model 'gemini-2.5-flash' (PERMISSION_DENIED): 403 PERMISSION_DENIED. {'error': {'code': 403, 'message': 'Your API key was reported as leaked. Please use another API key.', 'status': 'PERMISSION_DENIED'}}). Accepting classifier result.
+SuggestionAgent failed (Error calling model 'gemini-2.5-flash' (PERMISSION_DENIED): 403 PERMISSION_DENIED. {'error': {'code': 403, 'message': 'Your API key was reported as leaked. Please use another API key.', 'status': 'PERMISSION_DENIED'}}). Using generic suggestions.
+Gemini structuring failed: Client error '403 Forbidden' for url 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyCgGZmbTRh-23wvjACc--73LDWKmqXyUqA'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/403
+RoutingAgent failed (Error calling model 'gemini-2.5-flash' (PERMISSION_DENIED): 403 PERMISSION_DENIED. {'error': {'code': 403, 'message': 'Your API key was reported as leaked. Please use another API key.', 'status': 'PERMISSION_DENIED'}}). Accepting classifier result.
+SuggestionAgent failed (Error calling model 'gemini-2.5-flash' (PERMISSION_DENIED): 403 PERMISSION_DENIED. {'error': {'code': 403, 'message': 'Your API key was reported as leaked. Please use another API key.', 'status': 'PERMISSION_DENIED'}}). Using generic suggestions.

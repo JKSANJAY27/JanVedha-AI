@@ -33,12 +33,11 @@ async def lifespan(app: FastAPI):
     bot_app = get_bot_application()
     if bot_app:
         try:
+            print("Telegram bot initializing...")
             await bot_app.initialize()
             await bot_app.start()
-            import asyncio
-            # Run polling in background task to not block the FastAPI thread
-            asyncio.create_task(bot_app.updater.start_polling())
-            print("Telegram bot started.")
+            await bot_app.updater.start_polling(drop_pending_updates=True)
+            print("Telegram bot successfully started.")
         except Exception as e:
             print(f"Failed to start telegram bot: {e}")
 
