@@ -76,6 +76,8 @@ async def init_mongodb() -> None:
         EscalationMongo,
         CommissionerDigestMongo,
         AuditAnchorMongo,
+        # Feature: Grievance Ingestion
+        GrievanceMongo,
     )
 
     from app.mongodb.models.scheme_query import SchemeQueryMongo
@@ -137,6 +139,8 @@ async def init_mongodb() -> None:
             EscalationMongo,
             CommissionerDigestMongo,
             AuditAnchorMongo,
+            # Grievance Ingestion
+            GrievanceMongo,
         ],
     )
 

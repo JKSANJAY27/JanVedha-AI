@@ -14,6 +14,8 @@ class TicketSource(str, enum.Enum):
     CPGRAMS = "CPGRAMS"
     TELEGRAM = "TELEGRAM"
     CCTV_DETECTION = "CCTV_DETECTION"
+    MUNICIPAL_PORTAL = "MUNICIPAL_PORTAL"
+    TWITTER = "TWITTER"
 
 
 class TicketStatus(str, enum.Enum):

@@ -285,7 +285,16 @@ _bot_application = None
 def get_bot_application() -> Application:
     global _bot_application
     if _bot_application is None and settings.TELEGRAM_BOT_TOKEN:
-        _bot_application = Application.builder().token(settings.TELEGRAM_BOT_TOKEN).build()
+        from telegram.request import HTTPXRequest
+        # Increase timeout settings to prevent "TimedOut" errors on startup
+        req = HTTPXRequest(connect_timeout=20.0, read_timeout=30.0)
+        _bot_application = (
+            Application.builder()
+            .token(settings.TELEGRAM_BOT_TOKEN)
+            .request(req)
+            .get_updates_request(req)
+            .build()
+        )
         
         _bot_application.add_handler(CommandHandler("start", start))
         _bot_application.add_handler(CommandHandler("track", track))

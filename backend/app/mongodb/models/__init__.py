@@ -35,6 +35,8 @@ from .dept_config import DeptConfigMongo
 from .intelligence_alert import IntelligenceAlertMongo
 from .escalation import EscalationMongo
 from .commissioner_digest import CommissionerDigestMongo
+# Feature: Grievance Ingestion
+from .grievance import GrievanceMongo
 
 __all__ = [
     "UserMongo",
@@ -67,4 +69,6 @@ __all__ = [
     "EscalationMongo",
     "CommissionerDigestMongo",
     "AuditAnchorMongo",
+    # Grievance Ingestion
+    "GrievanceMongo",
 ]

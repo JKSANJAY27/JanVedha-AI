@@ -68,6 +68,11 @@ class Settings(BaseSettings):
     # Scrape interval (minutes)
     SCRAPE_INTERVAL_MINUTES: int = 60
 
+    # ── Grievance Ingestion ──────────────────────────────────────────────────
+    GRIEVANCE_SCRAPE_INTERVAL_MINUTES: int = 30
+    GRIEVANCE_AUTO_TICKET_THRESHOLD: float = 0.7  # severity >= this → auto-ticket
+    GRIEVANCE_REVIEW_THRESHOLD: float = 0.4       # severity >= this → flag for review
+
     # Maps
     GOOGLE_MAPS_API_KEY: str = ""
 
