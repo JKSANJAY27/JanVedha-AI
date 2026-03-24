@@ -402,3 +402,10 @@ export const voiceAgentApi = {
   getLanguages: () =>
     api.get("/api/voice-agent/languages"),
 };
+
+export const blockchainApi = {
+  anchorPending: () => api.post("/api/blockchain/anchor"),
+  verifyBatch: (batchId: string) => api.get(`/api/blockchain/verify/${batchId}`),
+  listAnchors: (limit = 10, skip = 0) => api.get("/api/blockchain/anchors", { params: { limit, skip } }),
+  getTicketStatus: (ticketId: string) => api.get(`/api/blockchain/ticket/${ticketId}/audit-status`),
+};

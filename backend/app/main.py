@@ -97,7 +97,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-from app.api import cctv, public, auth, officer, webhooks, chat, calendar, councillor, commissioner, documents, social_intel, analytics, public_trust, opportunity, proposals, casework, communications, media_rti, scheme_advisor, voice_agent
+from app.api import cctv, public, auth, officer, webhooks, chat, calendar, councillor, commissioner, documents, social_intel, analytics, public_trust, opportunity, proposals, casework, communications, media_rti, scheme_advisor, voice_agent, blockchain
 
 app.include_router(public.router, prefix="/api/public", tags=["public"])
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
@@ -119,6 +119,7 @@ app.include_router(media_rti.router, prefix="/api/media-rti", tags=["media-rti"]
 app.include_router(cctv.router, prefix="/api/cctv", tags=["cctv"])
 app.include_router(scheme_advisor.router, prefix="/api/scheme-advisor", tags=["scheme-advisor"])
 app.include_router(voice_agent.router, prefix="/api/voice-agent", tags=["voice-agent"])
+app.include_router(blockchain.router, prefix="/api/blockchain", tags=["blockchain"])
 
 
 

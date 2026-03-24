@@ -10,11 +10,16 @@ class BlockchainRecord:
 
 class BlockchainProvider(ABC):
     @abstractmethod
-    async def record_hash(self, data_hash: str, event_type: str) -> BlockchainRecord:
-        """Write a hash to the blockchain. Returns transaction reference."""
-        pass
+    async def anchor_batch(self, batch_id: str, data_hash: str) -> BlockchainRecord:
+        """Anchor a batch to the blockchain. Returns transaction reference."""
+        raise NotImplementedError
 
     @abstractmethod
-    async def verify_hash(self, data_hash: str) -> bool:
-        """Verify a hash exists on chain."""
-        pass
+    async def verify_batch(self, batch_id: str, data_hash: str) -> bool:
+        """Verify a batch hash exists on chain."""
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_transaction_url(self, tx_hash: str) -> str:
+        """Return the block explorer URL for a given transaction hash."""
+        raise NotImplementedError

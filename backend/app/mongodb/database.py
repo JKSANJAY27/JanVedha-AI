@@ -75,6 +75,7 @@ async def init_mongodb() -> None:
         IntelligenceAlertMongo,
         EscalationMongo,
         CommissionerDigestMongo,
+        AuditAnchorMongo,
     )
 
     from app.mongodb.models.scheme_query import SchemeQueryMongo
@@ -135,6 +136,7 @@ async def init_mongodb() -> None:
             IntelligenceAlertMongo,
             EscalationMongo,
             CommissionerDigestMongo,
+            AuditAnchorMongo,
         ],
     )
 

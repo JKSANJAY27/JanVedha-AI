@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import hashlib
 import logging
+from app.services.audit_service import write_audit
 from datetime import datetime, timedelta
 from typing import Optional
 
@@ -171,6 +172,22 @@ class TicketService:
         ticket.blockchain_hash = data_hash
         await ticket.save()
 
+        # 9. Audit log — immutable record for blockchain anchoring
+        await write_audit(
+            action="TICKET_CREATED",
+            ticket_id=str(ticket.id),
+            actor_id=reporter_user_id,
+            actor_role="PUBLIC_USER",
+            new_value={
+                "ticket_code": ticket.ticket_code,
+                "description": description[:200],
+                "dept_id": ticket.dept_id,
+                "ward_id": ward_id,
+                "priority": ticket.priority_label.value if ticket.priority_label else None,
+                "source": source.value if source else None,
+            },
+        )
+
         # 9. SMS notification (non-blocking, best-effort)
         try:
             from app.core.container import get_sms_provider
@@ -260,4 +277,14 @@ class TicketService:
                     logger.warning("ML training on close failed (non-critical): %s", exc)
 
         await ticket.save()
+
+        # Audit log — immutable record for blockchain anchoring
+        await write_audit(
+            action=f"TICKET_STATUS_{new_status}",
+            ticket_id=str(ticket.id),
+            actor_id=actor_id,
+            actor_role=actor_role,
+            old_value={"status": old_status.value if hasattr(old_status, 'value') else str(old_status)},
+            new_value={"status": new_status, "reason": reason, "dept_id": new_dept_id},
+        )
         return ticket

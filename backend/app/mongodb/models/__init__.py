@@ -16,6 +16,7 @@ from .notification import NotificationMongo
 from .misinformation_flag import MisinformationFlagMongo
 from .trust_score import TrustScoreMongo
 from .ward_config import WardConfigMongo
+from .audit_anchor import AuditAnchorMongo
 # Feature: Infrastructure Opportunity & Proposals
 from .proposal import ProposalMongo
 # Feature: Constituent Casework
@@ -65,4 +66,5 @@ __all__ = [
     "IntelligenceAlertMongo",
     "EscalationMongo",
     "CommissionerDigestMongo",
+    "AuditAnchorMongo",
 ]

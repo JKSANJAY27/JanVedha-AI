@@ -16,6 +16,7 @@ import WardTrustScoreCard from "@/components/WardTrustScoreCard";
 import VerifiedResolutionsTable from "@/components/VerifiedResolutionsTable";
 import CommunicationLogPanel from "@/components/CommunicationLogPanel";
 import MisinfoFlagsPanel from "@/components/MisinfoFlagsPanel";
+import BlockchainAuditPanel from "@/components/BlockchainAuditPanel";
 import VoiceAgent from "@/components/voice-agent/VoiceAgent";
 
 interface WardSummary {
@@ -953,6 +954,11 @@ export default function CouncillorDashboard() {
                         <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6">
                             <MisinfoFlagsPanel wardId={user?.ward_id} />
                         </div>
+                    </div>
+
+                    {/* Row 1.5: Blockchain Audit Ledger */}
+                    <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 mb-6">
+                        <BlockchainAuditPanel />
                     </div>
 
                     {/* Row 2: Verified Resolutions (Feature 1) */}

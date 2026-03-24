@@ -31,6 +31,11 @@ class AuditLogMongo(Document):
     actor_role: Optional[str] = Field(None, max_length=50)
     ip_address: Optional[str] = Field(None, max_length=45)
     created_at: datetime = Field(default_factory=datetime.utcnow)
+    
+    # Blockchain Audit Integration
+    blockchain_anchored: bool = False
+    blockchain_batch_id: Optional[str] = None
+    blockchain_tx_hash: Optional[str] = None
 
     class Settings:
         name = "audit_logs"
