@@ -37,6 +37,13 @@ api.interceptors.response.use(
 export const publicApi = {
   submitComplaint: (data: object) =>
     api.post("/api/public/complaints", data),
+  uploadComplaintPhoto: (file: File) => {
+    const fd = new FormData();
+    fd.append("file", file);
+    return api.post("/api/public/upload-photo", fd, {
+      transformRequest: (_data, headers) => { delete headers["Content-Type"]; return _data; },
+    });
+  },
   detectWard: (locationText: string) =>
     api.post("/api/public/detect-ward", { location_text: locationText }),
   trackTicket: (code: string) => api.get(`/api/public/track/${code}`),
@@ -50,6 +57,8 @@ export const publicApi = {
   getMyTickets: () => api.get("/api/public/my-tickets"),
   withdrawTicket: (ticketCode: string, data: { withdrawal_reason: string; withdrawal_description?: string }) =>
     api.post(`/api/public/my-tickets/${ticketCode}/withdraw`, data),
+  downloadResolutionReport: (ticketCode: string) =>
+    api.get(`/api/public/track/${ticketCode}/apr`, { responseType: "blob" }),
 };
 
 export const authApi = {

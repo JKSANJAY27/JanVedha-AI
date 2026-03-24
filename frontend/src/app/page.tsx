@@ -221,6 +221,18 @@ export default function SubmitComplaintPage() {
     setIsSubmitting(true);
     setResult(null);
 
+    // Upload photo first if provided
+    let uploadedPhotoUrl: string | null = null;
+    if (photo) {
+      try {
+        const uploadRes = await publicApi.uploadComplaintPhoto(photo);
+        uploadedPhotoUrl = uploadRes.data.photo_url ?? null;
+      } catch {
+        // Non-fatal: continue without photo
+        toast.error("Photo upload failed — submitting without photo.");
+      }
+    }
+
     const jsonData: any = {
       description: data.description,
       location_text: data.location_text,
@@ -230,7 +242,7 @@ export default function SubmitComplaintPage() {
       auto_detected_ward: autoDetectedWard || null,
       consent_given: true,
       reporter_name: data.reporter_name || null,
-      photo_url: null,
+      photo_url: uploadedPhotoUrl,
       ...(gpsCoords ? { lat: gpsCoords.lat, lng: gpsCoords.lng } : {}),
     };
     if (isPublicUser && user) jsonData.reporter_user_id = user.id;

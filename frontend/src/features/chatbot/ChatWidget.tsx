@@ -58,7 +58,7 @@ export default function ChatWidget() {
 
         const sessionId = Math.random().toString(36).substring(7);
         const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
-        const wsBaseUrl = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8001";
+        const wsBaseUrl = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8000";
         const wsUrl = `${wsBaseUrl}/api/chat/ws${token ? `?token=${token}` : ""}`;
         const ws = new WebSocket(wsUrl);
         wsRef.current = ws;
@@ -132,7 +132,7 @@ export default function ChatWidget() {
 
     const publicPaths = ["/user-login", "/login", "/signup", "/"];
     const isPublicPath = publicPaths.includes(pathname);
-    
+
     // Only show on root "/" (home) if public or specific, but here we explicitly hide on auth pages.
     // Actually the requirement is "not appearing in login pages, only after someone is logged in"
     // So if NOT authenticated, don't show it anywhere.
@@ -143,7 +143,7 @@ export default function ChatWidget() {
 
     // Hide specifically for auth paths even if somehow user is loaded
     if (["/user-login", "/login", "/signup"].includes(pathname)) {
-        return null; 
+        return null;
     }
 
     return (

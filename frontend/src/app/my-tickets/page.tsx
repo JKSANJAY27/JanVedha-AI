@@ -234,7 +234,22 @@ function DetailPanel({ code, onClose }: { code: string; onClose: () => void }) {
                     <NotificationTimeline ticketCode={detail.ticket_code} />
                     {detail.status === "CLOSED" && (
                         <button
-                            onClick={() => window.open(`http://localhost:8001/api/v1/public/track/${detail.ticket_code}/apr`, "_blank")}
+                            onClick={async () => {
+                                try {
+                                    const res = await publicApi.downloadResolutionReport(detail.ticket_code);
+                                    const url = window.URL.createObjectURL(new Blob([res.data]));
+                                    const link = document.createElement("a");
+                                    link.href = url;
+                                    link.setAttribute("download", `Resolution_Report_${detail.ticket_code}.pdf`);
+                                    document.body.appendChild(link);
+                                    link.click();
+                                    link.remove();
+                                    window.URL.revokeObjectURL(url);
+                                    toast.success("Resolution report downloaded!");
+                                } catch {
+                                    toast.error("Failed to download resolution report. Please try again.");
+                                }
+                            }}
                             className="w-full text-center px-4 py-3 bg-emerald-600 text-white font-semibold rounded-xl hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2"
                         >
                             📄 Download Resolution Report

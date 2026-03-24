@@ -3,10 +3,11 @@ Public API — citizen-facing endpoints.
 
 Fully rewritten to use MongoDB (Beanie) + the full AI pipeline.
 """
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from pydantic import BaseModel
 from datetime import datetime
 from typing import Optional, List
+import base64
 
 from app.core.dependencies import get_current_user
 from app.mongodb.models.user import UserMongo
@@ -16,6 +17,26 @@ from app.mongodb.models.ticket import TicketMongo
 from app.enums import TicketSource
 
 router = APIRouter()
+
+
+@router.post("/upload-photo")
+async def upload_complaint_photo(file: UploadFile = File(...)):
+    """
+    Upload a complaint photo and receive a base64 data URI back.
+    This URI is then passed as photo_url in the complaint submission.
+    Max 10MB. Accepts common image formats.
+    """
+    if not file.content_type or not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="Only image files are accepted.")
+
+    photo_bytes = await file.read()
+    if len(photo_bytes) > 10 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="Photo too large. Maximum size is 10 MB.")
+
+    b64 = base64.b64encode(photo_bytes).decode("utf-8")
+    photo_url = f"data:{file.content_type};base64,{b64}"
+
+    return {"photo_url": photo_url}
 
 
 
@@ -280,75 +301,53 @@ async def public_download_apr(ticket_code: str):
     """
     Publicly accessible endpoint to download the Action Taken Report (APR)
     for a given ticket. Allowed only if the ticket status is CLOSED.
+    Uses fpdf2 (pure Python) — works on all platforms including Windows.
     """
+    from fastapi.responses import Response
+    from app.services.apr_generator import generate_apr_pdf
+
     ticket = await TicketMongo.find_one(TicketMongo.ticket_code == ticket_code)
     if not ticket:
         raise HTTPException(status_code=404, detail="Ticket not found")
 
     if get_public_status(ticket) != "CLOSED":
         raise HTTPException(
-            status_code=400, 
+            status_code=400,
             detail="Final report is only available for closed tickets."
         )
 
     try:
-        from weasyprint import HTML
-        from jinja2 import Environment, FileSystemLoader
-        import hashlib
-        import os
-        from datetime import datetime
-    except ImportError:
-        raise HTTPException(status_code=500, detail="PDF generation libraries are not installed.")
-
-    # Prepare template context
-    template_dir = os.path.join(os.path.dirname(__file__), "..", "templates")
-    if not os.path.exists(template_dir):
-        raise HTTPException(status_code=500, detail="Templates directory not found")
-        
-    env = Environment(loader=FileSystemLoader(template_dir))
-    
-    try:
-        template = env.get_template("apr_template.html")
+        pdf_bytes = generate_apr_pdf(
+            ticket_code=ticket.ticket_code,
+            priority=ticket.priority_label,
+            department=ticket.dept_id,
+            ward_id=ticket.ward_id or "Unassigned",
+            status=ticket.status,
+            reporter_name=ticket.reporter_name or "Anonymous",
+            issue_category=ticket.issue_category,
+            description=ticket.description,
+            created_at=ticket.created_at.strftime("%d %b %Y, %H:%M"),
+            officer_id=ticket.assigned_officer_id or "N/A",
+            technician_id=ticket.technician_id or "N/A",
+            resolved_at=ticket.resolved_at.strftime("%d %b %Y, %H:%M") if ticket.resolved_at else "N/A",
+            verification_verdict="Verified" if ticket.work_verified else (
+                "Failed" if ticket.work_verified is False else "Manual / Pending"
+            ),
+            verification_confidence=(
+                f"{ticket.work_verification_confidence * 100:.1f}%"
+                if ticket.work_verification_confidence is not None else "N/A"
+            ),
+            verification_explanation=ticket.work_verification_explanation or "No explanation available.",
+            before_photo_url=ticket.before_photo_url or ticket.photo_url,
+            after_photo_url=ticket.after_photo_url,
+        )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to load template: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to generate PDF: {str(e)}")
 
-    doc_hash = hashlib.sha256(f"{ticket.id}-{datetime.utcnow().isoformat()}".encode('utf-8')).hexdigest()[:12].upper()
-    
-    context = {
-        "ticket_code": ticket.ticket_code,
-        "generated_at": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC"),
-        "priority": ticket.priority_label,
-        "department": ticket.dept_id,
-        "ward_id": ticket.ward_id or "Unassigned",
-        "status": ticket.status,
-        "reporter_name": ticket.reporter_name or "Anonymous",
-        "issue_category": ticket.issue_category,
-        "description": ticket.description,
-        "created_at": ticket.created_at.strftime("%Y-%m-%d %H:%M"),
-        "officer_id": ticket.assigned_officer_id or "N/A",
-        "technician_id": ticket.technician_id or "N/A",
-        "resolved_at": ticket.resolved_at.strftime("%Y-%m-%d %H:%M") if ticket.resolved_at else "N/A",
-        "verification_verdict": "Verified" if ticket.work_verified else ("Failed" if ticket.work_verified is False else "Manual / Pending"),
-        "verification_confidence": f"{ticket.work_verification_confidence*100:.1f}%" if ticket.work_verification_confidence is not None else "N/A",
-        "verification_explanation": ticket.work_verification_explanation or "No explanation available.",
-        "before_photo_url": ticket.before_photo_url or ticket.photo_url,
-        "after_photo_url": ticket.after_photo_url,
-        "doc_hash": doc_hash
-    }
-
-    try:
-        rendered_html = template.render(context)
-        pdf_bytes = HTML(string=rendered_html).write_pdf()
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to render PDF: {str(e)}")
-
-    from fastapi.responses import Response
     return Response(
         content=pdf_bytes,
         media_type="application/pdf",
-        headers={
-            "Content-Disposition": f"attachment; filename=APR_{ticket.ticket_code}.pdf"
-        }
+        headers={"Content-Disposition": f"attachment; filename=APR_{ticket.ticket_code}.pdf"}
     )
 
 @router.get("/stats")
