@@ -48,7 +48,7 @@ def _get_gemini(temperature: float = 0.4):
         from app.core.config import settings
         genai.configure(api_key=settings.GEMINI_API_KEY)
         return genai.GenerativeModel(
-            "gemini-1.5-flash",
+            "gemini-2.5-flash",
             generation_config={"temperature": temperature},
         )
     except Exception as e:

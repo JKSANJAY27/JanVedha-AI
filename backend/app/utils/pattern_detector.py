@@ -502,7 +502,7 @@ async def _generate_narratives(alerts: List[Dict]) -> List[Dict]:
         import google.generativeai as genai
 
         genai.configure(api_key=settings.GEMINI_API_KEY)
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        model = genai.GenerativeModel("gemini-2.5-flash")
 
         evidence_list = [
             {"index": i, "pattern_type": a["pattern_type"], "evidence": a.get("evidence", {})}

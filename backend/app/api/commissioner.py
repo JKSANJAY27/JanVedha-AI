@@ -103,7 +103,7 @@ async def get_department_health(current_user: UserMongo = Depends(_require_commi
     overall_verdict = None
     try:
         genai.configure(api_key=settings.GEMINI_API_KEY)
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        model = genai.GenerativeModel("gemini-2.5-flash")
         dept_keys = list(all_summary.keys())
         prompt = f"""You are an analyst for a municipal commissioner dashboard.
 Performance data for departments (past 30 days vs previous 30):
@@ -717,7 +717,7 @@ async def generate_weekly_digest(triggered_by: str = "scheduler", user_id: Optio
     gen_status = "success"
     try:
         genai.configure(api_key=cfg.GEMINI_API_KEY)
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        model = genai.GenerativeModel("gemini-2.5-flash")
         prompt = f"""You are writing the weekly performance digest for a Municipal Commissioner in Tamil Nadu, India.
 WEEK: {week_label}
 DATA:
@@ -986,13 +986,16 @@ async def get_digest_pdf(digest_id: str, current_user: UserMongo = Depends(_requ
         filename=f"commissioner-digest-{digest.week_label.replace(' ', '-')}.pdf")
 
 
+class GenerateDigestBody(BaseModel):
+    user_id: Optional[str] = None
+
 @router.post("/digest/generate")
 async def trigger_digest_generation(
-    user_id: Optional[str] = Body(None),
+    body: GenerateDigestBody,
     current_user: UserMongo = Depends(_require_commissioner),
 ):
     import asyncio
-    asyncio.create_task(generate_weekly_digest(triggered_by="manual", user_id=user_id or str(current_user.id)))
+    asyncio.create_task(generate_weekly_digest(triggered_by="manual", user_id=body.user_id or str(current_user.id)))
     return {"message": "Digest generation started", "check_url": "/api/commissioner/digest/latest"}
 
 

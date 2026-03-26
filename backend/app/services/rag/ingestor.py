@@ -8,7 +8,6 @@ import os
 import glob
 import logging
 from typing import List, Dict, Any
-import fitz  # PyMuPDF
 
 from app.services.rag.chunker import chunk_text
 from app.services.rag.embedder import get_embedder
@@ -49,8 +48,12 @@ class DocumentIngestor:
                     text = f.read()
             elif ext == '.pdf':
                 try:
+                    import fitz  # PyMuPDF — optional dependency
                     doc = fitz.open(file_path)
                     text = "\n".join([page.get_text() for page in doc])
+                except ImportError:
+                    logger.error(f"PyMuPDF (fitz) is not installed. Cannot read PDF: {file_path}")
+                    continue
                 except Exception as e:
                     logger.error(f"Failed to read PDF {file_path}: {e}")
                     continue

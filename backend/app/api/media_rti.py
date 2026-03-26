@@ -63,7 +63,7 @@ def _get_gemini(temperature: float = 0.3):
         from app.core.config import settings
         genai.configure(api_key=settings.GEMINI_API_KEY)
         return genai.GenerativeModel(
-            "gemini-1.5-flash",
+            "gemini-2.5-flash",
             generation_config={"temperature": temperature},
         )
     except Exception as e:
@@ -860,7 +860,7 @@ async def extract_query_from_image(
         import google.generativeai as genai
         from app.core.config import settings
         genai.configure(api_key=settings.GEMINI_API_KEY)
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        model = genai.GenerativeModel("gemini-2.5-flash")
         response = model.generate_content([
             {"mime_type": mime_type, "data": b64_data},
             prompt,

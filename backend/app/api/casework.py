@@ -60,7 +60,7 @@ def _get_gemini():
         import google.generativeai as genai
         from app.core.config import settings
         genai.configure(api_key=settings.GEMINI_API_KEY)
-        return genai.GenerativeModel("gemini-1.5-flash")
+        return genai.GenerativeModel("gemini-2.5-flash")
     except Exception as e:
         raise HTTPException(status_code=503, detail=f"Gemini unavailable: {e}")
 
@@ -686,7 +686,7 @@ Important: The message must be grounded in the actual ticket status provided. Do
         from app.core.config import settings
         genai.configure(api_key=settings.GEMINI_API_KEY)
         model = genai.GenerativeModel(
-            "gemini-1.5-flash",
+            "gemini-2.5-flash",
             generation_config={"temperature": 0.4},
         )
         response = model.generate_content(prompt)

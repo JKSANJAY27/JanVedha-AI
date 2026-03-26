@@ -79,6 +79,30 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"Grievance ingestion loop failed to start (non-fatal): {e}")
 
+    # ── RAG: Auto-ingest scheme documents if vector store is empty ────────────
+    try:
+        import os
+        from app.services.rag.vector_store import get_vector_store
+        from app.services.rag.ingestor import get_ingestor
+
+        vector_store = get_vector_store()
+        doc_count = vector_store.collection.count()
+        print(f"RAG vector store contains {doc_count} documents.")
+
+        if doc_count == 0:
+            print("RAG vector store is empty — ingesting scheme documents now...")
+            scheme_docs_path = os.path.join(
+                os.path.dirname(__file__),
+                "services", "rag", "scheme_docs"
+            )
+            ingestor = get_ingestor()
+            ingestor.ingest_directory(scheme_docs_path)
+            print(f"RAG ingestion complete. Documents in store: {vector_store.collection.count()}")
+        else:
+            print("RAG vector store is populated — skipping ingestion.")
+    except Exception as e:
+        print(f"RAG auto-ingest failed (non-fatal): {e}")
+
     yield
 
     # ── Shutdown ─────────────────────────────────────────────────────────────
